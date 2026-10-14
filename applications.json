@@ -1,0 +1,2132 @@
+{
+  "apps": [
+    {
+      "id": "Google.Chrome",
+      "en": "Google Chrome",
+      "ar": "جوجل كروم",
+      "category": "Browsers",
+      "domain": "chrome.com"
+    },
+    {
+      "id": "Mozilla.Firefox",
+      "en": "Firefox",
+      "ar": "فايرفوكس",
+      "category": "Browsers",
+      "domain": "firefox.com"
+    },
+    {
+      "id": "Microsoft.Edge",
+      "en": "Microsoft Edge",
+      "ar": "مايكروسوفت إيدج",
+      "category": "Browsers",
+      "domain": "microsoftedge.microsoft.com"
+    },
+    {
+      "id": "Brave.Brave",
+      "en": "Brave",
+      "ar": "بريف",
+      "category": "Browsers",
+      "domain": "brave.com"
+    },
+    {
+      "id": "Opera.Opera",
+      "en": "Opera",
+      "ar": "أوبرا",
+      "category": "Browsers",
+      "domain": "opera.com"
+    },
+    {
+      "id": "Vivaldi.Vivaldi",
+      "en": "Vivaldi",
+      "ar": "فيفالدي",
+      "category": "Browsers",
+      "domain": "vivaldi.com"
+    },
+    {
+      "id": "TorProject.TorBrowser",
+      "en": "Tor Browser",
+      "ar": "متصفح تور",
+      "category": "Browsers",
+      "domain": "torproject.org"
+    },
+    {
+      "id": "Valve.Steam",
+      "en": "Steam",
+      "ar": "ستيم",
+      "category": "Gaming",
+      "domain": "steampowered.com"
+    },
+    {
+      "id": "EpicGames.EpicGamesLauncher",
+      "en": "Epic Games Launcher",
+      "ar": "إيبك جيمز",
+      "category": "Gaming",
+      "domain": "epicgames.com"
+    },
+    {
+      "id": "GOG.Galaxy",
+      "en": "GOG Galaxy",
+      "ar": "جي أو جي جالاكسي",
+      "category": "Gaming",
+      "domain": "gog.com"
+    },
+    {
+      "id": "ElectronicArts.EADesktop",
+      "en": "EA app",
+      "ar": "تطبيق EA",
+      "category": "Gaming",
+      "domain": "ea.com"
+    },
+    {
+      "id": "Ubisoft.Connect",
+      "en": "Ubisoft Connect",
+      "ar": "يوبيسوفت كونكت",
+      "category": "Gaming",
+      "domain": "ubisoft.com"
+    },
+    {
+      "id": "RockstarGames.Launcher",
+      "en": "Rockstar Games Launcher",
+      "ar": "مشغّل روكستار",
+      "category": "Gaming",
+      "domain": "rockstargames.com"
+    },
+    {
+      "id": "Blizzard.BattleNet",
+      "en": "Battle.net",
+      "ar": "باتل نت",
+      "category": "Gaming",
+      "domain": "battle.net"
+    },
+    {
+      "id": "Mojang.MinecraftLauncher",
+      "en": "Minecraft Launcher",
+      "ar": "مشغّل ماين كرافت",
+      "category": "Gaming",
+      "domain": "minecraft.net"
+    },
+    {
+      "id": "Playnite.Playnite",
+      "en": "Playnite",
+      "ar": "بلاي نايت",
+      "category": "Gaming",
+      "domain": "playnite.link"
+    },
+    {
+      "id": "HeroicGamesLauncher.HeroicGamesLauncher",
+      "en": "Heroic Games Launcher",
+      "ar": "هيروك",
+      "category": "Gaming",
+      "domain": "heroicgameslauncher.com"
+    },
+    {
+      "id": "ItchIo.Itch",
+      "en": "itch.io",
+      "ar": "إيتش آيو",
+      "category": "Gaming",
+      "domain": "itch.io"
+    },
+    {
+      "id": "Libretro.RetroArch",
+      "en": "RetroArch",
+      "ar": "ريترو آرك",
+      "category": "Gaming",
+      "domain": "retroarch.com"
+    },
+    {
+      "id": "https://www.nvidia.com/en-us/software/nvidia-app/",
+      "en": "NVIDIA App",
+      "ar": "تطبيق NVIDIA",
+      "category": "Gaming",
+      "domain": "nvidia.com",
+      "source": "web"
+    },
+    {
+      "id": "Overwolf.Overwolf",
+      "en": "Overwolf",
+      "ar": "أوفروولف",
+      "category": "Gaming",
+      "domain": "overwolf.com"
+    },
+    {
+      "id": "MoonlightGameStreamingProject.Moonlight",
+      "en": "Moonlight",
+      "ar": "مون لايت",
+      "category": "Gaming",
+      "domain": "moonlight-stream.org"
+    },
+    {
+      "id": "Parsec.Parsec",
+      "en": "Parsec",
+      "ar": "بارسك",
+      "category": "Gaming",
+      "domain": "parsec.app"
+    },
+    {
+      "id": "Guru3D.Afterburner",
+      "en": "MSI Afterburner",
+      "ar": "إم إس آي أفتربيرنر",
+      "category": "Gaming",
+      "domain": "msi.com"
+    },
+    {
+      "id": "Discord.Discord",
+      "en": "Discord",
+      "ar": "ديسكورد",
+      "category": "Communication",
+      "domain": "discord.com"
+    },
+    {
+      "id": "Telegram.TelegramDesktop",
+      "en": "Telegram",
+      "ar": "تيليجرام",
+      "category": "Communication",
+      "domain": "telegram.org"
+    },
+    {
+      "id": "Zoom.Zoom",
+      "en": "Zoom",
+      "ar": "زووم",
+      "category": "Communication",
+      "domain": "zoom.us"
+    },
+    {
+      "id": "Microsoft.Teams",
+      "en": "Microsoft Teams",
+      "ar": "مايكروسوفت تيمز",
+      "category": "Communication",
+      "domain": "teams.microsoft.com"
+    },
+    {
+      "id": "SlackTechnologies.Slack",
+      "en": "Slack",
+      "ar": "سلاك",
+      "category": "Communication",
+      "domain": "slack.com"
+    },
+    {
+      "id": "OpenWhisperSystems.Signal",
+      "en": "Signal",
+      "ar": "سيجنال",
+      "category": "Communication",
+      "domain": "signal.org"
+    },
+    {
+      "id": "Mozilla.Thunderbird",
+      "en": "Thunderbird",
+      "ar": "ثندربيرد",
+      "category": "Communication",
+      "domain": "thunderbird.net"
+    },
+    {
+      "id": "VideoLAN.VLC",
+      "en": "VLC media player",
+      "ar": "مشغّل VLC",
+      "category": "Media",
+      "domain": "videolan.org"
+    },
+    {
+      "id": "OBSProject.OBSStudio",
+      "en": "OBS Studio",
+      "ar": "أو بي إس ستوديو",
+      "category": "Media",
+      "domain": "obsproject.com"
+    },
+    {
+      "id": "Spotify.Spotify",
+      "en": "Spotify",
+      "ar": "سبوتيفاي",
+      "category": "Media",
+      "domain": "spotify.com"
+    },
+    {
+      "id": "Audacity.Audacity",
+      "en": "Audacity",
+      "ar": "أوداسيتي",
+      "category": "Media",
+      "domain": "audacityteam.org"
+    },
+    {
+      "id": "HandBrake.HandBrake",
+      "en": "HandBrake",
+      "ar": "هاند بريك",
+      "category": "Media",
+      "domain": "handbrake.fr"
+    },
+    {
+      "id": "XBMCFoundation.Kodi",
+      "en": "Kodi",
+      "ar": "كودي",
+      "category": "Media",
+      "domain": "kodi.tv"
+    },
+    {
+      "id": "Daum.PotPlayer",
+      "en": "PotPlayer",
+      "ar": "بوت بلاير",
+      "category": "Media",
+      "domain": "potplayer.daum.net"
+    },
+    {
+      "id": "CodecGuide.K-LiteCodecPack.Standard",
+      "en": "K-Lite Codec Pack",
+      "ar": "حزمة الترميز K-Lite",
+      "category": "Media",
+      "domain": "codecguide.com"
+    },
+    {
+      "id": "Gyan.FFmpeg",
+      "en": "FFmpeg",
+      "ar": "إف إف إم بيج",
+      "category": "Media",
+      "domain": "ffmpeg.org"
+    },
+    {
+      "id": "Apple.iTunes",
+      "en": "iTunes",
+      "ar": "آي تيونز",
+      "category": "Media",
+      "domain": "apple.com"
+    },
+    {
+      "id": "PeterPawlowski.foobar2000",
+      "en": "foobar2000",
+      "ar": "فوبار 2000",
+      "category": "Media",
+      "domain": "foobar2000.org"
+    },
+    {
+      "id": "Microsoft.VisualStudioCode",
+      "en": "Visual Studio Code",
+      "ar": "فيجوال ستوديو كود",
+      "category": "Development",
+      "domain": "code.visualstudio.com"
+    },
+    {
+      "id": "Microsoft.VisualStudio.2022.Community",
+      "en": "Visual Studio 2022",
+      "ar": "فيجوال ستوديو 2022",
+      "category": "Development",
+      "domain": "visualstudio.microsoft.com"
+    },
+    {
+      "id": "Git.Git",
+      "en": "Git",
+      "ar": "جيت",
+      "category": "Development",
+      "domain": "git-scm.com"
+    },
+    {
+      "id": "GitHub.GitHubDesktop",
+      "en": "GitHub Desktop",
+      "ar": "جيت هب ديسكتوب",
+      "category": "Development",
+      "domain": "desktop.github.com"
+    },
+    {
+      "id": "OpenJS.NodeJS.LTS",
+      "en": "Node.js LTS",
+      "ar": "نود جي إس",
+      "category": "Development",
+      "domain": "nodejs.org"
+    },
+    {
+      "id": "EclipseAdoptium.Temurin.21.JDK",
+      "en": "Java JDK 21",
+      "ar": "جافا JDK 21",
+      "category": "Development",
+      "domain": "adoptium.net"
+    },
+    {
+      "id": "Notepad++.Notepad++",
+      "en": "Notepad++",
+      "ar": "نوتباد++",
+      "category": "Development",
+      "domain": "notepad-plus-plus.org"
+    },
+    {
+      "id": "SublimeHQ.SublimeText.4",
+      "en": "Sublime Text",
+      "ar": "سبلايم تكست",
+      "category": "Development",
+      "domain": "sublimetext.com"
+    },
+    {
+      "id": "Docker.DockerDesktop",
+      "en": "Docker Desktop",
+      "ar": "دوكر ديسكتوب",
+      "category": "Development",
+      "domain": "docker.com"
+    },
+    {
+      "id": "JetBrains.IntelliJIDEA.Community",
+      "en": "IntelliJ IDEA CE",
+      "ar": "إنتليج آيديا",
+      "category": "Development",
+      "domain": "jetbrains.com"
+    },
+    {
+      "id": "Google.AndroidStudio",
+      "en": "Android Studio",
+      "ar": "أندرويد ستوديو",
+      "category": "Development",
+      "domain": "developer.android.com"
+    },
+    {
+      "id": "Unity.UnityHub",
+      "en": "Unity Hub",
+      "ar": "يونيتي هب",
+      "category": "Development",
+      "domain": "unity.com"
+    },
+    {
+      "id": "Microsoft.WindowsTerminal",
+      "en": "Windows Terminal",
+      "ar": "طرفية ويندوز",
+      "category": "Development",
+      "domain": "microsoft.com"
+    },
+    {
+      "id": "Microsoft.PowerShell",
+      "en": "PowerShell 7",
+      "ar": "باورشل 7",
+      "category": "Development",
+      "domain": "microsoft.com"
+    },
+    {
+      "id": "Postman.Postman",
+      "en": "Postman",
+      "ar": "بوستمان",
+      "category": "Development",
+      "domain": "postman.com"
+    },
+    {
+      "id": "WinSCP.WinSCP",
+      "en": "WinSCP",
+      "ar": "وين إس سي بي",
+      "category": "Development",
+      "domain": "winscp.net"
+    },
+    {
+      "id": "PuTTY.PuTTY",
+      "en": "PuTTY",
+      "ar": "باتي",
+      "category": "Development",
+      "domain": "putty.org"
+    },
+    {
+      "id": "7zip.7zip",
+      "en": "7-Zip",
+      "ar": "سفن زيب",
+      "category": "Utilities",
+      "domain": "7-zip.org"
+    },
+    {
+      "id": "RARLab.WinRAR",
+      "en": "WinRAR",
+      "ar": "وين رار",
+      "category": "Utilities",
+      "domain": "win-rar.com"
+    },
+    {
+      "id": "Microsoft.PowerToys",
+      "en": "PowerToys",
+      "ar": "باور توايز",
+      "category": "Utilities",
+      "domain": "microsoft.com"
+    },
+    {
+      "id": "voidtools.Everything",
+      "en": "Everything",
+      "ar": "إيفري ثينج",
+      "category": "Utilities",
+      "domain": "voidtools.com"
+    },
+    {
+      "id": "Flow-Launcher.Flow-Launcher",
+      "en": "Flow Launcher",
+      "ar": "فلو لانشر",
+      "category": "Utilities",
+      "domain": "flowlauncher.com"
+    },
+    {
+      "id": "ShareX.ShareX",
+      "en": "ShareX",
+      "ar": "شير إكس",
+      "category": "Utilities",
+      "domain": "getsharex.com"
+    },
+    {
+      "id": "CPUID.CPU-Z",
+      "en": "CPU-Z",
+      "ar": "سي بي يو زد",
+      "category": "Utilities",
+      "domain": "cpuid.com"
+    },
+    {
+      "id": "TechPowerUp.GPU-Z",
+      "en": "GPU-Z",
+      "ar": "جي بي يو زد",
+      "category": "Utilities",
+      "domain": "techpowerup.com"
+    },
+    {
+      "id": "REALiX.HWiNFO",
+      "en": "HWiNFO",
+      "ar": "إتش دبليو إنفو",
+      "category": "Utilities",
+      "domain": "hwinfo.com"
+    },
+    {
+      "id": "CrystalDewWorld.CrystalDiskInfo",
+      "en": "CrystalDiskInfo",
+      "ar": "كريستال ديسك إنفو",
+      "category": "Utilities",
+      "domain": "crystalmark.info"
+    },
+    {
+      "id": "Wagnardsoft.DisplayDriverUninstaller",
+      "en": "Display Driver Uninstaller",
+      "ar": "أداة إزالة تعريفات الشاشة",
+      "category": "Utilities",
+      "domain": "wagnardsoft.com"
+    },
+    {
+      "id": "Piriform.CCleaner",
+      "en": "CCleaner",
+      "ar": "سي كلينر",
+      "category": "Utilities",
+      "domain": "ccleaner.com"
+    },
+    {
+      "id": "WinDirStat.WinDirStat",
+      "en": "WinDirStat",
+      "ar": "وين دير ستات",
+      "category": "Utilities",
+      "domain": "windirstat.net"
+    },
+    {
+      "id": "Rufus.Rufus",
+      "en": "Rufus",
+      "ar": "روفوس",
+      "category": "Utilities",
+      "domain": "rufus.ie"
+    },
+    {
+      "id": "Balena.Etcher",
+      "en": "balenaEtcher",
+      "ar": "بالينا إتشر",
+      "category": "Utilities",
+      "domain": "etcher.balena.io"
+    },
+    {
+      "id": "Ventoy.Ventoy",
+      "en": "Ventoy",
+      "ar": "فينتوي",
+      "category": "Utilities",
+      "domain": "ventoy.net"
+    },
+    {
+      "id": "TeamViewer.TeamViewer",
+      "en": "TeamViewer",
+      "ar": "تيم فيور",
+      "category": "Utilities",
+      "domain": "teamviewer.com"
+    },
+    {
+      "id": "qBittorrent.qBittorrent",
+      "en": "qBittorrent",
+      "ar": "كيو بت تورنت",
+      "category": "Utilities",
+      "domain": "qbittorrent.org"
+    },
+    {
+      "id": "AutoHotkey.AutoHotkey",
+      "en": "AutoHotkey",
+      "ar": "أوتو هوت كي",
+      "category": "Utilities",
+      "domain": "autohotkey.com"
+    },
+    {
+      "id": "Malwarebytes.Malwarebytes",
+      "en": "Malwarebytes",
+      "ar": "مالوير بايتس",
+      "category": "Security",
+      "domain": "malwarebytes.com"
+    },
+    {
+      "id": "Bitwarden.Bitwarden",
+      "en": "Bitwarden",
+      "ar": "بيتواردن",
+      "category": "Security",
+      "domain": "bitwarden.com"
+    },
+    {
+      "id": "KeePassXCTeam.KeePassXC",
+      "en": "KeePassXC",
+      "ar": "كي باس إكس سي",
+      "category": "Security",
+      "domain": "keepassxc.org"
+    },
+    {
+      "id": "IDRIX.VeraCrypt",
+      "en": "VeraCrypt",
+      "ar": "فيرا كريبت",
+      "category": "Security",
+      "domain": "veracrypt.fr"
+    },
+    {
+      "id": "WireGuard.WireGuard",
+      "en": "WireGuard",
+      "ar": "وايرجارد",
+      "category": "Security",
+      "domain": "wireguard.com"
+    },
+    {
+      "id": "Cloudflare.Warp",
+      "en": "Cloudflare WARP",
+      "ar": "كلاودفلير وارب",
+      "category": "Security",
+      "domain": "cloudflare.com"
+    },
+    {
+      "id": "NordVPN.NordVPN",
+      "en": "NordVPN",
+      "ar": "نورد في بي إن",
+      "category": "Security",
+      "domain": "nordvpn.com"
+    },
+    {
+      "id": "WiresharkFoundation.Wireshark",
+      "en": "Wireshark",
+      "ar": "وايرشارك",
+      "category": "Security",
+      "domain": "wireshark.org"
+    },
+    {
+      "id": "Insecure.Nmap",
+      "en": "Nmap",
+      "ar": "إن ماب",
+      "category": "Security",
+      "domain": "nmap.org"
+    },
+    {
+      "id": "TheDocumentFoundation.LibreOffice",
+      "en": "LibreOffice",
+      "ar": "ليبر أوفيس",
+      "category": "Productivity",
+      "domain": "libreoffice.org"
+    },
+    {
+      "id": "ONLYOFFICE.DesktopEditors",
+      "en": "ONLYOFFICE",
+      "ar": "أونلي أوفيس",
+      "category": "Productivity",
+      "domain": "onlyoffice.com"
+    },
+    {
+      "id": "Adobe.Acrobat.Reader.64-bit",
+      "en": "Adobe Acrobat Reader",
+      "ar": "أدوبي أكروبات ريدر",
+      "category": "Productivity",
+      "domain": "adobe.com"
+    },
+    {
+      "id": "SumatraPDF.SumatraPDF",
+      "en": "SumatraPDF",
+      "ar": "سوماترا PDF",
+      "category": "Productivity",
+      "domain": "sumatrapdfreader.org"
+    },
+    {
+      "id": "Foxit.FoxitReader",
+      "en": "Foxit Reader",
+      "ar": "فوكسيت ريدر",
+      "category": "Productivity",
+      "domain": "foxit.com"
+    },
+    {
+      "id": "Notion.Notion",
+      "en": "Notion",
+      "ar": "نوشن",
+      "category": "Productivity",
+      "domain": "notion.so"
+    },
+    {
+      "id": "Obsidian.Obsidian",
+      "en": "Obsidian",
+      "ar": "أوبسيديان",
+      "category": "Productivity",
+      "domain": "obsidian.md"
+    },
+    {
+      "id": "Joplin.Joplin",
+      "en": "Joplin",
+      "ar": "جوبلين",
+      "category": "Productivity",
+      "domain": "joplinapp.org"
+    },
+    {
+      "id": "calibre.calibre",
+      "en": "calibre",
+      "ar": "كاليبر",
+      "category": "Productivity",
+      "domain": "calibre-ebook.com"
+    },
+    {
+      "id": "Inkscape.Inkscape",
+      "en": "Inkscape",
+      "ar": "إنكسكيب",
+      "category": "Design",
+      "domain": "inkscape.org"
+    },
+    {
+      "id": "KDE.Krita",
+      "en": "Krita",
+      "ar": "كريتا",
+      "category": "Design",
+      "domain": "krita.org"
+    },
+    {
+      "id": "BlenderFoundation.Blender",
+      "en": "Blender",
+      "ar": "بلندر",
+      "category": "Design",
+      "domain": "blender.org"
+    },
+    {
+      "id": "dotPDN.PaintDotNet",
+      "en": "Paint.NET",
+      "ar": "بينت دوت نت",
+      "category": "Design",
+      "domain": "getpaint.net"
+    },
+    {
+      "id": "IrfanSkiljan.IrfanView",
+      "en": "IrfanView",
+      "ar": "إرفان فيو",
+      "category": "Design",
+      "domain": "irfanview.com"
+    },
+    {
+      "id": "darktable.darktable",
+      "en": "darktable",
+      "ar": "دارك تيبل",
+      "category": "Design",
+      "domain": "darktable.org"
+    },
+    {
+      "id": "Figma.Figma",
+      "en": "Figma",
+      "ar": "فيجما",
+      "category": "Design",
+      "domain": "figma.com"
+    },
+    {
+      "id": "BlackmagicDesign.DaVinciResolve",
+      "en": "DaVinci Resolve",
+      "ar": "دافنشي ريزولف",
+      "category": "Design",
+      "domain": "blackmagicdesign.com"
+    },
+    {
+      "id": "Meltytech.Shotcut",
+      "en": "Shotcut",
+      "ar": "شوت كت",
+      "category": "Design",
+      "domain": "shotcut.org"
+    },
+    {
+      "id": "KDE.Kdenlive",
+      "en": "Kdenlive",
+      "ar": "كدن لايف",
+      "category": "Design",
+      "domain": "kdenlive.org"
+    },
+    {
+      "id": "Dropbox.Dropbox",
+      "en": "Dropbox",
+      "ar": "دروب بوكس",
+      "category": "Cloud",
+      "domain": "dropbox.com"
+    },
+    {
+      "id": "Google.GoogleDrive",
+      "en": "Google Drive",
+      "ar": "جوجل درايف",
+      "category": "Cloud",
+      "domain": "drive.google.com"
+    },
+    {
+      "id": "Microsoft.OneDrive",
+      "en": "OneDrive",
+      "ar": "ون درايف",
+      "category": "Cloud",
+      "domain": "onedrive.live.com"
+    },
+    {
+      "id": "Mega.MEGASync",
+      "en": "MEGAsync",
+      "ar": "ميجا سينك",
+      "category": "Cloud",
+      "domain": "mega.io"
+    },
+    {
+      "id": "Syncthing.Syncthing",
+      "en": "Syncthing",
+      "ar": "سينك ثينج",
+      "category": "Cloud",
+      "domain": "syncthing.net"
+    },
+    {
+      "id": "Nextcloud.NextcloudDesktop",
+      "en": "Nextcloud",
+      "ar": "نيكست كلاود",
+      "category": "Cloud",
+      "domain": "nextcloud.com"
+    },
+    {
+      "id": "Microsoft.VCRedist.2015+.x64",
+      "en": "Visual C++ Redist x64",
+      "ar": "مكتبات Visual C++ (64)",
+      "category": "Runtimes",
+      "domain": "microsoft.com"
+    },
+    {
+      "id": "Microsoft.VCRedist.2015+.x86",
+      "en": "Visual C++ Redist x86",
+      "ar": "مكتبات Visual C++ (32)",
+      "category": "Runtimes",
+      "domain": "microsoft.com"
+    },
+    {
+      "id": "Microsoft.DotNet.DesktopRuntime.8",
+      "en": ".NET Desktop Runtime 8",
+      "ar": "بيئة .NET 8",
+      "category": "Runtimes",
+      "domain": "dotnet.microsoft.com"
+    },
+    {
+      "id": "Microsoft.DirectX",
+      "en": "DirectX Runtime",
+      "ar": "مكتبات DirectX",
+      "category": "Runtimes",
+      "domain": "microsoft.com"
+    },
+    {
+      "id": "Oracle.JavaRuntimeEnvironment",
+      "en": "Java Runtime (JRE)",
+      "ar": "بيئة جافا JRE",
+      "category": "Runtimes",
+      "domain": "java.com"
+    },
+    {
+      "id": "Microsoft.EdgeWebView2Runtime",
+      "en": "WebView2 Runtime",
+      "ar": "بيئة WebView2",
+      "category": "Runtimes",
+      "domain": "microsoft.com"
+    },
+    {
+      "id": "Hibbiki.Chromium",
+      "en": "Chromium",
+      "ar": "كروميوم",
+      "category": "Browsers",
+      "domain": "chromium.org"
+    },
+    {
+      "id": "Mozilla.Firefox.ESR",
+      "en": "Firefox ESR",
+      "ar": "فايرفوكس ESR",
+      "category": "Browsers",
+      "domain": "mozilla.org"
+    },
+    {
+      "id": "Ablaze.Floorp",
+      "en": "Floorp",
+      "ar": "فلورب",
+      "category": "Browsers",
+      "domain": "floorp.app"
+    },
+    {
+      "id": "ImputNet.Helium",
+      "en": "Helium",
+      "ar": "هيليوم",
+      "category": "Browsers",
+      "domain": "helium.computer"
+    },
+    {
+      "id": "LibreWolf.LibreWolf",
+      "en": "LibreWolf",
+      "ar": "ليبر وولف",
+      "category": "Browsers",
+      "domain": "librewolf.net"
+    },
+    {
+      "id": "MullvadVPN.MullvadBrowser",
+      "en": "Mullvad Browser",
+      "ar": "متصفح مولفاد",
+      "category": "Browsers",
+      "domain": "mullvad.net"
+    },
+    {
+      "id": "eloston.ungoogled-chromium",
+      "en": "Ungoogled Chromium",
+      "ar": "أنجوجلد كروميوم",
+      "category": "Browsers",
+      "domain": ""
+    },
+    {
+      "id": "Waterfox.Waterfox",
+      "en": "Waterfox",
+      "ar": "ووترفوكس",
+      "category": "Browsers",
+      "domain": "waterfox.net"
+    },
+    {
+      "id": "Zen-Team.Zen-Browser",
+      "en": "Zen Browser",
+      "ar": "متصفح زين",
+      "category": "Browsers",
+      "domain": "zen-browser.app"
+    },
+    {
+      "id": "Cemu.Cemu",
+      "en": "Cemu",
+      "ar": "سيمو",
+      "category": "Gaming",
+      "domain": "cemu.info"
+    },
+    {
+      "id": "Overwolf.CurseForge",
+      "en": "CurseForge",
+      "ar": "كيرس فورج",
+      "category": "Gaming",
+      "domain": "overwolf.com"
+    },
+    {
+      "id": "ES-DE.EmulationStation-DE",
+      "en": "EmulationStation Desktop Edition",
+      "ar": "إميوليشن ستيشن",
+      "category": "Gaming",
+      "domain": "es-de.org"
+    },
+    {
+      "id": "Nvidia.GeForceNow",
+      "en": "GeForce NOW",
+      "ar": "جيفورس ناو",
+      "category": "Gaming",
+      "domain": "nvidia.com"
+    },
+    {
+      "id": "Modrinth.ModrinthApp",
+      "en": "Modrinth App",
+      "ar": "مودرينث",
+      "category": "Gaming",
+      "domain": "modrinth.com"
+    },
+    {
+      "id": "PrismLauncher.PrismLauncher",
+      "en": "Prism Launcher",
+      "ar": "بريزم لانشر",
+      "category": "Gaming",
+      "domain": "prismlauncher.org"
+    },
+    {
+      "id": "Roblox.Roblox",
+      "en": "Roblox",
+      "ar": "روبلوكس",
+      "category": "Gaming",
+      "domain": "roblox.com"
+    },
+    {
+      "id": "VirtualDesktop.Streamer",
+      "en": "Virtual Desktop Streamer",
+      "ar": "فيرتشوال ديسكتوب ستريمر",
+      "category": "Gaming",
+      "domain": "vrdesktop.net"
+    },
+    {
+      "id": "Betterbird.Betterbird",
+      "en": "Betterbird",
+      "ar": "بيتربيرد",
+      "category": "Communication",
+      "domain": "betterbird.eu"
+    },
+    {
+      "id": "ChatterinoTeam.Chatterino",
+      "en": "Chatterino",
+      "ar": "تشاتيرينو",
+      "category": "Communication",
+      "domain": "chatterino.com"
+    },
+    {
+      "id": "SpikeHD.Dorion",
+      "en": "Dorion",
+      "ar": "دوريون",
+      "category": "Communication",
+      "domain": "spikehd.dev"
+    },
+    {
+      "id": "Element.Element",
+      "en": "Element",
+      "ar": "إلمنت",
+      "category": "Communication",
+      "domain": "element.io"
+    },
+    {
+      "id": "Proton.ProtonMail",
+      "en": "Proton Mail",
+      "ar": "بروتون ميل",
+      "category": "Communication",
+      "domain": "proton.me"
+    },
+    {
+      "id": "Tox.qTox",
+      "en": "QTox",
+      "ar": "كيو توكس",
+      "category": "Communication",
+      "domain": "qtox.github.io"
+    },
+    {
+      "id": "TeamSpeakSystems.TeamSpeakClient",
+      "en": "TeamSpeak 3",
+      "ar": "تيم سبيك 3",
+      "category": "Communication",
+      "domain": "teamspeak.com"
+    },
+    {
+      "id": "TeamSpeakSystems.TeamSpeakClient.Beta.6",
+      "en": "TeamSpeak 6",
+      "ar": "تيم سبيك 6",
+      "category": "Communication",
+      "domain": "teamspeak.com"
+    },
+    {
+      "id": "Vencord.Vesktop",
+      "en": "Vesktop",
+      "ar": "فيسكتوب",
+      "category": "Communication",
+      "domain": "vesktop.dev"
+    },
+    {
+      "id": "Rakuten.Viber",
+      "en": "Viber",
+      "ar": "فايبر",
+      "category": "Communication",
+      "domain": "viber.com"
+    },
+    {
+      "id": "9NKSQGP7F2NH",
+      "en": "WhatsApp Desktop",
+      "ar": "واتساب",
+      "category": "Communication",
+      "domain": "whatsapp.com",
+      "source": "msstore"
+    },
+    {
+      "id": "AIMP.AIMP",
+      "en": "AIMP",
+      "ar": "مشغّل AIMP",
+      "category": "Media",
+      "domain": "aimp.ru"
+    },
+    {
+      "id": "File-New-Project.EarTrumpet",
+      "en": "EarTrumpet",
+      "ar": "إير ترمبت",
+      "category": "Media",
+      "domain": "eartrumpet.app"
+    },
+    {
+      "id": "AdrienAllard.FileConverter",
+      "en": "File Converter",
+      "ar": "محوّل الملفات",
+      "category": "Media",
+      "domain": "file-converter.io"
+    },
+    {
+      "id": "GIMP.GIMP.3",
+      "en": "GIMP",
+      "ar": "جيمب 3",
+      "category": "Media",
+      "domain": "gimp.org"
+    },
+    {
+      "id": "DuongDieuPhap.ImageGlass",
+      "en": "ImageGlass",
+      "ar": "عارض ImageGlass",
+      "category": "Media",
+      "domain": "imageglass.org"
+    },
+    {
+      "id": "clsid2.mpc-hc",
+      "en": "Media Player Classic - Home Cinema",
+      "ar": "مشغّل MPC-HC",
+      "category": "Media",
+      "domain": "mpc-hc.org"
+    },
+    {
+      "id": "mpc-qt.mpc-qt",
+      "en": "mpc-qt",
+      "ar": "مشغّل mpc-qt",
+      "category": "Media",
+      "domain": "mpc-qt.github.io"
+    },
+    {
+      "id": "shinchiro.mpv",
+      "en": "mpv",
+      "ar": "مشغّل mpv",
+      "category": "Media",
+      "domain": "mpv.io"
+    },
+    {
+      "id": "nomacs.nomacs",
+      "en": "nomacs",
+      "ar": "نوماكس",
+      "category": "Media",
+      "domain": "nomacs.org"
+    },
+    {
+      "id": "Amazon.Corretto.21.JDK",
+      "en": "Amazon Corretto 21",
+      "ar": "أمازون كوريتو 21",
+      "category": "Development",
+      "domain": "aws.amazon.com"
+    },
+    {
+      "id": "Amazon.Corretto.25.JDK",
+      "en": "Amazon Corretto 25",
+      "ar": "أمازون كوريتو 25",
+      "category": "Development",
+      "domain": "aws.amazon.com"
+    },
+    {
+      "id": "Amazon.Corretto.8.JDK",
+      "en": "Amazon Corretto 8",
+      "ar": "أمازون كوريتو 8",
+      "category": "Development",
+      "domain": "aws.amazon.com"
+    },
+    {
+      "id": "Bruno.Bruno",
+      "en": "Bruno",
+      "ar": "برونو",
+      "category": "Development",
+      "domain": "usebruno.com"
+    },
+    {
+      "id": "9NT1R1C2HH7J",
+      "en": "ChatGPT Desktop",
+      "ar": "تشات جي بي تي",
+      "category": "Development",
+      "domain": "openai.com",
+      "source": "msstore"
+    },
+    {
+      "id": "Anthropic.ClaudeCode",
+      "en": "Claude Code",
+      "ar": "كلود كود",
+      "category": "Development",
+      "domain": "code.claude.com"
+    },
+    {
+      "id": "Anthropic.Claude",
+      "en": "Claude Desktop",
+      "ar": "كلود (سطح المكتب)",
+      "category": "Development",
+      "domain": "claude.ai"
+    },
+    {
+      "id": "Kitware.CMake",
+      "en": "CMake",
+      "ar": "سي ميك",
+      "category": "Development",
+      "domain": "cmake.org"
+    },
+    {
+      "id": "OpenAI.Codex",
+      "en": "Codex",
+      "ar": "كوديكس",
+      "category": "Development",
+      "domain": "developers.openai.com"
+    },
+    {
+      "id": "Anysphere.Cursor",
+      "en": "Cursor",
+      "ar": "كيرسر",
+      "category": "Development",
+      "domain": "cursor.com"
+    },
+    {
+      "id": "Schniz.fnm",
+      "en": "Fast Node Manager",
+      "ar": "مدير نود السريع",
+      "category": "Development",
+      "domain": ""
+    },
+    {
+      "id": "GitExtensionsTeam.GitExtensions",
+      "en": "Git Extensions",
+      "ar": "جيت إكستنشنز",
+      "category": "Development",
+      "domain": "gitextensions.github.io"
+    },
+    {
+      "id": "GitHub.cli",
+      "en": "GitHub CLI",
+      "ar": "جيت هب CLI",
+      "category": "Development",
+      "domain": "cli.github.com"
+    },
+    {
+      "id": "GoLang.Go",
+      "en": "Go",
+      "ar": "لغة جو (Go)",
+      "category": "Development",
+      "domain": "go.dev"
+    },
+    {
+      "id": "JetBrains.Toolbox",
+      "en": "Jetbrains Toolbox",
+      "ar": "جيت براينز تولبوكس",
+      "category": "Development",
+      "domain": "jetbrains.com"
+    },
+    {
+      "id": "JesseDuffield.lazygit",
+      "en": "Lazygit",
+      "ar": "ليزي جيت",
+      "category": "Development",
+      "domain": ""
+    },
+    {
+      "id": "rjpcomputing.luaforwindows",
+      "en": "Lua",
+      "ar": "لوا",
+      "category": "Development",
+      "domain": ""
+    },
+    {
+      "id": "Neovim.Neovim",
+      "en": "Neovim",
+      "ar": "نيوفيم",
+      "category": "Development",
+      "domain": "neovim.io"
+    },
+    {
+      "id": "OpenJS.NodeJS",
+      "en": "NodeJS",
+      "ar": "نود جي إس (الأحدث)",
+      "category": "Development",
+      "domain": "nodejs.org"
+    },
+    {
+      "id": "JanDeDobbeleer.OhMyPosh",
+      "en": "Oh My Posh",
+      "ar": "أوه ماي بوش",
+      "category": "Development",
+      "domain": "ohmyposh.dev"
+    },
+    {
+      "id": "pnpm.pnpm",
+      "en": "pnpm",
+      "ar": "بي إن بي إم",
+      "category": "Development",
+      "domain": "pnpm.io"
+    },
+    {
+      "id": "Python.Python.3.14",
+      "en": "Python3",
+      "ar": "بايثون 3.14",
+      "category": "Development",
+      "domain": "python.org"
+    },
+    {
+      "id": "RubyInstallerTeam.Ruby.4.0",
+      "en": "Ruby",
+      "ar": "روبي",
+      "category": "Development",
+      "domain": "rubyinstaller.org"
+    },
+    {
+      "id": "Rustlang.Rust.MSVC",
+      "en": "Rust",
+      "ar": "راست",
+      "category": "Development",
+      "domain": "rust-lang.org"
+    },
+    {
+      "id": "Starship.Starship",
+      "en": "Starship",
+      "ar": "ستارشيب",
+      "category": "Development",
+      "domain": "starship.rs"
+    },
+    {
+      "id": "WinsiderSS.SystemInformer",
+      "en": "System Informer",
+      "ar": "سيستم إنفورمر",
+      "category": "Development",
+      "domain": "systeminformer.com"
+    },
+    {
+      "id": "astral-sh.uv",
+      "en": "uv",
+      "ar": "يو في (uv)",
+      "category": "Development",
+      "domain": "docs.astral.sh"
+    },
+    {
+      "id": "Hashicorp.Vagrant",
+      "en": "Vagrant",
+      "ar": "فاجرانت",
+      "category": "Development",
+      "domain": "developer.hashicorp.com"
+    },
+    {
+      "id": "Microsoft.VisualStudio.Community",
+      "en": "Visual Studio 2026",
+      "ar": "فيجوال ستوديو 2026",
+      "category": "Development",
+      "domain": "visualstudio.microsoft.com"
+    },
+    {
+      "id": "VSCodium.VSCodium",
+      "en": "VS Codium",
+      "ar": "في إس كوديوم",
+      "category": "Development",
+      "domain": "vscodium.com"
+    },
+    {
+      "id": "Yarn.Yarn",
+      "en": "Yarn",
+      "ar": "يارن",
+      "category": "Development",
+      "domain": "yarnpkg.com"
+    },
+    {
+      "id": "ZedIndustries.Zed",
+      "en": "Zed",
+      "ar": "زد",
+      "category": "Development",
+      "domain": "zed.dev"
+    },
+    {
+      "id": "AgileBits.1Password",
+      "en": "1Password",
+      "ar": "ون باسوورد",
+      "category": "Utilities",
+      "domain": "1password.com"
+    },
+    {
+      "id": "amir1376.ABDownloadManager",
+      "en": "AB Download Manager",
+      "ar": "مدير التحميل AB",
+      "category": "Utilities",
+      "domain": "abdownloadmanager.com"
+    },
+    {
+      "id": "AnyDesk.AnyDesk",
+      "en": "AnyDesk",
+      "ar": "أني ديسك",
+      "category": "Utilities",
+      "domain": "anydesk.com"
+    },
+    {
+      "id": "Blur009.BlurAutoClicker",
+      "en": "BlurAutoClicker",
+      "ar": "النقر التلقائي Blur",
+      "category": "Utilities",
+      "domain": "blur009.vercel.app"
+    },
+    {
+      "id": "Klocman.BulkCrapUninstaller",
+      "en": "Bulk Crap Uninstaller",
+      "ar": "أداة إزالة البرامج BCU",
+      "category": "Utilities",
+      "domain": "bcuninstaller.com"
+    },
+    {
+      "id": "CrystalDewWorld.CrystalDiskMark",
+      "en": "Crystal Disk Mark",
+      "ar": "كريستال ديسك مارك",
+      "category": "Utilities",
+      "domain": "crystalmark.info"
+    },
+    {
+      "id": "Deskflow.Deskflow",
+      "en": "Deskflow",
+      "ar": "ديسك فلو",
+      "category": "Utilities",
+      "domain": ""
+    },
+    {
+      "id": "ente-io.auth-desktop",
+      "en": "Ente Auth",
+      "ar": "إنتي أوث",
+      "category": "Utilities",
+      "domain": "ente.io"
+    },
+    {
+      "id": "flux.flux",
+      "en": "F.lux",
+      "ar": "إف لكس",
+      "category": "Utilities",
+      "domain": "justgetflux.com"
+    },
+    {
+      "id": "FilesCommunity.Files",
+      "en": "Files",
+      "ar": "فايلز",
+      "category": "Utilities",
+      "domain": "files.community"
+    },
+    {
+      "id": "glzr-io.glazewm",
+      "en": "GlazeWM",
+      "ar": "جليز دبليو إم",
+      "category": "Utilities",
+      "domain": ""
+    },
+    {
+      "id": "Hugo.Hugo.Extended",
+      "en": "Hugo",
+      "ar": "هوغو",
+      "category": "Utilities",
+      "domain": "gohugo.io"
+    },
+    {
+      "id": "MHNexus.HxD",
+      "en": "HxD Hex Editor",
+      "ar": "محرر HxD",
+      "category": "Utilities",
+      "domain": "mh-nexus.de"
+    },
+    {
+      "id": "Tonec.InternetDownloadManager",
+      "en": "Internet Download Manager",
+      "ar": "إنترنت داونلود مانجر",
+      "category": "Utilities",
+      "domain": "internetdownloadmanager.com"
+    },
+    {
+      "id": "sylikc.JPEGView",
+      "en": "JPEG View",
+      "ar": "عارض JPEG",
+      "category": "Utilities",
+      "domain": ""
+    },
+    {
+      "id": "MiniTool.PartitionWizard.Free",
+      "en": "MiniTool Partition Wizard",
+      "ar": "ميني تول لإدارة الأقراص",
+      "category": "Utilities",
+      "domain": "partitionwizard.com"
+    },
+    {
+      "id": "rcmaehl.MSEdgeRedirect",
+      "en": "MSEdgeRedirect",
+      "ar": "MSEdgeRedirect",
+      "category": "Utilities",
+      "domain": ""
+    },
+    {
+      "id": "M2Team.NanaZip",
+      "en": "NanaZip",
+      "ar": "نانا زيب",
+      "category": "Utilities",
+      "domain": "nanazip.org"
+    },
+    {
+      "id": "Nilesoft.Shell",
+      "en": "Nilesoft Shell",
+      "ar": "نايل سوفت شل",
+      "category": "Utilities",
+      "domain": "nilesoft.org"
+    },
+    {
+      "id": "TechPowerUp.NVCleanstall",
+      "en": "NVCleanstall",
+      "ar": "إن في كلين ستول",
+      "category": "Utilities",
+      "domain": "techpowerup.com"
+    },
+    {
+      "id": "xM4ddy.OFGB",
+      "en": "OFGB",
+      "ar": "OFGB",
+      "category": "Utilities",
+      "domain": ""
+    },
+    {
+      "id": "OPAutoClicker.OPAutoClicker",
+      "en": "OPAutoClicker",
+      "ar": "OP Auto Clicker",
+      "category": "Utilities",
+      "domain": "opautoclicker.com"
+    },
+    {
+      "id": "OpenRGB.OpenRGB",
+      "en": "OpenRGB",
+      "ar": "أوبن آر جي بي",
+      "category": "Utilities",
+      "domain": "openrgb.org"
+    },
+    {
+      "id": "Oracle.VirtualBox",
+      "en": "Oracle VirtualBox",
+      "ar": "فيرتشوال بوكس",
+      "category": "Utilities",
+      "domain": "virtualbox.org"
+    },
+    {
+      "id": "Giorgiotani.Peazip",
+      "en": "PeaZip",
+      "ar": "بي زيب",
+      "category": "Utilities",
+      "domain": "peazip.github.io"
+    },
+    {
+      "id": "Fleex255.PolicyPlus",
+      "en": "Policy Plus",
+      "ar": "بوليسي بلس",
+      "category": "Utilities",
+      "domain": ""
+    },
+    {
+      "id": "BitSum.ProcessLasso",
+      "en": "Process Lasso",
+      "ar": "بروسس لاسو",
+      "category": "Utilities",
+      "domain": "bitsum.com"
+    },
+    {
+      "id": "Proton.ProtonAuthenticator",
+      "en": "Proton Authenticator",
+      "ar": "مصادق بروتون",
+      "category": "Utilities",
+      "domain": "proton.me"
+    },
+    {
+      "id": "Proton.ProtonDrive",
+      "en": "Proton Drive",
+      "ar": "بروتون درايف",
+      "category": "Utilities",
+      "domain": "proton.me"
+    },
+    {
+      "id": "Proton.ProtonPass",
+      "en": "Proton Pass",
+      "ar": "بروتون باس",
+      "category": "Utilities",
+      "domain": "proton.me"
+    },
+    {
+      "id": "RevoUninstaller.RevoUninstaller",
+      "en": "Revo Uninstaller",
+      "ar": "ريفو أنإنستالر",
+      "category": "Utilities",
+      "domain": "revouninstaller.com"
+    },
+    {
+      "id": "WhirlwindFX.SignalRgb",
+      "en": "SignalRGB",
+      "ar": "سيجنال آر جي بي",
+      "category": "Utilities",
+      "domain": "signalrgb.com"
+    },
+    {
+      "id": "GlennDelahoy.SnappyDriverInstallerOrigin",
+      "en": "Snappy Driver Installer Origin",
+      "ar": "منزّل التعريفات Snappy",
+      "category": "Utilities",
+      "domain": "glenn.delahoy.com"
+    },
+    {
+      "id": "StartIsBack.StartAllBack",
+      "en": "StartAllBack",
+      "ar": "ستارت أول باك",
+      "category": "Utilities",
+      "domain": "startallback.com"
+    },
+    {
+      "id": "Tailscale.Tailscale",
+      "en": "Tailscale",
+      "ar": "تيل سكيل",
+      "category": "Utilities",
+      "domain": "tailscale.com"
+    },
+    {
+      "id": "GlavSoft.TightVNC",
+      "en": "TightVNC",
+      "ar": "تايت في إن سي",
+      "category": "Utilities",
+      "domain": "tightvnc.com"
+    },
+    {
+      "id": "Ghisler.TotalCommander",
+      "en": "Total Commander",
+      "ar": "توتال كوماندر",
+      "category": "Utilities",
+      "domain": "ghisler.com"
+    },
+    {
+      "id": "CharlesMilette.TranslucentTB",
+      "en": "TranslucentTB",
+      "ar": "شريط مهام شفاف",
+      "category": "Utilities",
+      "domain": "translucenttb.github.io"
+    },
+    {
+      "id": "JAMSoftware.TreeSize.Free",
+      "en": "TreeSize Free",
+      "ar": "تري سايز",
+      "category": "Utilities",
+      "domain": "jam-software.com"
+    },
+    {
+      "id": "Devolutions.UniGetUI",
+      "en": "UniGetUI",
+      "ar": "يوني جيت يو آي",
+      "category": "Utilities",
+      "domain": "devolutions.net"
+    },
+    {
+      "id": "WiseCleaner.WiseProgramUninstaller",
+      "en": "Wise Program Uninstaller",
+      "ar": "وايز لإزالة البرامج",
+      "category": "Utilities",
+      "domain": "wisecleaner.com"
+    },
+    {
+      "id": "AntibodySoftware.WizTree",
+      "en": "WizTree",
+      "ar": "ويز تري",
+      "category": "Utilities",
+      "domain": "wiztreefree.com"
+    },
+    {
+      "id": "Cyanfish.NAPS2",
+      "en": "NAPS2",
+      "ar": "ماسح الوثائق NAPS2",
+      "category": "Productivity",
+      "domain": "naps2.com"
+    },
+    {
+      "id": "KDE.Okular",
+      "en": "Okular",
+      "ar": "أوكولار",
+      "category": "Productivity",
+      "domain": "okular.kde.org"
+    },
+    {
+      "id": "TrackerSoftware.PDF-XChangeEditor",
+      "en": "PDF-XChange Editor",
+      "ar": "محرر PDF-XChange",
+      "category": "Productivity",
+      "domain": "pdf-xchange.com"
+    },
+    {
+      "id": "geeksoftwareGmbH.PDF24Creator",
+      "en": "PDF24 Creator",
+      "ar": "PDF24",
+      "category": "Productivity",
+      "domain": "tools.pdf24.org"
+    },
+    {
+      "id": "PDFgear.PDFgear",
+      "en": "PDFgear",
+      "ar": "بي دي إف جير",
+      "category": "Productivity",
+      "domain": "pdfgear.com"
+    },
+    {
+      "id": "PDFsam.PDFsam",
+      "en": "PDFsam Basic",
+      "ar": "PDFsam",
+      "category": "Productivity",
+      "domain": "pdfsam.org"
+    },
+    {
+      "id": "pbek.QOwnNotes",
+      "en": "QOwnNotes",
+      "ar": "كيو أون نوتس",
+      "category": "Productivity",
+      "domain": "qownnotes.org"
+    },
+    {
+      "id": "Automattic.Simplenote",
+      "en": "Simplenote",
+      "ar": "سيمبل نوت",
+      "category": "Productivity",
+      "domain": "simplenote.com"
+    },
+    {
+      "id": "Xournal++.Xournal++",
+      "en": "Xournal++",
+      "ar": "زورنال++",
+      "category": "Productivity",
+      "domain": "xournalpp.github.io"
+    },
+    {
+      "id": "DigitalScholar.Zotero",
+      "en": "Zotero",
+      "ar": "زوتيرو",
+      "category": "Productivity",
+      "domain": "zotero.org"
+    },
+    {
+      "id": "Famatech.AdvancedIPScanner",
+      "en": "Advanced IP Scanner",
+      "ar": "ماسح IP المتقدم",
+      "category": "ProTools",
+      "domain": "advanced-ip-scanner.com"
+    },
+    {
+      "id": "angryziber.AngryIPScanner",
+      "en": "Angry IP Scanner",
+      "ar": "أنجري آي بي سكانر",
+      "category": "ProTools",
+      "domain": "angryip.org"
+    },
+    {
+      "id": "Maxon.CinebenchR23",
+      "en": "Cinebench R23",
+      "ar": "سينيبنش R23",
+      "category": "ProTools",
+      "domain": "maxon.net"
+    },
+    {
+      "id": "gerardog.gsudo",
+      "en": "gsudo",
+      "ar": "جي سودو",
+      "category": "ProTools",
+      "domain": ""
+    },
+    {
+      "id": "CPUID.HWMonitor",
+      "en": "HWMonitor",
+      "ar": "إتش دبليو مونيتور",
+      "category": "ProTools",
+      "domain": "cpuid.com"
+    },
+    {
+      "id": "MullvadVPN.MullvadVPN",
+      "en": "Mullvad VPN",
+      "ar": "مولفاد VPN",
+      "category": "ProTools",
+      "domain": "mullvad.net"
+    },
+    {
+      "id": "OpenVPNTechnologies.OpenVPNConnect",
+      "en": "OpenVPN Connect",
+      "ar": "أوبن في بي إن",
+      "category": "ProTools",
+      "domain": "openvpn.net"
+    },
+    {
+      "id": "Proton.ProtonVPN",
+      "en": "Proton VPN",
+      "ar": "بروتون VPN",
+      "category": "ProTools",
+      "domain": "protonvpn.com"
+    },
+    {
+      "id": "Henry++.simplewall",
+      "en": "Simplewall",
+      "ar": "سيمبل وول",
+      "category": "ProTools",
+      "domain": ""
+    },
+    {
+      "id": "Microsoft.DotNet.DesktopRuntime.10",
+      "en": ".NET Desktop Runtime 10",
+      "ar": "بيئة .NET 10",
+      "category": "Microsoft",
+      "domain": "dotnet.microsoft.com"
+    },
+    {
+      "id": "Microsoft.DotNet.DesktopRuntime.6",
+      "en": ".NET Desktop Runtime 6",
+      "ar": "بيئة .NET 6",
+      "category": "Microsoft",
+      "domain": "dotnet.microsoft.com"
+    },
+    {
+      "id": "Microsoft.DotNet.DesktopRuntime.9",
+      "en": ".NET Desktop Runtime 9",
+      "ar": "بيئة .NET 9",
+      "category": "Microsoft",
+      "domain": "dotnet.microsoft.com"
+    },
+    {
+      "id": "Microsoft.Sysinternals.Autoruns",
+      "en": "Autoruns",
+      "ar": "أوتورانز",
+      "category": "Microsoft",
+      "domain": "learn.microsoft.com"
+    },
+    {
+      "id": "CodingWondersSoftware.DISMTools.Stable",
+      "en": "DISMTools",
+      "ar": "أدوات DISM",
+      "category": "Microsoft",
+      "domain": ""
+    },
+    {
+      "id": "Nlitesoft.NTLite",
+      "en": "NTLite",
+      "ar": "إن تي لايت",
+      "category": "Microsoft",
+      "domain": "ntlite.com"
+    },
+    {
+      "id": "Microsoft.NuGet",
+      "en": "NuGet",
+      "ar": "نوجيت",
+      "category": "Microsoft",
+      "domain": "nuget.org"
+    },
+    {
+      "id": "Microsoft.Sysinternals.ProcessExplorer",
+      "en": "Process Explorer",
+      "ar": "مستكشف العمليات",
+      "category": "Microsoft",
+      "domain": "learn.microsoft.com"
+    },
+    {
+      "id": "Microsoft.Sysinternals.ProcessMonitor",
+      "en": "Process Monitor",
+      "ar": "مراقب العمليات",
+      "category": "Microsoft",
+      "domain": "docs.microsoft.com"
+    },
+    {
+      "id": "Microsoft.Sysinternals.RDCMan",
+      "en": "RDCMan",
+      "ar": "مدير سطح المكتب البعيد",
+      "category": "Microsoft",
+      "domain": "learn.microsoft.com"
+    },
+    {
+      "id": "Microsoft.Sysinternals.TCPView",
+      "en": "TCPView",
+      "ar": "TCPView",
+      "category": "Microsoft",
+      "domain": "docs.microsoft.com"
+    },
+    {
+      "id": "Jellyfin.JellyfinMediaPlayer",
+      "en": "Jellyfin Media Player",
+      "ar": "مشغّل جيليفين",
+      "category": "Selfhosted",
+      "domain": "jellyfin.org"
+    },
+    {
+      "id": "Jellyfin.Server",
+      "en": "Jellyfin Server",
+      "ar": "خادم جيليفين",
+      "category": "Selfhosted",
+      "domain": "jellyfin.org"
+    },
+    {
+      "id": "LocalSend.LocalSend",
+      "en": "LocalSend",
+      "ar": "لوكال سيند",
+      "category": "Selfhosted",
+      "domain": "localsend.org"
+    },
+    {
+      "id": "Netbird.Netbird",
+      "en": "NetBird",
+      "ar": "نت بيرد",
+      "category": "Selfhosted",
+      "domain": "netbird.io"
+    },
+    {
+      "id": "Plex.Plex",
+      "en": "Plex Desktop",
+      "ar": "بليكس",
+      "category": "Selfhosted",
+      "domain": "plex.tv"
+    },
+    {
+      "id": "Plex.PlexMediaServer",
+      "en": "Plex Media Server",
+      "ar": "خادم بليكس",
+      "category": "Selfhosted",
+      "domain": "plex.tv"
+    },
+    {
+      "id": "LizardByte.Sunshine",
+      "en": "Sunshine/GameStream Server",
+      "ar": "سنشاين (خادم البث)",
+      "category": "Selfhosted",
+      "domain": "app.lizardbyte.dev"
+    },
+    {
+      "id": "GermanCoding.SyncTrayzor",
+      "en": "SyncTrayzor",
+      "ar": "سينك تريزور",
+      "category": "Selfhosted",
+      "domain": ""
+    },
+    {
+      "id": "9NZBF4GT040C",
+      "en": "Bing Search",
+      "ar": "بحث Bing",
+      "category": "Store",
+      "domain": "bing.com",
+      "source": "msstore"
+    },
+    {
+      "id": "9WZDNCRFHVN5",
+      "en": "Calculator",
+      "ar": "الآلة الحاسبة",
+      "category": "Store",
+      "domain": "",
+      "source": "msstore"
+    },
+    {
+      "id": "9WZDNCRFJBBG",
+      "en": "Camera",
+      "ar": "الكاميرا",
+      "category": "Store",
+      "domain": "",
+      "source": "msstore"
+    },
+    {
+      "id": "9P1J8S7CCWWT",
+      "en": "Clipchamp",
+      "ar": "كليب تشامب",
+      "category": "Store",
+      "domain": "clipchamp.com",
+      "source": "msstore"
+    },
+    {
+      "id": "9WZDNCRFJ3PR",
+      "en": "Clock",
+      "ar": "الساعة",
+      "category": "Store",
+      "domain": "",
+      "source": "msstore"
+    },
+    {
+      "id": "9NHT9RB2F4HD",
+      "en": "Copilot",
+      "ar": "كوبايلوت",
+      "category": "Store",
+      "domain": "copilot.microsoft.com",
+      "source": "msstore"
+    },
+    {
+      "id": "9N8MHTPHNGVV",
+      "en": "Dev Home",
+      "ar": "مركز المطوّر Dev Home",
+      "category": "Store",
+      "domain": "",
+      "source": "msstore"
+    },
+    {
+      "id": "9NBLGGH4R32N",
+      "en": "Feedback Hub",
+      "ar": "مركز الملاحظات",
+      "category": "Store",
+      "domain": "",
+      "source": "msstore"
+    },
+    {
+      "id": "9PKDZBMV1H3T",
+      "en": "Get Help",
+      "ar": "الحصول على مساعدة",
+      "category": "Store",
+      "domain": "",
+      "source": "msstore"
+    },
+    {
+      "id": "9WZDNCRFJ3PT",
+      "en": "Media Player",
+      "ar": "مشغّل الوسائط",
+      "category": "Store",
+      "domain": "",
+      "source": "msstore"
+    },
+    {
+      "id": "9WZDNCRD29V9",
+      "en": "Microsoft 365",
+      "ar": "مايكروسوفت 365",
+      "category": "Store",
+      "domain": "microsoft365.com",
+      "source": "msstore"
+    },
+    {
+      "id": "9NTXGKQ8P7N0",
+      "en": "Mobile Devices",
+      "ar": "الأجهزة المحمولة",
+      "category": "Store",
+      "domain": "",
+      "source": "msstore"
+    },
+    {
+      "id": "9WZDNCRFJ3P2",
+      "en": "Movies & TV",
+      "ar": "الأفلام والتلفزيون",
+      "category": "Store",
+      "domain": "",
+      "source": "msstore"
+    },
+    {
+      "id": "9WZDNCRFHVFW",
+      "en": "News",
+      "ar": "الأخبار",
+      "category": "Store",
+      "domain": "bing.com",
+      "source": "msstore"
+    },
+    {
+      "id": "9MSMLRH6LZF3",
+      "en": "Notepad",
+      "ar": "المفكرة",
+      "category": "Store",
+      "domain": "",
+      "source": "msstore"
+    },
+    {
+      "id": "9NRX63209R7B",
+      "en": "Outlook for Windows",
+      "ar": "Outlook لنظام ويندوز",
+      "category": "Store",
+      "domain": "outlook.live.com",
+      "source": "msstore"
+    },
+    {
+      "id": "9PCFS5B6T72H",
+      "en": "Paint",
+      "ar": "الرسام (Paint)",
+      "category": "Store",
+      "domain": "",
+      "source": "msstore"
+    },
+    {
+      "id": "9NMPJ99VJBWV",
+      "en": "Phone Link",
+      "ar": "رابط الهاتف",
+      "category": "Store",
+      "domain": "",
+      "source": "msstore"
+    },
+    {
+      "id": "9WZDNCRFJBH4",
+      "en": "Photos",
+      "ar": "الصور",
+      "category": "Store",
+      "domain": "",
+      "source": "msstore"
+    },
+    {
+      "id": "9NFTCH6J7FHV",
+      "en": "Power Automate",
+      "ar": "باور أوتوميت",
+      "category": "Store",
+      "domain": "powerautomate.microsoft.com",
+      "source": "msstore"
+    },
+    {
+      "id": "9P7BP5VNWKX5",
+      "en": "Quick Assist",
+      "ar": "المساعدة السريعة",
+      "category": "Store",
+      "domain": "",
+      "source": "msstore"
+    },
+    {
+      "id": "9MZ95KL8MR0L",
+      "en": "Snipping Tool",
+      "ar": "أداة القصاصة",
+      "category": "Store",
+      "domain": "",
+      "source": "msstore"
+    },
+    {
+      "id": "9WZDNCRFHWD2",
+      "en": "Solitaire Collection",
+      "ar": "مجموعة سوليتير",
+      "category": "Store",
+      "domain": "",
+      "source": "msstore"
+    },
+    {
+      "id": "9WZDNCRFHWKN",
+      "en": "Sound Recorder",
+      "ar": "مسجّل الصوت",
+      "category": "Store",
+      "domain": "",
+      "source": "msstore"
+    },
+    {
+      "id": "9PC1H9VN18CM",
+      "en": "Start Experiences App",
+      "ar": "تجارب البداية (الأدوات)",
+      "category": "Store",
+      "domain": "",
+      "source": "msstore"
+    },
+    {
+      "id": "9NBLGGH4QGHW",
+      "en": "Sticky Notes",
+      "ar": "الملاحظات اللاصقة",
+      "category": "Store",
+      "domain": "",
+      "source": "msstore"
+    },
+    {
+      "id": "XP8BT8DW290MPQ",
+      "en": "Teams (Store)",
+      "ar": "مايكروسوفت تيمز (المتجر)",
+      "category": "Store",
+      "domain": "teams.microsoft.com",
+      "source": "msstore"
+    },
+    {
+      "id": "9NBLGGH5R558",
+      "en": "To Do",
+      "ar": "المهام (To Do)",
+      "category": "Store",
+      "domain": "todo.microsoft.com",
+      "source": "msstore"
+    },
+    {
+      "id": "9WZDNCRFJ3Q2",
+      "en": "Weather",
+      "ar": "الطقس",
+      "category": "Store",
+      "domain": "bing.com",
+      "source": "msstore"
+    },
+    {
+      "id": "9MV0B5HZVK9Z",
+      "en": "Xbox App",
+      "ar": "تطبيق Xbox",
+      "category": "Store",
+      "domain": "xbox.com",
+      "source": "msstore"
+    },
+    {
+      "id": "9NZKPSTSNW4P",
+      "en": "Xbox Game Bar",
+      "ar": "شريط ألعاب Xbox",
+      "category": "Store",
+      "domain": "xbox.com",
+      "source": "msstore"
+    },
+    {
+      "id": "9WZDNCRD1HKW",
+      "en": "Xbox Identity Provider",
+      "ar": "موفّر هوية Xbox",
+      "category": "Store",
+      "domain": "xbox.com",
+      "source": "msstore"
+    }
+  ]
+}
