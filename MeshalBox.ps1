@@ -161,6 +161,7 @@ $Strings = @{
         cat_Utilities = 'Utilities'; cat_Security = 'Security & Network'; cat_Productivity = 'Productivity'
         cat_Design = 'Design & Creative'; cat_Cloud = 'Cloud Storage'; cat_Runtimes = 'Runtimes'
         cat_ProTools = 'Pro Tools'; cat_Microsoft = 'Microsoft Tools'; cat_Selfhosted = 'Self-hosted'; cat_Store = 'Microsoft Store Apps'
+        cat_Peripherals = 'Peripheral Software'
         st_queued     = [string][char]0x23F3 + ' Queued'
         st_installing = [string][char]0x2B07 + ' Installing...'
         st_done       = [string][char]0x2714 + ' Installed'
@@ -201,6 +202,7 @@ $Strings = @{
         cat_Utilities = 'الأدوات'; cat_Security = 'الأمان والشبكات'; cat_Productivity = 'الإنتاجية والمكتب'
         cat_Design = 'التصميم والإبداع'; cat_Cloud = 'التخزين السحابي'; cat_Runtimes = 'مكتبات التشغيل'
         cat_ProTools = 'أدوات احترافية'; cat_Microsoft = 'أدوات مايكروسوفت'; cat_Selfhosted = 'الاستضافة الذاتية'; cat_Store = 'تطبيقات متجر مايكروسوفت'
+        cat_Peripherals = 'برامج الملحقات'
         st_queued     = [string][char]0x23F3 + ' في الانتظار'
         st_installing = [string][char]0x2B07 + ' جارٍ التثبيت...'
         st_done       = [string][char]0x2714 + ' تم التثبيت'
@@ -232,12 +234,13 @@ $Strings = @{
 #    { "id": "Publisher.App", "en": "Name", "ar": "الاسم", "category": "Utilities", "domain": "site.com" }
 #    (add  "source": "msstore"  for Store apps).  Find ids with:  winget search <name>
 # ----------------------------------------------------------------------------
-$CategoryOrder = @('All', 'Selected', 'Browsers', 'Gaming', 'Communication', 'Media', 'Development',
+$CategoryOrder = @('All', 'Selected', 'Browsers', 'Gaming', 'Peripherals', 'Communication', 'Media', 'Development',
                    'Utilities', 'Security', 'Productivity', 'Design', 'Cloud', 'Runtimes',
                    'ProTools', 'Microsoft', 'Selfhosted', 'Store')
 $CategoryGlyph = @{
     All = [char]::ConvertFromUtf32(0x1F5C2); Selected = [string][char]0x2705
     Browsers = [char]::ConvertFromUtf32(0x1F310); Gaming = [char]::ConvertFromUtf32(0x1F3AE)
+    Peripherals = [char]::ConvertFromUtf32(0x1F5B1)
     Communication = [char]::ConvertFromUtf32(0x1F4AC); Media = [char]::ConvertFromUtf32(0x1F3AC)
     Development = [char]::ConvertFromUtf32(0x1F4BB); Utilities = [char]::ConvertFromUtf32(0x1F6E0)
     Security = [char]::ConvertFromUtf32(0x1F6E1); Productivity = [char]::ConvertFromUtf32(0x1F4C4)
@@ -249,7 +252,7 @@ $CategoryGlyph = @{
 
 # Bright colours so the (monochrome) emoji glyphs are clearly visible on the dark background
 $CategoryColor = @{
-    All = '#E5E7EB'; Selected = '#4ADE80'; Browsers = '#60A5FA'; Gaming = '#C084FC'
+    All = '#E5E7EB'; Selected = '#4ADE80'; Browsers = '#60A5FA'; Gaming = '#C084FC'; Peripherals = '#F9A8D4'
     Communication = '#34D399'; Media = '#F472B6'; Development = '#38BDF8'; Utilities = '#FBBF24'
     Security = '#F87171'; Productivity = '#A3E635'; Design = '#FB923C'; Cloud = '#7DD3FC'
     Runtimes = '#CBD5E1'
@@ -284,6 +287,7 @@ if (-not $catalog) {
 
 foreach ($e in $catalog.apps) {
     if (-not $e.id -or -not $e.en) { continue }
+    if ($script:ById.ContainsKey([string]$e.id)) { continue }   # never list the same program twice
     $a = New-Object MeshalApp
     $a.Id = [string]$e.id; $a.NameEn = [string]$e.en
     $a.NameAr = if ($e.ar) { [string]$e.ar } else { [string]$e.en }
