@@ -940,6 +940,13 @@
       "domain": "roblox.com"
     },
     {
+      "id": "RiotGames.Valorant.EU",
+      "en": "Riot Client (VALORANT)",
+      "ar": "لانشر رايوت (فالورانت)",
+      "category": "Gaming",
+      "domain": "playvalorant.com"
+    },
+    {
       "id": "VirtualDesktop.Streamer",
       "en": "Virtual Desktop Streamer",
       "ar": "فيرتشوال ديسكتوب ستريمر",
@@ -1049,14 +1056,14 @@
       "id": "GIMP.GIMP.3",
       "en": "GIMP",
       "ar": "جيمب 3",
-      "category": "Media",
+      "category": "Design",
       "domain": "gimp.org"
     },
     {
       "id": "DuongDieuPhap.ImageGlass",
       "en": "ImageGlass",
       "ar": "عارض ImageGlass",
-      "category": "Media",
+      "category": "Design",
       "domain": "imageglass.org"
     },
     {
@@ -1084,7 +1091,7 @@
       "id": "nomacs.nomacs",
       "en": "nomacs",
       "ar": "نوماكس",
-      "category": "Media",
+      "category": "Design",
       "domain": "nomacs.org"
     },
     {
@@ -1316,7 +1323,7 @@
       "id": "AgileBits.1Password",
       "en": "1Password",
       "ar": "ون باسوورد",
-      "category": "Utilities",
+      "category": "Security",
       "domain": "1password.com"
     },
     {
@@ -1365,7 +1372,7 @@
       "id": "ente-io.auth-desktop",
       "en": "Ente Auth",
       "ar": "إنتي أوث",
-      "category": "Utilities",
+      "category": "Security",
       "domain": "ente.io"
     },
     {
@@ -1393,7 +1400,7 @@
       "id": "Hugo.Hugo.Extended",
       "en": "Hugo",
       "ar": "هوغو",
-      "category": "Utilities",
+      "category": "Development",
       "domain": "gohugo.io"
     },
     {
@@ -1470,7 +1477,7 @@
       "id": "OpenRGB.OpenRGB",
       "en": "OpenRGB",
       "ar": "أوبن آر جي بي",
-      "category": "Utilities",
+      "category": "Peripherals",
       "domain": "openrgb.org"
     },
     {
@@ -1505,21 +1512,21 @@
       "id": "Proton.ProtonAuthenticator",
       "en": "Proton Authenticator",
       "ar": "مصادق بروتون",
-      "category": "Utilities",
+      "category": "Security",
       "domain": "proton.me"
     },
     {
       "id": "Proton.ProtonDrive",
       "en": "Proton Drive",
       "ar": "بروتون درايف",
-      "category": "Utilities",
+      "category": "Cloud",
       "domain": "proton.me"
     },
     {
       "id": "Proton.ProtonPass",
       "en": "Proton Pass",
       "ar": "بروتون باس",
-      "category": "Utilities",
+      "category": "Security",
       "domain": "proton.me"
     },
     {
@@ -1533,7 +1540,7 @@
       "id": "WhirlwindFX.SignalRgb",
       "en": "SignalRGB",
       "ar": "سيجنال آر جي بي",
-      "category": "Utilities",
+      "category": "Peripherals",
       "domain": "signalrgb.com"
     },
     {
@@ -1554,7 +1561,7 @@
       "id": "Tailscale.Tailscale",
       "en": "Tailscale",
       "ar": "تيل سكيل",
-      "category": "Utilities",
+      "category": "Security",
       "domain": "tailscale.com"
     },
     {
@@ -1680,14 +1687,14 @@
       "id": "Famatech.AdvancedIPScanner",
       "en": "Advanced IP Scanner",
       "ar": "ماسح IP المتقدم",
-      "category": "ProTools",
+      "category": "Security",
       "domain": "advanced-ip-scanner.com"
     },
     {
       "id": "angryziber.AngryIPScanner",
       "en": "Angry IP Scanner",
       "ar": "أنجري آي بي سكانر",
-      "category": "ProTools",
+      "category": "Security",
       "domain": "angryip.org"
     },
     {
@@ -1715,49 +1722,49 @@
       "id": "MullvadVPN.MullvadVPN",
       "en": "Mullvad VPN",
       "ar": "مولفاد VPN",
-      "category": "ProTools",
+      "category": "Security",
       "domain": "mullvad.net"
     },
     {
       "id": "OpenVPNTechnologies.OpenVPNConnect",
       "en": "OpenVPN Connect",
       "ar": "أوبن في بي إن",
-      "category": "ProTools",
+      "category": "Security",
       "domain": "openvpn.net"
     },
     {
       "id": "Proton.ProtonVPN",
       "en": "Proton VPN",
       "ar": "بروتون VPN",
-      "category": "ProTools",
+      "category": "Security",
       "domain": "protonvpn.com"
     },
     {
       "id": "Henry++.simplewall",
       "en": "Simplewall",
       "ar": "سيمبل وول",
-      "category": "ProTools",
+      "category": "Security",
       "domain": ""
     },
     {
       "id": "Microsoft.DotNet.DesktopRuntime.10",
       "en": ".NET Desktop Runtime 10",
       "ar": "بيئة .NET 10",
-      "category": "Microsoft",
+      "category": "Runtimes",
       "domain": "dotnet.microsoft.com"
     },
     {
       "id": "Microsoft.DotNet.DesktopRuntime.6",
       "en": ".NET Desktop Runtime 6",
       "ar": "بيئة .NET 6",
-      "category": "Microsoft",
+      "category": "Runtimes",
       "domain": "dotnet.microsoft.com"
     },
     {
       "id": "Microsoft.DotNet.DesktopRuntime.9",
       "en": ".NET Desktop Runtime 9",
       "ar": "بيئة .NET 9",
-      "category": "Microsoft",
+      "category": "Runtimes",
       "domain": "dotnet.microsoft.com"
     },
     {
@@ -1785,7 +1792,7 @@
       "id": "Microsoft.NuGet",
       "en": "NuGet",
       "ar": "نوجيت",
-      "category": "Microsoft",
+      "category": "Development",
       "domain": "nuget.org"
     },
     {
@@ -1841,7 +1848,7 @@
       "id": "Netbird.Netbird",
       "en": "NetBird",
       "ar": "نت بيرد",
-      "category": "Selfhosted",
+      "category": "Security",
       "domain": "netbird.io"
     },
     {
@@ -1869,7 +1876,7 @@
       "id": "GermanCoding.SyncTrayzor",
       "en": "SyncTrayzor",
       "ar": "سينك تريزور",
-      "category": "Selfhosted",
+      "category": "Cloud",
       "domain": ""
     },
     {
@@ -2081,14 +2088,6 @@
       "source": "msstore"
     },
     {
-      "id": "XP8BT8DW290MPQ",
-      "en": "Teams (Store)",
-      "ar": "مايكروسوفت تيمز (المتجر)",
-      "category": "Store",
-      "domain": "teams.microsoft.com",
-      "source": "msstore"
-    },
-    {
       "id": "9NBLGGH5R558",
       "en": "To Do",
       "ar": "المهام (To Do)",
@@ -2127,6 +2126,150 @@
       "category": "Store",
       "domain": "xbox.com",
       "source": "msstore"
+    },
+    {
+      "id": "RazerInc.RazerInstaller.Synapse4",
+      "en": "Razer Synapse 4",
+      "ar": "رايزر سيناپس 4",
+      "category": "Peripherals",
+      "domain": "razer.com"
+    },
+    {
+      "id": "Logitech.GHUB",
+      "en": "Logitech G HUB",
+      "ar": "لوجيتك G HUB",
+      "category": "Peripherals",
+      "domain": "logitechg.com"
+    },
+    {
+      "id": "Logitech.OptionsPlus",
+      "en": "Logitech Options+",
+      "ar": "لوجيتك أوبشنز+",
+      "category": "Peripherals",
+      "domain": "logitech.com"
+    },
+    {
+      "id": "SteelSeries.GG",
+      "en": "SteelSeries GG",
+      "ar": "ستيل سيريز GG",
+      "category": "Peripherals",
+      "domain": "steelseries.com"
+    },
+    {
+      "id": "Corsair.iCUE.5",
+      "en": "Corsair iCUE",
+      "ar": "كورسير iCUE",
+      "category": "Peripherals",
+      "domain": "corsair.com"
+    },
+    {
+      "id": "https://hyperx.com/pages/ngenuity",
+      "en": "HyperX NGENUITY",
+      "ar": "هايبر إكس NGENUITY",
+      "category": "Peripherals",
+      "domain": "hyperx.com",
+      "source": "web"
+    },
+    {
+      "id": "https://www.gloriousgaming.com/pages/software",
+      "en": "Glorious CORE",
+      "ar": "جلوريوس CORE",
+      "category": "Peripherals",
+      "domain": "gloriousgaming.com",
+      "source": "web"
+    },
+    {
+      "id": "https://wooting.io/wootility",
+      "en": "Wootility",
+      "ar": "ووتيليتي",
+      "category": "Peripherals",
+      "domain": "wooting.io",
+      "source": "web"
+    },
+    {
+      "id": "https://usevia.app",
+      "en": "VIA",
+      "ar": "في آي إيه (VIA)",
+      "category": "Peripherals",
+      "domain": "usevia.app",
+      "source": "web"
+    },
+    {
+      "id": "QMK.QMKToolbox",
+      "en": "QMK Toolbox",
+      "ar": "أداة QMK",
+      "category": "Peripherals",
+      "domain": "qmk.fm"
+    },
+    {
+      "id": "Vial.Vial",
+      "en": "Vial",
+      "ar": "فايال",
+      "category": "Peripherals",
+      "domain": "get.vial.today"
+    },
+    {
+      "id": "Elgato.StreamDeck",
+      "en": "Elgato Stream Deck",
+      "ar": "إلجاتو ستريم ديك",
+      "category": "Peripherals",
+      "domain": "elgato.com"
+    },
+    {
+      "id": "Elgato.WaveLink",
+      "en": "Elgato Wave Link",
+      "ar": "إلجاتو ويف لينك",
+      "category": "Peripherals",
+      "domain": "elgato.com"
+    },
+    {
+      "id": "Elgato.CameraHub",
+      "en": "Elgato Camera Hub",
+      "ar": "إلجاتو كاميرا هب",
+      "category": "Peripherals",
+      "domain": "elgato.com"
+    },
+    {
+      "id": "NZXT.CAM",
+      "en": "NZXT CAM",
+      "ar": "إن زد إكس تي CAM",
+      "category": "Peripherals",
+      "domain": "nzxt.com"
+    },
+    {
+      "id": "TurtleBeach.AudioHub",
+      "en": "Turtle Beach Audio Hub",
+      "ar": "تيرتل بيتش أوديو هب",
+      "category": "Peripherals",
+      "domain": "turtlebeach.com"
+    },
+    {
+      "id": "TurtleBeach.ROCCATSwarm",
+      "en": "ROCCAT Swarm",
+      "ar": "روكات سوارم",
+      "category": "Peripherals",
+      "domain": "roccat.com"
+    },
+    {
+      "id": "LianLi.LConnect3",
+      "en": "Lian Li L-Connect 3",
+      "ar": "لي لي L-Connect 3",
+      "category": "Peripherals",
+      "domain": "lian-li.com"
+    },
+    {
+      "id": "Wacom.WacomTabletDriver",
+      "en": "Wacom Tablet Driver",
+      "ar": "تعريف واكوم",
+      "category": "Peripherals",
+      "domain": "wacom.com"
+    },
+    {
+      "id": "Highresolution.X-MouseButtonControl",
+      "en": "X-Mouse Button Control",
+      "ar": "التحكم بأزرار الماوس",
+      "category": "Peripherals",
+      "domain": "highrez.co.uk"
     }
   ]
 }
