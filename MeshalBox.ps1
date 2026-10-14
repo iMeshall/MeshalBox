@@ -151,17 +151,18 @@ $Strings = @{
         langBtn       = 'العربية'
         selectVisible = 'Select shown'
         clearAll      = 'Clear selection'
-        install       = 'Install selected'
+        install       = [string][char]0x2B07 + '  Install selected'
         cancel        = 'Stop'
         selected      = 'Selected: {0}'
         ready         = 'Ready'
         noResults     = 'No matching apps.'
+        appsCount     = '{0} apps'
         cat_All = 'All apps'; cat_Selected = 'Selected'; cat_Browsers = 'Browsers'; cat_Gaming = 'Gaming'
         cat_Communication = 'Communication'; cat_Media = 'Media'; cat_Development = 'Development'
-        cat_Utilities = 'Utilities'; cat_Security = 'Security & Network'; cat_Productivity = 'Productivity'
-        cat_Design = 'Design & Creative'; cat_Cloud = 'Cloud Storage'; cat_Runtimes = 'Runtimes'
-        cat_ProTools = 'Pro Tools'; cat_Microsoft = 'Microsoft Tools'; cat_Selfhosted = 'Self-hosted'; cat_Store = 'Microsoft Store Apps'
-        cat_Peripherals = 'Peripheral Software'
+        cat_Utilities = 'Utilities'; cat_Security = 'Security'; cat_Productivity = 'Productivity'
+        cat_Design = 'Design'; cat_Cloud = 'Cloud'; cat_Runtimes = 'Runtimes'
+        cat_ProTools = 'Pro Tools'; cat_Microsoft = 'Microsoft'; cat_Selfhosted = 'Self-hosted'; cat_Store = 'Store Apps'
+        cat_Peripherals = 'Peripherals'
         st_queued     = [string][char]0x23F3 + ' Queued'
         st_installing = [string][char]0x2B07 + ' Installing...'
         st_done       = [string][char]0x2714 + ' Installed'
@@ -192,17 +193,18 @@ $Strings = @{
         langBtn       = 'English'
         selectVisible = 'تحديد المعروض'
         clearAll      = 'إلغاء التحديد'
-        install       = 'تثبيت المحدد'
+        install       = [string][char]0x2B07 + '  تثبيت المحدد'
         cancel        = 'إيقاف'
         selected      = 'المحدد: {0}'
         ready         = 'جاهز'
         noResults     = 'لا توجد برامج مطابقة.'
+        appsCount     = '{0} برنامج'
         cat_All = 'كل البرامج'; cat_Selected = 'المحدد'; cat_Browsers = 'المتصفحات'; cat_Gaming = 'الألعاب'
-        cat_Communication = 'التواصل'; cat_Media = 'الوسائط'; cat_Development = 'البرمجة والتطوير'
-        cat_Utilities = 'الأدوات'; cat_Security = 'الأمان والشبكات'; cat_Productivity = 'الإنتاجية والمكتب'
-        cat_Design = 'التصميم والإبداع'; cat_Cloud = 'التخزين السحابي'; cat_Runtimes = 'مكتبات التشغيل'
-        cat_ProTools = 'أدوات احترافية'; cat_Microsoft = 'أدوات مايكروسوفت'; cat_Selfhosted = 'الاستضافة الذاتية'; cat_Store = 'تطبيقات متجر مايكروسوفت'
-        cat_Peripherals = 'برامج الملحقات'
+        cat_Communication = 'التواصل'; cat_Media = 'الوسائط'; cat_Development = 'البرمجة'
+        cat_Utilities = 'الأدوات'; cat_Security = 'الأمان'; cat_Productivity = 'الإنتاجية'
+        cat_Design = 'التصميم'; cat_Cloud = 'السحابة'; cat_Runtimes = 'المكتبات'
+        cat_ProTools = 'أدوات احترافية'; cat_Microsoft = 'مايكروسوفت'; cat_Selfhosted = 'استضافة ذاتية'; cat_Store = 'تطبيقات المتجر'
+        cat_Peripherals = 'الملحقات'
         st_queued     = [string][char]0x23F3 + ' في الانتظار'
         st_installing = [string][char]0x2B07 + ' جارٍ التثبيت...'
         st_done       = [string][char]0x2714 + ' تم التثبيت'
@@ -343,15 +345,67 @@ $script:T = $Strings[$script:Lang]
 [xml]$xaml = @'
 <Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Width="1200" Height="800" MinWidth="920" MinHeight="620"
-        WindowStartupLocation="CenterScreen" Background="#14161C"
+        Width="1240" Height="820" MinWidth="960" MinHeight="640"
+        WindowStartupLocation="CenterScreen" Background="#12141A"
         FontFamily="Segoe UI" TextOptions.TextFormattingMode="Ideal" UseLayoutRounding="True">
   <Window.Resources>
+
+    <LinearGradientBrush x:Key="AccentBrush" StartPoint="0,0" EndPoint="1,1">
+      <GradientStop Color="#3B82F6" Offset="0"/>
+      <GradientStop Color="#7C5CFF" Offset="1"/>
+    </LinearGradientBrush>
+
+    <!-- Slim dark scrollbar -->
+    <Style x:Key="ScrollPage" TargetType="RepeatButton">
+      <Setter Property="Focusable" Value="False"/>
+      <Setter Property="IsTabStop" Value="False"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="RepeatButton"><Border Background="Transparent"/></ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+    <Style x:Key="ScrollThumb" TargetType="Thumb">
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Thumb">
+            <Border x:Name="t" CornerRadius="4" Background="#3A4052" Margin="2,0"/>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="t" Property="Background" Value="#566079"/></Trigger>
+              <Trigger Property="IsDragging" Value="True"><Setter TargetName="t" Property="Background" Value="#3B82F6"/></Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+    <Style TargetType="ScrollBar">
+      <Setter Property="Width" Value="12"/>
+      <Setter Property="Background" Value="Transparent"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="ScrollBar">
+            <Grid Background="Transparent">
+              <Track x:Name="PART_Track" IsDirectionReversed="True">
+                <Track.DecreaseRepeatButton>
+                  <RepeatButton Command="ScrollBar.PageUpCommand" Style="{StaticResource ScrollPage}"/>
+                </Track.DecreaseRepeatButton>
+                <Track.Thumb>
+                  <Thumb Style="{StaticResource ScrollThumb}"/>
+                </Track.Thumb>
+                <Track.IncreaseRepeatButton>
+                  <RepeatButton Command="ScrollBar.PageDownCommand" Style="{StaticResource ScrollPage}"/>
+                </Track.IncreaseRepeatButton>
+              </Track>
+            </Grid>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
 
     <!-- Rounded button -->
     <Style x:Key="Btn" TargetType="Button">
       <Setter Property="Foreground" Value="White"/>
-      <Setter Property="Background" Value="#2B2F3D"/>
+      <Setter Property="Background" Value="#272B38"/>
       <Setter Property="Padding" Value="16,9"/>
       <Setter Property="Margin" Value="4,0"/>
       <Setter Property="FontSize" Value="13"/>
@@ -359,11 +413,13 @@ $script:T = $Strings[$script:Lang]
       <Setter Property="Template">
         <Setter.Value>
           <ControlTemplate TargetType="Button">
-            <Border x:Name="b" Background="{TemplateBinding Background}" CornerRadius="9" Padding="{TemplateBinding Padding}">
+            <Border x:Name="b" Background="{TemplateBinding Background}" CornerRadius="10" Padding="{TemplateBinding Padding}"
+                    BorderBrush="#33384A" BorderThickness="1">
               <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
             </Border>
             <ControlTemplate.Triggers>
-              <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="b" Property="Opacity" Value="0.85"/></Trigger>
+              <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="b" Property="Opacity" Value="0.88"/><Setter TargetName="b" Property="BorderBrush" Value="#4B6FB5"/></Trigger>
+              <Trigger Property="IsPressed" Value="True"><Setter TargetName="b" Property="Opacity" Value="0.7"/></Trigger>
               <Trigger Property="IsEnabled" Value="False"><Setter TargetName="b" Property="Opacity" Value="0.35"/></Trigger>
             </ControlTemplate.Triggers>
           </ControlTemplate>
@@ -371,9 +427,15 @@ $script:T = $Strings[$script:Lang]
       </Setter>
     </Style>
     <Style x:Key="BtnPrimary" TargetType="Button" BasedOn="{StaticResource Btn}">
-      <Setter Property="Background" Value="#3B82F6"/>
+      <Setter Property="Background" Value="{StaticResource AccentBrush}"/>
       <Setter Property="FontWeight" Value="SemiBold"/>
-      <Setter Property="Padding" Value="22,10"/>
+      <Setter Property="Padding" Value="26,11"/>
+      <Setter Property="Effect">
+        <Setter.Value><DropShadowEffect Color="#5B6CFF" Opacity="0.45" BlurRadius="20" ShadowDepth="0"/></Setter.Value>
+      </Setter>
+      <Style.Triggers>
+        <Trigger Property="IsEnabled" Value="False"><Setter Property="Effect" Value="{x:Null}"/></Trigger>
+      </Style.Triggers>
     </Style>
     <Style x:Key="BtnDanger" TargetType="Button" BasedOn="{StaticResource Btn}">
       <Setter Property="Background" Value="#DC2626"/>
@@ -384,14 +446,16 @@ $script:T = $Strings[$script:Lang]
       <Setter Property="Foreground" Value="White"/>
       <Setter Property="CaretBrush" Value="White"/>
       <Setter Property="FontSize" Value="14"/>
+      <Setter Property="Padding" Value="40,10,14,10"/>
       <Setter Property="Template">
         <Setter.Value>
           <ControlTemplate TargetType="TextBox">
-            <Border x:Name="bd" Background="#1E212B" BorderBrush="#2A2E3B" BorderThickness="1.5" CornerRadius="10" Padding="14,9">
+            <Border x:Name="bd" Background="#1B1E28" BorderBrush="#2A2E3B" BorderThickness="1.5" CornerRadius="12" Padding="{TemplateBinding Padding}">
               <ScrollViewer x:Name="PART_ContentHost"/>
             </Border>
             <ControlTemplate.Triggers>
-              <Trigger Property="IsKeyboardFocused" Value="True"><Setter TargetName="bd" Property="BorderBrush" Value="#3B82F6"/></Trigger>
+              <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="bd" Property="BorderBrush" Value="#3A4056"/></Trigger>
+              <Trigger Property="IsKeyboardFocused" Value="True"><Setter TargetName="bd" Property="BorderBrush" Value="#3B82F6"/><Setter TargetName="bd" Property="Background" Value="#1F2330"/></Trigger>
             </ControlTemplate.Triggers>
           </ControlTemplate>
         </Setter.Value>
@@ -404,12 +468,19 @@ $script:T = $Strings[$script:Lang]
       <Setter Property="Template">
         <Setter.Value>
           <ControlTemplate TargetType="ListBoxItem">
-            <Border x:Name="bd" CornerRadius="9" Padding="12,7" Margin="0,1" Background="Transparent">
-              <ContentPresenter/>
-            </Border>
+            <Grid Margin="0,1">
+              <Border x:Name="bd" CornerRadius="10" Padding="14,8,12,8" Background="Transparent">
+                <ContentPresenter/>
+              </Border>
+              <Border x:Name="bar" Width="3" Height="20" CornerRadius="2" Background="{StaticResource AccentBrush}"
+                      HorizontalAlignment="Left" VerticalAlignment="Center" Visibility="Collapsed"/>
+            </Grid>
             <ControlTemplate.Triggers>
-              <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="bd" Property="Background" Value="#1E212B"/></Trigger>
-              <Trigger Property="IsSelected" Value="True"><Setter TargetName="bd" Property="Background" Value="#27324D"/></Trigger>
+              <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="bd" Property="Background" Value="#1E222D"/></Trigger>
+              <Trigger Property="IsSelected" Value="True">
+                <Setter TargetName="bd" Property="Background" Value="#222B44"/>
+                <Setter TargetName="bar" Property="Visibility" Value="Visible"/>
+              </Trigger>
             </ControlTemplate.Triggers>
           </ControlTemplate>
         </Setter.Value>
@@ -422,13 +493,20 @@ $script:T = $Strings[$script:Lang]
       <Setter Property="Template">
         <Setter.Value>
           <ControlTemplate TargetType="CheckBox">
-            <Border x:Name="card" Width="150" Height="158" Margin="6" CornerRadius="14"
-                    Background="#1E212B" BorderBrush="#2A2E3B" BorderThickness="1.5" Padding="8"
-                    ToolTip="{Binding Id}">
+            <Border x:Name="card" Width="150" Height="160" Margin="7" CornerRadius="16"
+                    BorderBrush="#2A2E3B" BorderThickness="1.5" Padding="8"
+                    RenderTransformOrigin="0.5,0.5" ToolTip="{Binding Id}">
+              <Border.Background>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                  <GradientStop Color="#232736" Offset="0"/>
+                  <GradientStop Color="#1B1E29" Offset="1"/>
+                </LinearGradientBrush>
+              </Border.Background>
+              <Border.RenderTransform><ScaleTransform x:Name="zoom" ScaleX="1" ScaleY="1"/></Border.RenderTransform>
               <Grid>
                 <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
-                  <Grid Width="58" Height="58" HorizontalAlignment="Center" Margin="0,6,0,8">
-                    <Border CornerRadius="15" Background="{Binding Color}">
+                  <Grid Width="60" Height="60" HorizontalAlignment="Center" Margin="0,6,0,9">
+                    <Border CornerRadius="16" Background="{Binding Color}">
                       <Border.Style>
                         <Style TargetType="Border">
                           <Style.Triggers>
@@ -436,10 +514,10 @@ $script:T = $Strings[$script:Lang]
                           </Style.Triggers>
                         </Style>
                       </Border.Style>
-                      <TextBlock Text="{Binding Initial}" Foreground="White" FontSize="26" FontWeight="Bold"
+                      <TextBlock Text="{Binding Initial}" Foreground="White" FontSize="27" FontWeight="Bold"
                                  HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
-                    <Border CornerRadius="15" Background="#F4F6FA" Padding="7">
+                    <Border CornerRadius="16" Background="#F4F6FA" Padding="7">
                       <Border.Style>
                         <Style TargetType="Border">
                           <Style.Triggers>
@@ -459,21 +537,57 @@ $script:T = $Strings[$script:Lang]
                 </StackPanel>
                 <Border x:Name="tick" Width="22" Height="22" CornerRadius="11" Background="#00000000"
                         BorderBrush="#4B5263" BorderThickness="1.5" HorizontalAlignment="Left" VerticalAlignment="Top">
-                  <TextBlock x:Name="mark" Text="✓" Foreground="White" FontSize="13" FontWeight="Bold"
+                  <TextBlock x:Name="mark" Text="&#x2713;" Foreground="White" FontSize="13" FontWeight="Bold"
                              HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Collapsed"/>
                 </Border>
               </Grid>
             </Border>
             <ControlTemplate.Triggers>
-              <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="card" Property="BorderBrush" Value="#4B6FB5"/></Trigger>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="card" Property="BorderBrush" Value="#4B6FB5"/>
+                <Setter TargetName="tick" Property="BorderBrush" Value="#8AA4D6"/>
+                <Trigger.EnterActions>
+                  <BeginStoryboard>
+                    <Storyboard>
+                      <DoubleAnimation Storyboard.TargetName="zoom" Storyboard.TargetProperty="ScaleX" To="1.04" Duration="0:0:0.12"/>
+                      <DoubleAnimation Storyboard.TargetName="zoom" Storyboard.TargetProperty="ScaleY" To="1.04" Duration="0:0:0.12"/>
+                    </Storyboard>
+                  </BeginStoryboard>
+                </Trigger.EnterActions>
+                <Trigger.ExitActions>
+                  <BeginStoryboard>
+                    <Storyboard>
+                      <DoubleAnimation Storyboard.TargetName="zoom" Storyboard.TargetProperty="ScaleX" To="1" Duration="0:0:0.15"/>
+                      <DoubleAnimation Storyboard.TargetName="zoom" Storyboard.TargetProperty="ScaleY" To="1" Duration="0:0:0.15"/>
+                    </Storyboard>
+                  </BeginStoryboard>
+                </Trigger.ExitActions>
+              </Trigger>
               <Trigger Property="IsChecked" Value="True">
                 <Setter TargetName="card" Property="Background" Value="#1F2B47"/>
                 <Setter TargetName="card" Property="BorderBrush" Value="#3B82F6"/>
                 <Setter TargetName="tick" Property="Background" Value="#3B82F6"/>
                 <Setter TargetName="tick" Property="BorderBrush" Value="#3B82F6"/>
                 <Setter TargetName="mark" Property="Visibility" Value="Visible"/>
+                <Setter TargetName="card" Property="Effect">
+                  <Setter.Value><DropShadowEffect Color="#3B82F6" Opacity="0.35" BlurRadius="16" ShadowDepth="0"/></Setter.Value>
+                </Setter>
               </Trigger>
             </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
+    <!-- Rounded progress bar -->
+    <Style x:Key="Prog" TargetType="ProgressBar">
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="ProgressBar">
+            <Grid>
+              <Border x:Name="PART_Track" CornerRadius="4" Background="#2A2E3B"/>
+              <Border x:Name="PART_Indicator" CornerRadius="4" HorizontalAlignment="Left" Background="{StaticResource AccentBrush}"/>
+            </Grid>
           </ControlTemplate>
         </Setter.Value>
       </Setter>
@@ -488,37 +602,48 @@ $script:T = $Strings[$script:Lang]
     </Grid.RowDefinitions>
 
     <!-- Header -->
-    <Border Grid.Row="0" Background="#181B23" Padding="22,14" BorderBrush="#22262F" BorderThickness="0,0,0,1">
-      <Grid>
-        <Grid.ColumnDefinitions>
-          <ColumnDefinition Width="Auto"/>
-          <ColumnDefinition Width="*"/>
-          <ColumnDefinition Width="Auto"/>
-        </Grid.ColumnDefinitions>
-        <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-          <Image x:Name="imgLogo" Width="46" Height="46" Margin="0,0,12,0" RenderOptions.BitmapScalingMode="HighQuality"/>
-          <StackPanel VerticalAlignment="Center">
-            <TextBlock x:Name="txtTitle" FontSize="22" FontWeight="Bold" Foreground="White"/>
-            <TextBlock x:Name="txtSubtitle" FontSize="12" Foreground="#8B93A3"/>
+    <Grid Grid.Row="0">
+      <Border Padding="24,16" BorderBrush="#22262F" BorderThickness="0,0,0,1">
+        <Border.Background>
+          <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+            <GradientStop Color="#1B1F2B" Offset="0"/>
+            <GradientStop Color="#161922" Offset="1"/>
+          </LinearGradientBrush>
+        </Border.Background>
+        <Grid>
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="Auto"/>
+          </Grid.ColumnDefinitions>
+          <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+            <Image x:Name="imgLogo" Width="48" Height="48" Margin="0,0,14,0" RenderOptions.BitmapScalingMode="HighQuality"/>
+            <StackPanel VerticalAlignment="Center">
+              <TextBlock x:Name="txtTitle" FontSize="23" FontWeight="Bold" Foreground="White"/>
+              <TextBlock x:Name="txtSubtitle" FontSize="12" Foreground="#8B93A3"/>
+            </StackPanel>
           </StackPanel>
-        </StackPanel>
-        <Grid Grid.Column="1" Margin="30,0" VerticalAlignment="Center" MaxWidth="540">
-          <TextBox x:Name="txtSearch" Style="{StaticResource SearchBox}"/>
-          <TextBlock x:Name="txtPlaceholder" IsHitTestVisible="False" Foreground="#6B7280" FontSize="14"
-                     VerticalAlignment="Center" Margin="16,0"/>
+          <Grid Grid.Column="1" Margin="34,0" VerticalAlignment="Center" MaxWidth="560">
+            <TextBox x:Name="txtSearch" Style="{StaticResource SearchBox}"/>
+            <TextBlock Text="&#xE721;" FontFamily="Segoe MDL2 Assets" FontSize="15" Foreground="#6B7280"
+                       IsHitTestVisible="False" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="15,0,0,0"/>
+            <TextBlock x:Name="txtPlaceholder" IsHitTestVisible="False" Foreground="#6B7280" FontSize="14"
+                       VerticalAlignment="Center" Margin="42,0,16,0"/>
+          </Grid>
+          <Button x:Name="btnLang" Grid.Column="2" Style="{StaticResource Btn}" FontWeight="SemiBold" MinWidth="110"/>
         </Grid>
-        <Button x:Name="btnLang" Grid.Column="2" Style="{StaticResource Btn}" FontWeight="SemiBold" MinWidth="110"/>
-      </Grid>
-    </Border>
+      </Border>
+      <Rectangle Height="2" VerticalAlignment="Bottom" Fill="{StaticResource AccentBrush}" Opacity="0.85"/>
+    </Grid>
 
     <!-- Body -->
     <Grid Grid.Row="1">
       <Grid.ColumnDefinitions>
-        <ColumnDefinition Width="240"/>
+        <ColumnDefinition Width="262"/>
         <ColumnDefinition Width="*"/>
       </Grid.ColumnDefinitions>
 
-      <Border Grid.Column="0" Background="#181B23" Padding="10,12" BorderBrush="#22262F" BorderThickness="0,0,1,0">
+      <Border Grid.Column="0" Background="#161922" Padding="10,14" BorderBrush="#22262F" BorderThickness="0,0,1,0">
         <ListBox x:Name="lstCats" Background="Transparent" BorderThickness="0"
                  ItemContainerStyle="{StaticResource MeshalCat}" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
           <ListBox.ItemTemplate>
@@ -531,8 +656,8 @@ $script:T = $Strings[$script:Lang]
                 </Grid.ColumnDefinitions>
                 <TextBlock Grid.Column="0" Text="{Binding Glyph}" Foreground="{Binding Color}" FontSize="18" FontFamily="Segoe UI Emoji, Segoe UI Symbol" VerticalAlignment="Center"/>
                 <TextBlock Grid.Column="1" Text="{Binding Name}" Foreground="White" FontSize="14" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
-                <Border Grid.Column="2" CornerRadius="9" Background="#2A2E3B" Padding="8,1" VerticalAlignment="Center">
-                  <TextBlock Text="{Binding Count}" Foreground="#C5CBD6" FontSize="11"/>
+                <Border Grid.Column="2" CornerRadius="9" Background="#262A38" Padding="8,1" VerticalAlignment="Center" MinWidth="26">
+                  <TextBlock Text="{Binding Count}" Foreground="#C5CBD6" FontSize="11" TextAlignment="Center"/>
                 </Border>
               </Grid>
             </DataTemplate>
@@ -540,15 +665,27 @@ $script:T = $Strings[$script:Lang]
         </ListBox>
       </Border>
 
-      <Grid Grid.Column="1" Margin="14,12,8,0">
+      <Grid Grid.Column="1" Margin="18,16,6,0">
         <Grid.RowDefinitions>
           <RowDefinition Height="Auto"/>
           <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
-        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,6">
-          <Button x:Name="btnSelectVisible" Style="{StaticResource Btn}" Margin="0,0,6,0"/>
-          <Button x:Name="btnClear" Style="{StaticResource Btn}"/>
-        </StackPanel>
+        <Grid Grid.Row="0" Margin="6,0,12,10">
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="Auto"/>
+          </Grid.ColumnDefinitions>
+          <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+            <TextBlock x:Name="txtCatTitle" FontSize="21" FontWeight="Bold" Foreground="White" VerticalAlignment="Center"/>
+            <Border CornerRadius="10" Background="#222633" Padding="10,2" Margin="12,2,0,0" VerticalAlignment="Center">
+              <TextBlock x:Name="txtCatCount" Foreground="#9AA3B2" FontSize="12"/>
+            </Border>
+          </StackPanel>
+          <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+            <Button x:Name="btnSelectVisible" Style="{StaticResource Btn}" Margin="0,0,6,0"/>
+            <Button x:Name="btnClear" Style="{StaticResource Btn}" Margin="0"/>
+          </StackPanel>
+        </Grid>
         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
           <ItemsControl x:Name="icApps">
             <ItemsControl.ItemsPanel>
@@ -567,7 +704,7 @@ $script:T = $Strings[$script:Lang]
     </Grid>
 
     <!-- Footer -->
-    <Border Grid.Row="2" Background="#181B23" Padding="20,12" BorderBrush="#22262F" BorderThickness="0,1,0,0">
+    <Border Grid.Row="2" Background="#161922" Padding="22,14" BorderBrush="#22262F" BorderThickness="0,1,0,0">
       <Grid>
         <Grid.RowDefinitions>
           <RowDefinition Height="Auto"/>
@@ -578,10 +715,9 @@ $script:T = $Strings[$script:Lang]
             <ColumnDefinition Width="*"/>
             <ColumnDefinition Width="Auto"/>
           </Grid.ColumnDefinitions>
-          <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,20,0">
+          <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,24,0">
             <TextBlock x:Name="txtSelected" Foreground="White" FontSize="14" FontWeight="SemiBold"/>
-            <ProgressBar x:Name="pbar" Height="8" Minimum="0" Maximum="100" Value="0" Margin="0,6,0,4"
-                         Foreground="#3B82F6" Background="#2A2E3B" BorderThickness="0"/>
+            <ProgressBar x:Name="pbar" Style="{StaticResource Prog}" Height="8" Minimum="0" Maximum="100" Value="0" Margin="0,7,0,5"/>
             <TextBlock x:Name="txtProgress" Foreground="#9AA3B2" FontSize="12" TextTrimming="CharacterEllipsis"/>
           </StackPanel>
           <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
@@ -589,9 +725,9 @@ $script:T = $Strings[$script:Lang]
             <Button x:Name="btnInstall" Style="{StaticResource BtnPrimary}" FontSize="15"/>
           </StackPanel>
         </Grid>
-        <TextBox x:Name="txtLog" Grid.Row="1" Height="110" Margin="0,10,0,0" IsReadOnly="True" TextWrapping="Wrap"
+        <TextBox x:Name="txtLog" Grid.Row="1" Height="100" Margin="0,12,0,0" IsReadOnly="True" TextWrapping="Wrap"
                  VerticalScrollBarVisibility="Auto" FontFamily="Consolas" FontSize="12" FlowDirection="LeftToRight"
-                 Background="#0E1014" Foreground="#B8C0CC" BorderBrush="#22262F" Padding="8"/>
+                 Background="#0E1014" Foreground="#B8C0CC" BorderBrush="#22262F" Padding="10"/>
       </Grid>
     </Border>
   </Grid>
@@ -601,7 +737,7 @@ $script:T = $Strings[$script:Lang]
 $reader = New-Object System.Xml.XmlNodeReader $xaml
 $window = [Windows.Markup.XamlReader]::Load($reader)
 foreach ($n in 'imgLogo', 'txtTitle', 'txtSubtitle', 'txtSearch', 'txtPlaceholder', 'btnLang', 'lstCats', 'btnSelectVisible',
-                'btnClear', 'icApps', 'txtEmpty', 'txtSelected', 'pbar', 'txtProgress', 'btnCancel', 'btnInstall', 'txtLog') {
+                'btnClear', 'txtCatTitle', 'txtCatCount', 'icApps', 'txtEmpty', 'txtSelected', 'pbar', 'txtProgress', 'btnCancel', 'btnInstall', 'txtLog') {
     Set-Variable -Name $n -Value $window.FindName($n) -Scope Script
 }
 
@@ -609,7 +745,7 @@ foreach ($n in 'imgLogo', 'txtTitle', 'txtSubtitle', 'txtSearch', 'txtPlaceholde
 # 6. Helper functions
 # ----------------------------------------------------------------------------
 # App logo (embedded PNG) used in the header and as the window icon.
-$LogoBase64 = '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'
+$LogoBase64 = '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'
 try {
     $logoBytes = [Convert]::FromBase64String($LogoBase64)
     $logoStream = New-Object System.IO.MemoryStream(, $logoBytes)
@@ -617,6 +753,41 @@ try {
     $logoBmp.BeginInit(); $logoBmp.CacheOption = 'OnLoad'; $logoBmp.StreamSource = $logoStream; $logoBmp.EndInit(); $logoBmp.Freeze()
     $script:imgLogo.Source = $logoBmp
     $window.Icon = $logoBmp
+}
+catch { }
+
+# Dark title bar (matches the app theme instead of the default white Windows title bar).
+# Works on Windows 10 (dark mode) and Windows 11 (custom caption / text / border colours).
+try {
+    if (-not ('MeshalDwm' -as [type])) {
+        Add-Type -Language CSharp -TypeDefinition @'
+using System;
+using System.Runtime.InteropServices;
+public static class MeshalDwm
+{
+    [DllImport("dwmapi.dll")]
+    private static extern int DwmSetWindowAttribute(IntPtr hwnd, int attr, ref int value, int size);
+
+    private static int ToColorRef(int r, int g, int b) { return r | (g << 8) | (b << 16); }
+
+    public static void Apply(IntPtr hwnd)
+    {
+        int dark = 1;
+        // 20 = DWMWA_USE_IMMERSIVE_DARK_MODE (Win10 20H1+/Win11), 19 = older Win10 builds
+        if (DwmSetWindowAttribute(hwnd, 20, ref dark, 4) != 0) DwmSetWindowAttribute(hwnd, 19, ref dark, 4);
+
+        int caption = ToColorRef(0x12, 0x14, 0x1A);   // same as the window background  #12141A
+        int text    = ToColorRef(0xE6, 0xE9, 0xF0);   // light title text
+        int border  = ToColorRef(0x22, 0x26, 0x2F);   // same as the panel borders       #22262F
+        DwmSetWindowAttribute(hwnd, 35, ref caption, 4);  // DWMWA_CAPTION_COLOR (Win11)
+        DwmSetWindowAttribute(hwnd, 36, ref text, 4);     // DWMWA_TEXT_COLOR    (Win11)
+        DwmSetWindowAttribute(hwnd, 34, ref border, 4);   // DWMWA_BORDER_COLOR  (Win11)
+    }
+}
+'@
+    }
+    $helper = New-Object System.Windows.Interop.WindowInteropHelper($window)
+    [MeshalDwm]::Apply($helper.EnsureHandle())
 }
 catch { }
 
@@ -660,6 +831,8 @@ function Refresh-Grid {
              ($_.Category -eq $script:Cat)) -and (Test-Match $_ $q)
         })
     $script:icApps.ItemsSource = [MeshalApp[]]$list
+    $script:txtCatTitle.Text = [string]$script:T["cat_$($script:Cat)"]
+    $script:txtCatCount.Text = ($script:T.appsCount -f $list.Count)
     if ($list.Count -eq 0) { $script:txtEmpty.Visibility = 'Visible' } else { $script:txtEmpty.Visibility = 'Collapsed' }
 }
 
@@ -1016,6 +1189,14 @@ $btnClear.Add_Click({
     })
 
 $btnInstall.Add_Click({ Start-Install })
+
+# Ctrl+F jumps to the search box
+$window.Add_KeyDown({
+        param($s, $e)
+        if ($e.Key -eq 'F' -and ([System.Windows.Input.Keyboard]::Modifiers -band [System.Windows.Input.ModifierKeys]::Control)) {
+            $script:txtSearch.Focus() | Out-Null; $script:txtSearch.SelectAll(); $e.Handled = $true
+        }
+    })
 
 $btnCancel.Add_Click({
         if ($script:Sync) { $script:Sync.Cancel = $true }
