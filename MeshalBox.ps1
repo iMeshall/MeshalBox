@@ -199,6 +199,7 @@ $Strings = @{
         st_installing = [string][char]0x2B07 + ' Installing...'
         st_done       = [string][char]0x2714 + ' Installed'
         st_already    = [string][char]0x2714 + ' Already installed'
+        st_installed  = [string][char]0x2714 + ' Installed'
         st_failed     = [string][char]0x2716 + ' Failed'
         st_cancelled  = [string][char]0x23F9 + ' Cancelled'
         st_manual     = [char]::ConvertFromUtf32(0x1F310) + ' Download page opened'
@@ -211,7 +212,9 @@ $Strings = @{
         startLog      = 'Starting installation of {0} app(s)...'
         finished      = 'Finished: {0} installed, {1} already installed, {2} failed, {3} cancelled, {4} opened for manual install.'
         manualLog     = 'Not available in winget - official download page opened: {0}'
-        cancelling    = 'Stopping after the current app...'
+        cancelling    = 'Stopping the installation...'
+        scanStart     = 'Checking which apps are already installed on this PC...'
+        scanDone      = 'Detected {0} installed app(s).'
         busyClose     = 'An installation is running. Stop it first, then close the window.'
         installingNow = 'Installing: {0}  ({1}/{2})'
         reboot        = 'A restart may be required.'
@@ -245,6 +248,7 @@ $Strings = @{
         st_installing = [string][char]0x2B07 + ' جارٍ التثبيت...'
         st_done       = [string][char]0x2714 + ' تم التثبيت'
         st_already    = [string][char]0x2714 + ' مثبّت مسبقًا'
+        st_installed  = [string][char]0x2714 + ' مثبّت'
         st_failed     = [string][char]0x2716 + ' فشل'
         st_cancelled  = [string][char]0x23F9 + ' أُلغي'
         st_manual     = [char]::ConvertFromUtf32(0x1F310) + ' فُتحت صفحة التحميل'
@@ -257,7 +261,9 @@ $Strings = @{
         startLog      = 'بدء تثبيت {0} برنامج...'
         finished      = 'اكتمل: {0} تم تثبيته، {1} مثبّت مسبقًا، {2} فشل، {3} أُلغي، {4} فُتحت صفحة تحميله للتثبيت اليدوي.'
         manualLog     = 'غير متوفر في winget - تم فتح صفحة التحميل الرسمية: {0}'
-        cancelling    = 'جارٍ الإيقاف بعد البرنامج الحالي...'
+        cancelling    = 'جارٍ إيقاف التثبيت...'
+        scanStart     = 'جارٍ فحص البرامج المثبّتة مسبقًا على جهازك...'
+        scanDone      = 'تم التعرّف على {0} برنامج مثبّت.'
         busyClose     = 'هناك عملية تثبيت جارية. أوقفها أولًا ثم أغلق النافذة.'
         installingNow = 'جارٍ تثبيت: {0}  ({1}/{2})'
         reboot        = 'قد تحتاج إلى إعادة تشغيل الجهاز.'
@@ -638,6 +644,7 @@ try {
                           <DataTrigger Binding="{Binding StatusKey}" Value="st_manual"><Setter Property="Background" Value="{DynamicResource StInfoBg}"/></DataTrigger>
                           <DataTrigger Binding="{Binding StatusKey}" Value="st_done"><Setter Property="Background" Value="{DynamicResource StOkBg}"/></DataTrigger>
                           <DataTrigger Binding="{Binding StatusKey}" Value="st_already"><Setter Property="Background" Value="{DynamicResource StOkBg}"/></DataTrigger>
+                          <DataTrigger Binding="{Binding StatusKey}" Value="st_installed"><Setter Property="Background" Value="{DynamicResource StOkBg}"/></DataTrigger>
                           <DataTrigger Binding="{Binding StatusKey}" Value="st_failed"><Setter Property="Background" Value="{DynamicResource StErrBg}"/></DataTrigger>
                           <DataTrigger Binding="{Binding StatusKey}" Value="st_cancelled"><Setter Property="Background" Value="{DynamicResource StWarnBg}"/></DataTrigger>
                         </Style.Triggers>
@@ -652,6 +659,7 @@ try {
                             <DataTrigger Binding="{Binding StatusKey}" Value="st_manual"><Setter Property="Foreground" Value="{DynamicResource StInfoFg}"/></DataTrigger>
                             <DataTrigger Binding="{Binding StatusKey}" Value="st_done"><Setter Property="Foreground" Value="{DynamicResource StOkFg}"/></DataTrigger>
                             <DataTrigger Binding="{Binding StatusKey}" Value="st_already"><Setter Property="Foreground" Value="{DynamicResource StOkFg}"/></DataTrigger>
+                            <DataTrigger Binding="{Binding StatusKey}" Value="st_installed"><Setter Property="Foreground" Value="{DynamicResource StOkFg}"/></DataTrigger>
                             <DataTrigger Binding="{Binding StatusKey}" Value="st_failed"><Setter Property="Foreground" Value="{DynamicResource StErrFg}"/></DataTrigger>
                             <DataTrigger Binding="{Binding StatusKey}" Value="st_cancelled"><Setter Property="Foreground" Value="{DynamicResource StWarnFg}"/></DataTrigger>
                           </Style.Triggers>
@@ -1426,6 +1434,40 @@ $worker = {
         }
         # ---------------------------------------------------------------------------------
 
+        # ---- helpers: stop a process together with everything it started ----------------
+        function Stop-Tree([int]$ProcId) {
+            try {
+                $psi = New-Object System.Diagnostics.ProcessStartInfo
+                $psi.FileName = 'taskkill.exe'; $psi.Arguments = "/PID $ProcId /T /F"
+                $psi.UseShellExecute = $false; $psi.CreateNoWindow = $true
+                $k = [System.Diagnostics.Process]::Start($psi); [void]$k.WaitForExit(5000)
+            } catch { }
+        }
+
+        # ---- helpers: real download progress (0..1) from a winget output line -----------
+        function Get-Frac([string]$line) {
+            $inv = [Globalization.CultureInfo]::InvariantCulture
+            if ($line -match '(\d+(?:[\.,]\d+)?)\s*(KB|MB|GB)\s*/\s*(\d+(?:[\.,]\d+)?)\s*(KB|MB|GB)') {
+                $mul = @{ KB = 1.0; MB = 1024.0; GB = 1048576.0 }
+                $c = [double]::Parse(($Matches[1] -replace ',', '.'), $inv) * $mul[$Matches[2].ToUpper()]
+                $t = [double]::Parse(($Matches[3] -replace ',', '.'), $inv) * $mul[$Matches[4].ToUpper()]
+                if ($t -gt 0) { return [math]::Min(1.0, $c / $t) }
+            }
+            elseif ($line -match '(?<![\d\.])(\d{1,3})\s*%') { return [math]::Min(1.0, [int]$Matches[1] / 100.0) }
+            return -1.0
+        }
+
+        function Send-WingetLine([string]$id, [string]$raw) {
+            $line = $raw.Trim()
+            if ($line.Length -eq 0) { return }
+            $f = Get-Frac $line
+            if ($line -match '(?i)verified installer hash|starting package install') { $f = 1.0 }
+            if ($f -ge 0) { $sync.Queue.Enqueue("prog|$id|" + ([double]$f).ToString([Globalization.CultureInfo]::InvariantCulture)) }
+            if ($line.Length -gt 3 -and $line -notmatch '[\u2588\u2592\u2591]' -and $line -notmatch '^\d[\d\.]*\s*(KB|MB|GB)\s*/' -and $line -notmatch '^[-\\|/\s]+$') {
+                $sync.Queue.Enqueue("log|$id|$line")
+            }
+        }
+
         # ---- NVIDIA App is not in winget: fetch the latest official installer and run it silently ----
         function Install-NvidiaApp($app) {
             $q  = $sync.Queue
@@ -1458,11 +1500,37 @@ $worker = {
 
             $q.Enqueue("log|$id|Downloading: $url")
             $exe = Join-Path $env:TEMP ([System.IO.Path]::GetFileName($url))
-            try { Invoke-WebRequest -Uri $url -OutFile $exe -UseBasicParsing -UserAgent $ua -TimeoutSec 1800 }
-            catch { $q.Enqueue("log|$id|Download failed: $($_.Exception.Message)"); return $null }
+            try {
+                $req = [Net.HttpWebRequest]::Create($url); $req.UserAgent = $ua; $req.Timeout = 30000; $req.ReadWriteTimeout = 30000
+                $resp = $req.GetResponse(); $total = $resp.ContentLength
+                $inS = $resp.GetResponseStream(); $outS = [System.IO.File]::Create($exe)
+                try {
+                    $buf = New-Object byte[] 81920; $got = 0; $last = 0.0
+                    while (($n = $inS.Read($buf, 0, $buf.Length)) -gt 0) {
+                        if ($sync.Cancel) { throw 'cancelled' }
+                        $outS.Write($buf, 0, $n); $got += $n
+                        if ($total -gt 0) {
+                            $fr = $got / $total
+                            if (($fr - $last) -ge 0.01) { $last = $fr; $q.Enqueue("prog|$id|" + ([double]$fr).ToString([Globalization.CultureInfo]::InvariantCulture)) }
+                        }
+                    }
+                } finally { $outS.Close(); $inS.Close(); $resp.Close() }
+                $q.Enqueue("prog|$id|1")
+            }
+            catch {
+                Remove-Item -LiteralPath $exe -Force -ErrorAction SilentlyContinue
+                if (-not $sync.Cancel) { $q.Enqueue("log|$id|Download failed: $($_.Exception.Message)") }
+                return $null
+            }
 
             $q.Enqueue("log|$id|Installing silently...")
-            $proc = Start-Process -FilePath $exe -ArgumentList '-s -noreboot -noeula -nofinish -nosplash' -Wait -PassThru
+            $proc = Start-Process -FilePath $exe -ArgumentList '-s -noreboot -noeula -nofinish -nosplash' -PassThru
+            $null = $proc.Handle
+            while (-not $proc.HasExited) {
+                if ($sync.Cancel) { Stop-Tree $proc.Id; break }
+                Start-Sleep -Milliseconds 200
+            }
+            $proc.WaitForExit()
             Remove-Item -LiteralPath $exe -Force -ErrorAction SilentlyContinue
             return [int]$proc.ExitCode
         }
@@ -1476,6 +1544,7 @@ $worker = {
                 $code = -1
                 try { $res = Install-NvidiaApp $app; if ($null -eq $res) { $code = $null } else { $code = [int]$res } }
                 catch { $sync.Queue.Enqueue("log|$($app.Id)|$($_.Exception.Message)"); $code = -1 }
+                if ($sync.Cancel -and (@(0, 3010, -1978335135) -notcontains $code)) { $sync.Queue.Enqueue("skip|$($app.Id)|"); continue }
                 if ($null -eq $code) {
                     # could not download automatically: fall back to opening the official page
                     try { Start-Process 'https://www.nvidia.com/en-us/software/nvidia-app/' } catch { }
@@ -1500,21 +1569,65 @@ $worker = {
             $sync.Queue.Enqueue("start|$($app.Id)|")
             $code = -1
             $before = Get-StartLnks
+            $logFile = Join-Path $env:TEMP ('meshalbox_' + [guid]::NewGuid().ToString('N') + '.log')
+            $p = $null
             try {
-                $wargs = @('install', '--id', $app.Id, '--exact', '--silent', '--accept-package-agreements', '--accept-source-agreements', '--disable-interactivity')
-                if ($app.Source) { $wargs += @('--source', $app.Source) }
-                & winget @wargs 2>&1 |
-                    ForEach-Object {
-                        $line = ("$_").Trim()
-                        if ($line.Length -gt 3 -and $line -notmatch '[\u2588\u2592\u2591]' -and $line -notmatch '^\d[\d\.]*\s*(KB|MB|GB)\s*/' -and $line -notmatch '^[-\\|/\s]+$') {
-                            $sync.Queue.Enqueue("log|$($app.Id)|$line")
+                $wcmd = 'winget install --id ' + $app.Id + ' --exact --silent --accept-package-agreements --accept-source-agreements --disable-interactivity'
+                if ($app.Source) { $wcmd += ' --source ' + $app.Source }
+                $psi = New-Object System.Diagnostics.ProcessStartInfo
+                $psi.FileName = $env:ComSpec
+                $psi.Arguments = '/d /c "' + $wcmd + ' > "' + $logFile + '" 2>&1"'
+                $psi.UseShellExecute = $false
+                $psi.CreateNoWindow = $true
+                $p = [System.Diagnostics.Process]::Start($psi)
+                $sync.Proc = $p
+                $dec = [System.Text.Encoding]::UTF8.GetDecoder()
+                $pos = 0L
+                $sb = New-Object System.Text.StringBuilder
+                while ($true) {
+                    if ($sync.Cancel -and -not $p.HasExited) { Stop-Tree $p.Id }
+                    $exited = $p.HasExited
+                    try {
+                        if (Test-Path -LiteralPath $logFile) {
+                            $fs = New-Object System.IO.FileStream($logFile, [System.IO.FileMode]::Open, [System.IO.FileAccess]::Read, [System.IO.FileShare]'ReadWrite,Delete')
+                            try {
+                                if ($fs.Length -gt $pos) {
+                                    [void]$fs.Seek($pos, [System.IO.SeekOrigin]::Begin)
+                                    $bytes = New-Object byte[] ([int]($fs.Length - $pos))
+                                    $n = $fs.Read($bytes, 0, $bytes.Length)
+                                    $pos += $n
+                                    $chars = New-Object char[] ($n + 4)
+                                    $cn = $dec.GetChars($bytes, 0, $n, $chars, 0)
+                                    for ($i = 0; $i -lt $cn; $i++) {
+                                        $ch = $chars[$i]
+                                        if ($ch -eq [char]13 -or $ch -eq [char]10) {
+                                            if ($sb.Length -gt 0) { Send-WingetLine $app.Id $sb.ToString(); [void]$sb.Clear() }
+                                        }
+                                        else { [void]$sb.Append($ch) }
+                                    }
+                                }
+                            } finally { $fs.Close() }
                         }
-                    }
-                $code = $LASTEXITCODE
+                    } catch { }
+                    if ($exited) { break }
+                    Start-Sleep -Milliseconds 150
+                }
+                if ($sb.Length -gt 0) { Send-WingetLine $app.Id $sb.ToString() }
+                $p.WaitForExit()
+                $code = $p.ExitCode
             }
             catch {
                 $sync.Queue.Enqueue("log|$($app.Id)|$($_.Exception.Message)")
                 $code = -1
+            }
+            finally {
+                $sync.Proc = $null
+                Remove-Item -LiteralPath $logFile -Force -ErrorAction SilentlyContinue
+            }
+
+            # Stop was pressed while this app was running -> report it as cancelled (unless it had already succeeded)
+            if ($sync.Cancel -and (@(0, 3010, -1978334967, -1978335135, -1978335189) -notcontains $code)) {
+                $sync.Queue.Enqueue("skip|$($app.Id)|"); continue
             }
 
             # Installed (or already installed) -> make sure the app has a shortcut on the desktop
@@ -1533,6 +1646,104 @@ $worker = {
     }
 }
 
+function Stop-Tree {
+    param([int]$ProcId)
+    try {
+        $psi = New-Object System.Diagnostics.ProcessStartInfo
+        $psi.FileName = 'taskkill.exe'; $psi.Arguments = "/PID $ProcId /T /F"
+        $psi.UseShellExecute = $false; $psi.CreateNoWindow = $true
+        $k = [System.Diagnostics.Process]::Start($psi); [void]$k.WaitForExit(5000)
+    } catch { }
+}
+
+# Overall bar = finished apps + how far the running app is (real download % when winget reports it, otherwise a smooth estimate)
+$script:AppFrac   = 0.0
+$script:AppActive = $false
+function Update-Bar {
+    $r = $script:Res
+    if (-not $r -or $r.total -lt 1) { return }
+    $v = 100.0 * ($r.done + $script:AppFrac) / $r.total
+    if ($v -gt 100) { $v = 100 }
+    if ($v -gt $script:pbar.Value) { $script:pbar.Value = $v }
+}
+
+# ---- Detect programs that are already installed on this PC ---------------------------
+$script:InstalledIds = @{}
+$script:ScanBusy = $false
+$scanWorker = {
+    param($apps, $result)
+    $found = New-Object 'System.Collections.Generic.List[string]'
+    try {
+        try { [Console]::OutputEncoding = [System.Text.Encoding]::UTF8 } catch { }
+        $text = ''
+        try { $text = (& winget list --accept-source-agreements --disable-interactivity 2>&1 | Out-String) } catch { }
+
+        # names of everything registered in "Programs and Features" (machine + current user)
+        $names = New-Object 'System.Collections.Generic.HashSet[string]'
+        foreach ($rk in @('HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*', 'HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*', 'HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*')) {
+            try {
+                foreach ($it in @(Get-ItemProperty -Path $rk -ErrorAction SilentlyContinue)) {
+                    if ($it.DisplayName) { [void]$names.Add((([string]$it.DisplayName).ToLowerInvariant() -replace '[^\p{L}\p{Nd}]', '')) }
+                }
+            } catch { }
+        }
+
+        foreach ($a in $apps) {
+            $hit = $false
+            if ($text) {
+                $rx = '(?i)(?<![\w\.\-])' + [regex]::Escape($a.Id) + '(?:\.(?:x86|x64|arm64))?(?![\w\.\-])'
+                if ($text -match $rx) { $hit = $true }
+            }
+            if (-not $hit) {
+                $nm = ([string]$a.Name).ToLowerInvariant() -replace '[^\p{L}\p{Nd}]', ''
+                if ($nm.Length -ge 3 -and $names.Contains($nm)) { $hit = $true }
+            }
+            if ($hit) { $found.Add($a.Id) }
+        }
+    }
+    catch { }
+    finally {
+        $result.Ids  = $found.ToArray()
+        $result.Done = $true
+    }
+}
+
+function Mark-Installed {
+    foreach ($a in $script:Apps) {
+        if ($script:InstalledIds.ContainsKey($a.Id) -and (-not $a.StatusKey)) { Set-Status $a 'st_installed' }
+    }
+}
+
+function Start-InstalledScan {
+    if ($script:ScanBusy) { return }
+    $script:ScanBusy = $true
+    Write-Log $script:T.scanStart
+    $script:ScanResult = [hashtable]::Synchronized(@{ Done = $false; Ids = @() })
+    $list = @($script:Apps | ForEach-Object { [pscustomobject]@{ Id = $_.Id; Name = $_.NameEn } })
+    $rs = [runspacefactory]::CreateRunspace()
+    $rs.ApartmentState = 'MTA'
+    $rs.Open()
+    $ps = [powershell]::Create()
+    $ps.Runspace = $rs
+    [void]$ps.AddScript($scanWorker).AddArgument($list).AddArgument($script:ScanResult)
+    $script:ScanHandle = $ps.BeginInvoke()
+    $script:ScanPs = $ps
+    $script:ScanRs = $rs
+    $script:ScanTimer.Start()
+}
+
+function Finish-InstalledScan {
+    $script:ScanTimer.Stop()
+    $set = @{}
+    foreach ($i in @($script:ScanResult.Ids)) { $set[[string]$i] = $true }
+    $script:InstalledIds = $set
+    Mark-Installed
+    Write-Log ($script:T.scanDone -f $set.Count)
+    try { $script:ScanPs.EndInvoke($script:ScanHandle) } catch { }
+    try { $script:ScanPs.Dispose(); $script:ScanRs.Dispose() } catch { }
+    $script:ScanBusy = $false
+}
+
 function Finish-Install {
     $script:InstallTimer.Stop()
     $script:Busy = $false
@@ -1540,15 +1751,26 @@ function Finish-Install {
     $script:btnCancel.IsEnabled = $true
     $r = $script:Res
     $summary = $script:T.finished -f $r.ok, $r.already, $r.fail, $r.cancel, $r.manual
+    $script:AppActive = $false
+    $script:AppFrac = 0.0
     $script:txtProgress.Text = $summary
-    $script:pbar.Value = 100
     Write-Log $summary
     if ($r.fail -gt 0) { Set-LogVisible $true }
     try { $script:WorkerPs.EndInvoke($script:WorkerHandle) } catch { }
     try { $script:WorkerPs.Dispose(); $script:WorkerRs.Dispose() } catch { }
     Update-Selection
     $icon = 'Information'; if ($r.fail -gt 0) { $icon = 'Warning' }
-    [void](Show-Msg $summary $script:T.title 'OK' $icon)
+    $script:FinishMsg = @{ Text = $summary; Icon = $icon }
+    if ($script:Sync -and $script:Sync.Cancel) {
+        # stopped by the user: clear the bar right away
+        $script:pbar.Value = 0
+        [void](Show-Msg $summary $script:T.title 'OK' $icon)
+    }
+    else {
+        # show a full bar for a moment, then reset it to 0% and show the summary
+        $script:pbar.Value = 100
+        $script:ResetTimer.Start()
+    }
 }
 
 function Clear-Finished {
@@ -1573,6 +1795,7 @@ function Process-Queue {
 
         switch ($type) {
             'start' {
+                $script:AppFrac = 0.0; $script:AppActive = $true
                 Set-Status $item 'st_installing'
                 $script:txtProgress.Text = ($script:T.installingNow -f $item.DisplayName, ($r.done + 1), $r.total)
                 Write-Log ('>> ' + $item.NameEn + '  (' + $id + ')')
@@ -1580,16 +1803,22 @@ function Process-Queue {
             'manual' {
                 Set-Status $item 'st_manual'
                 $r.manual++; $r.done++
-                $script:pbar.Value = [math]::Round(100 * $r.done / $r.total)
+                $script:AppActive = $false; $script:AppFrac = 0.0; Update-Bar
                 Write-Log ($script:T.manualLog -f $id)
                 Clear-Finished $item
+            }
+            'prog' {
+                try {
+                    $f = [double]::Parse($txt, [Globalization.CultureInfo]::InvariantCulture)
+                    if ((0.8 * $f) -gt $script:AppFrac) { $script:AppFrac = 0.8 * $f }
+                } catch { }
             }
             'shortcut' { Write-Log ($script:T.shortcutLog -f $txt) }
             'log' { Write-Log ('     ' + $txt) -Plain }
             'skip' {
                 Set-Status $item 'st_cancelled'
                 $r.cancel++; $r.done++
-                $script:pbar.Value = [math]::Round(100 * $r.done / $r.total)
+                $script:AppActive = $false; $script:AppFrac = 0.0; Update-Bar
             }
             'done' {
                 $code = [int]$txt
@@ -1602,12 +1831,17 @@ function Process-Queue {
                     default      { Set-Status $item 'st_failed';  $r.fail++;    Write-Log ([string][char]0x2716 + ' ' + $item.NameEn + ' - ' + ($script:T.failedCode -f $code)) }
                 }
                 $r.done++
-                $script:pbar.Value = [math]::Round(100 * $r.done / $r.total)
+                $script:AppActive = $false; $script:AppFrac = 0.0; Update-Bar
                 # installed / already installed -> remove it from the selected list (failed ones stay so you can retry)
                 if ($item -and ($item.StatusKey -eq 'st_done' -or $item.StatusKey -eq 'st_already')) { Clear-Finished $item }
             }
             'finished' { Finish-Install }
         }
+    }
+    # smooth movement while an app is installing (never goes backwards, never reaches the next app's share)
+    if ($script:Busy -and $script:AppActive) {
+        $script:AppFrac += (0.95 - $script:AppFrac) * 0.012
+        Update-Bar
     }
 }
 
@@ -1623,13 +1857,15 @@ function Start-Install {
 
     $script:Busy = $true
     $script:Res = @{ ok = 0; already = 0; fail = 0; cancel = 0; manual = 0; done = 0; total = $sel.Count }
+    $script:ResetTimer.Stop()
+    $script:AppFrac = 0.0; $script:AppActive = $false
     $script:pbar.Value = 0
     $script:btnInstall.IsEnabled = $false
     $script:btnCancel.Visibility = 'Visible'
     foreach ($a in $sel) { Set-Status $a 'st_queued' }
     Write-Log ($script:T.startLog -f $sel.Count)
 
-    $script:Sync = [hashtable]::Synchronized(@{ Cancel = $false })
+    $script:Sync = [hashtable]::Synchronized(@{ Cancel = $false; Proc = $null })
     $script:Sync.Queue = New-Object 'System.Collections.Concurrent.ConcurrentQueue[object]'
 
     $list = @($sel | ForEach-Object { [pscustomobject]@{ Id = $_.Id; Name = $_.NameEn; Source = $_.Source } })
@@ -1650,8 +1886,24 @@ function Start-Install {
 # 9. Events
 # ----------------------------------------------------------------------------
 $script:InstallTimer = New-Object System.Windows.Threading.DispatcherTimer
-$script:InstallTimer.Interval = [TimeSpan]::FromMilliseconds(250)
+$script:InstallTimer.Interval = [TimeSpan]::FromMilliseconds(120)
 $script:InstallTimer.Add_Tick({ Process-Queue })
+
+$script:ResetTimer = New-Object System.Windows.Threading.DispatcherTimer
+$script:ResetTimer.Interval = [TimeSpan]::FromMilliseconds(700)
+$script:ResetTimer.Add_Tick({
+        $script:ResetTimer.Stop()
+        if ($script:Busy) { return }          # a new installation already started
+        $script:pbar.Value = 0                # bar goes back to 0%
+        if ($script:FinishMsg) {
+            $m = $script:FinishMsg; $script:FinishMsg = $null
+            [void](Show-Msg $m.Text $script:T.title 'OK' $m.Icon)
+        }
+    })
+
+$script:ScanTimer = New-Object System.Windows.Threading.DispatcherTimer
+$script:ScanTimer.Interval = [TimeSpan]::FromMilliseconds(500)
+$script:ScanTimer.Add_Tick({ if ($script:ScanResult.Done) { Finish-InstalledScan } })
 
 # Grid state: cards are added in small batches; search waits 180 ms after the last key press.
 $script:GridItems   = New-Object 'System.Collections.ObjectModel.ObservableCollection[MeshalApp]'
@@ -1722,7 +1974,11 @@ $window.Add_KeyDown({
     })
 
 $btnCancel.Add_Click({
-        if ($script:Sync) { $script:Sync.Cancel = $true }
+        if ($script:Sync) {
+            $script:Sync.Cancel = $true
+            # kill the running winget / installer right now (and everything it started)
+            try { $pr = $script:Sync.Proc; if ($pr -and -not $pr.HasExited) { Stop-Tree $pr.Id } } catch { }
+        }
         $script:btnCancel.IsEnabled = $false
         Write-Log $script:T.cancelling
     })
@@ -1750,6 +2006,7 @@ try {
             $script:Started = $true
             [void](Load-CachedIcons)
             Start-IconDownloads
+            Start-InstalledScan
             $wg = Get-Command winget -ErrorAction SilentlyContinue
             if ($wg) { Write-Log ($script:T.wingetOk -f $wg.Source) } else { Write-Log $script:T.noWinget }
             if (-not $script:IsAdminNow) { Write-Log $script:T.adminWarn }
