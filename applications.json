@@ -179,6 +179,20 @@
       "domain": "discord.com"
     },
     {
+      "id": "Discord.Discord.Canary",
+      "en": "Discord Canary",
+      "ar": "ديسكورد كناري",
+      "category": "Communication",
+      "domain": "discord.com"
+    },
+    {
+      "id": "Discord.Discord.PTB",
+      "en": "Discord PTB",
+      "ar": "ديسكورد PTB",
+      "category": "Communication",
+      "domain": "discord.com"
+    },
+    {
       "id": "Telegram.TelegramDesktop",
       "en": "Telegram",
       "ar": "تيليجرام",
