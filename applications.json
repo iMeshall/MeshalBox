@@ -19,7 +19,8 @@
       "en": "Microsoft Edge",
       "ar": "مايكروسوفت إيدج",
       "category": "Browsers",
-      "domain": "microsoftedge.microsoft.com"
+      "domain": "microsoftedge.microsoft.com",
+      "icon": "microsoft-edge"
     },
     {
       "id": "Brave.Brave",
@@ -134,19 +135,20 @@
       "domain": "retroarch.com"
     },
     {
-      "id": "https://www.nvidia.com/en-us/software/nvidia-app/",
+      "id": "NVIDIA.NvidiaApp",
       "en": "NVIDIA App",
       "ar": "تطبيق NVIDIA",
       "category": "Gaming",
       "domain": "nvidia.com",
-      "source": "web"
+      "source": "nvapp"
     },
     {
       "id": "Overwolf.Overwolf",
       "en": "Overwolf",
       "ar": "أوفروولف",
       "category": "Gaming",
-      "domain": "overwolf.com"
+      "domain": "overwolf.com",
+      "icon": "overwolf"
     },
     {
       "id": "MoonlightGameStreamingProject.Moonlight",
@@ -223,7 +225,8 @@
       "en": "VLC media player",
       "ar": "مشغّل VLC",
       "category": "Media",
-      "domain": "videolan.org"
+      "domain": "videolan.org",
+      "icon": "vlc"
     },
     {
       "id": "OBSProject.OBSStudio",
@@ -384,14 +387,16 @@
       "en": "Windows Terminal",
       "ar": "طرفية ويندوز",
       "category": "Development",
-      "domain": "microsoft.com"
+      "domain": "microsoft.com",
+      "icon": "windows-terminal"
     },
     {
       "id": "Microsoft.PowerShell",
       "en": "PowerShell 7",
       "ar": "باورشل 7",
       "category": "Development",
-      "domain": "microsoft.com"
+      "domain": "microsoft.com",
+      "icon": "powershell"
     },
     {
       "id": "Postman.Postman",
@@ -433,7 +438,8 @@
       "en": "PowerToys",
       "ar": "باور توايز",
       "category": "Utilities",
-      "domain": "microsoft.com"
+      "domain": "microsoft.com",
+      "icon": "powertoys"
     },
     {
       "id": "voidtools.Everything",
@@ -818,7 +824,8 @@
       "en": "Java Runtime (JRE)",
       "ar": "بيئة جافا JRE",
       "category": "Runtimes",
-      "domain": "java.com"
+      "domain": "java.com",
+      "icon": "java"
     },
     {
       "id": "Microsoft.EdgeWebView2Runtime",
@@ -874,7 +881,8 @@
       "en": "Ungoogled Chromium",
       "ar": "أنجوجلد كروميوم",
       "category": "Browsers",
-      "domain": ""
+      "domain": "ungoogled-software.github.io",
+      "icon": "ungoogled-chromium"
     },
     {
       "id": "Waterfox.Waterfox",
@@ -902,7 +910,7 @@
       "en": "CurseForge",
       "ar": "كيرس فورج",
       "category": "Gaming",
-      "domain": "overwolf.com"
+      "domain": "curseforge.com"
     },
     {
       "id": "ES-DE.EmulationStation-DE",
@@ -910,13 +918,6 @@
       "ar": "إميوليشن ستيشن",
       "category": "Gaming",
       "domain": "es-de.org"
-    },
-    {
-      "id": "Nvidia.GeForceNow",
-      "en": "GeForce NOW",
-      "ar": "جيفورس ناو",
-      "category": "Gaming",
-      "domain": "nvidia.com"
     },
     {
       "id": "Modrinth.ModrinthApp",
@@ -1212,7 +1213,7 @@
       "en": "Lua",
       "ar": "لوا",
       "category": "Development",
-      "domain": ""
+      "domain": "lua.org"
     },
     {
       "id": "Neovim.Neovim",
@@ -1366,7 +1367,7 @@
       "en": "Deskflow",
       "ar": "ديسك فلو",
       "category": "Utilities",
-      "domain": ""
+      "domain": "deskflow.org"
     },
     {
       "id": "ente-io.auth-desktop",
@@ -1394,7 +1395,7 @@
       "en": "GlazeWM",
       "ar": "جليز دبليو إم",
       "category": "Utilities",
-      "domain": ""
+      "domain": "glzr.io"
     },
     {
       "id": "Hugo.Hugo.Extended",
@@ -1709,7 +1710,7 @@
       "en": "gsudo",
       "ar": "جي سودو",
       "category": "ProTools",
-      "domain": ""
+      "domain": "gerardog.github.io"
     },
     {
       "id": "CPUID.HWMonitor",
@@ -1744,7 +1745,7 @@
       "en": "Simplewall",
       "ar": "سيمبل وول",
       "category": "Security",
-      "domain": ""
+      "domain": "henrypp.org"
     },
     {
       "id": "Microsoft.DotNet.DesktopRuntime.10",
