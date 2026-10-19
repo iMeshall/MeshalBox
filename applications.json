@@ -5,14 +5,18 @@
       "en": "Google Chrome",
       "ar": "جوجل كروم",
       "category": "Browsers",
-      "domain": "chrome.com"
+      "domain": "chrome.com",
+      "desc": "Google's fast and popular web browser with sync, extensions, and a huge app ecosystem.",
+      "descAr": "متصفح جوجل السريع والشائع، يدعم المزامنة والإضافات ومتجرًا ضخمًا من التطبيقات."
     },
     {
       "id": "Mozilla.Firefox",
       "en": "Firefox",
       "ar": "فايرفوكس",
       "category": "Browsers",
-      "domain": "firefox.com"
+      "domain": "firefox.com",
+      "desc": "A free, open-source browser from Mozilla focused on privacy, customization, and speed.",
+      "descAr": "متصفح مجاني مفتوح المصدر من موزيلا يركّز على الخصوصية والتخصيص والسرعة."
     },
     {
       "id": "Microsoft.Edge",
@@ -20,119 +24,153 @@
       "ar": "مايكروسوفت إيدج",
       "category": "Browsers",
       "domain": "microsoftedge.microsoft.com",
-      "icon": "microsoft-edge"
+      "icon": "microsoft-edge",
+      "desc": "Microsoft's Chromium-based browser, built into Windows with strong integration and performance features.",
+      "descAr": "متصفح مايكروسوفت المبني على كروميوم، مدمج مع ويندوز ويتميز بالتكامل وميزات الأداء."
     },
     {
       "id": "Brave.Brave",
       "en": "Brave",
       "ar": "بريف",
       "category": "Browsers",
-      "domain": "brave.com"
+      "domain": "brave.com",
+      "desc": "A privacy-first browser that blocks ads and trackers by default and has a built-in rewards system.",
+      "descAr": "متصفح يضع الخصوصية أولًا، يحظر الإعلانات والمتتبعات افتراضيًا وفيه نظام مكافآت مدمج."
     },
     {
       "id": "Opera.Opera",
       "en": "Opera",
       "ar": "أوبرا",
       "category": "Browsers",
-      "domain": "opera.com"
+      "domain": "opera.com",
+      "desc": "A feature-rich browser with a built-in VPN, ad blocker, sidebar messengers, and workspaces.",
+      "descAr": "متصفح غني بالميزات فيه VPN مدمج ومانع إعلانات وتطبيقات مراسلة جانبية ومساحات عمل."
     },
     {
       "id": "Vivaldi.Vivaldi",
       "en": "Vivaldi",
       "ar": "فيفالدي",
       "category": "Browsers",
-      "domain": "vivaldi.com"
+      "domain": "vivaldi.com",
+      "desc": "A highly customizable browser with tab stacking, built-in notes, and powerful workflow tools.",
+      "descAr": "متصفح قابل للتخصيص بدرجة كبيرة، يدعم تجميع التبويبات والملاحظات وأدوات عمل متقدمة."
     },
     {
       "id": "TorProject.TorBrowser",
       "en": "Tor Browser",
       "ar": "متصفح تور",
       "category": "Browsers",
-      "domain": "torproject.org"
+      "domain": "torproject.org",
+      "desc": "A browser that routes traffic through the Tor network to protect your anonymity online.",
+      "descAr": "متصفح يمرّر حركتك عبر شبكة تور ليحمي هويتك ويخفي نشاطك على الإنترنت."
     },
     {
       "id": "Valve.Steam",
       "en": "Steam",
       "ar": "ستيم",
       "category": "Gaming",
-      "domain": "steampowered.com"
+      "domain": "steampowered.com",
+      "desc": "The largest PC gaming platform: buy, download, and play games, with a friends list and community.",
+      "descAr": "أكبر منصة ألعاب للكمبيوتر: اشترِ الألعاب وحمّلها والعب مع الأصدقاء ومجتمع ضخم."
     },
     {
       "id": "EpicGames.EpicGamesLauncher",
       "en": "Epic Games Launcher",
       "ar": "إيبك جيمز",
       "category": "Gaming",
-      "domain": "epicgames.com"
+      "domain": "epicgames.com",
+      "desc": "Epic's game store and launcher, known for free weekly games and Fortnite.",
+      "descAr": "متجر ومشغّل ألعاب إيبك، معروف بألعابه المجانية الأسبوعية وبلعبة فورتنايت."
     },
     {
       "id": "GOG.Galaxy",
       "en": "GOG Galaxy",
       "ar": "جي أو جي جالاكسي",
       "category": "Gaming",
-      "domain": "gog.com"
+      "domain": "gog.com",
+      "desc": "A game library that unifies all your platforms in one place, with DRM-free games from GOG.",
+      "descAr": "مكتبة ألعاب تجمع كل منصاتك في مكان واحد، مع ألعاب GOG الخالية من حماية DRM."
     },
     {
       "id": "ElectronicArts.EADesktop",
       "en": "EA app",
       "ar": "تطبيق EA",
       "category": "Gaming",
-      "domain": "ea.com"
+      "domain": "ea.com",
+      "desc": "EA's game launcher for EA titles like FIFA/FC, Battlefield, and The Sims, plus EA Play.",
+      "descAr": "مشغّل ألعاب EA لألعابها مثل FC وباتلفيلد وذا سيمز، ويدعم اشتراك EA Play."
     },
     {
       "id": "Ubisoft.Connect",
       "en": "Ubisoft Connect",
       "ar": "يوبيسوفت كونكت",
       "category": "Gaming",
-      "domain": "ubisoft.com"
+      "domain": "ubisoft.com",
+      "desc": "Ubisoft's launcher and store for games like Assassin's Creed, with rewards and cloud saves.",
+      "descAr": "مشغّل ومتجر يوبيسوفت لألعاب مثل أساسنز كريد، مع مكافآت وحفظ سحابي."
     },
     {
       "id": "RockstarGames.Launcher",
       "en": "Rockstar Games Launcher",
       "ar": "مشغّل روكستار",
       "category": "Gaming",
-      "domain": "rockstargames.com"
+      "domain": "rockstargames.com",
+      "desc": "Rockstar's launcher for GTA V, Red Dead Redemption 2, and other Rockstar games.",
+      "descAr": "مشغّل روكستار لألعاب GTA V وRed Dead Redemption 2 وغيرها من ألعابها."
     },
     {
       "id": "Blizzard.BattleNet",
       "en": "Battle.net",
       "ar": "باتل نت",
       "category": "Gaming",
-      "domain": "battle.net"
+      "domain": "battle.net",
+      "desc": "Blizzard's launcher for Overwatch, Diablo, World of Warcraft, and Call of Duty.",
+      "descAr": "مشغّل بليزارد لألعاب أوفرواتش وديابلو وورلد أوف ووركرافت وكول أوف ديوتي."
     },
     {
       "id": "Mojang.MinecraftLauncher",
       "en": "Minecraft Launcher",
       "ar": "مشغّل ماين كرافت",
       "category": "Gaming",
-      "domain": "minecraft.net"
+      "domain": "minecraft.net",
+      "desc": "The official launcher to install and play Minecraft Java and Bedrock editions.",
+      "descAr": "المشغّل الرسمي لتثبيت ولعب ماينكرافت بنسختيها جافا وبيدروك."
     },
     {
       "id": "Playnite.Playnite",
       "en": "Playnite",
       "ar": "بلاي نايت",
       "category": "Gaming",
-      "domain": "playnite.link"
+      "domain": "playnite.link",
+      "desc": "An open-source game library manager that gathers games from all stores and launchers.",
+      "descAr": "مدير مكتبة ألعاب مفتوح المصدر يجمع ألعابك من كل المتاجر والمشغّلات."
     },
     {
       "id": "HeroicGamesLauncher.HeroicGamesLauncher",
       "en": "Heroic Games Launcher",
       "ar": "هيروك",
       "category": "Gaming",
-      "domain": "heroicgameslauncher.com"
+      "domain": "heroicgameslauncher.com",
+      "desc": "An open-source launcher for your Epic, GOG, and Amazon Games libraries.",
+      "descAr": "مشغّل مفتوح المصدر لمكتبات ألعابك من إيبك وGOG وأمازون."
     },
     {
       "id": "ItchIo.Itch",
       "en": "itch.io",
       "ar": "إيتش آيو",
       "category": "Gaming",
-      "domain": "itch.io"
+      "domain": "itch.io",
+      "desc": "The desktop app for itch.io: download and play indie games and manage updates.",
+      "descAr": "تطبيق itch.io لتحميل وتشغيل ألعاب المطورين المستقلين وإدارة تحديثاتها."
     },
     {
       "id": "Libretro.RetroArch",
       "en": "RetroArch",
       "ar": "ريترو آرك",
       "category": "Gaming",
-      "domain": "retroarch.com"
+      "domain": "retroarch.com",
+      "desc": "A frontend that runs many classic console emulators and game engines in one app.",
+      "descAr": "واجهة موحّدة تشغّل عددًا كبيرًا من محاكيات الأجهزة الكلاسيكية ومحركات الألعاب."
     },
     {
       "id": "NVIDIA.NvidiaApp",
@@ -140,7 +178,9 @@
       "ar": "تطبيق NVIDIA",
       "category": "Gaming",
       "domain": "nvidia.com",
-      "source": "nvapp"
+      "source": "nvapp",
+      "desc": "NVIDIA's all-in-one app for GeForce drivers, game optimization, recording, and GPU settings.",
+      "descAr": "تطبيق NVIDIA الشامل لتعريفات GeForce وتحسين الألعاب والتسجيل وإعدادات كرت الشاشة."
     },
     {
       "id": "Overwolf.Overwolf",
@@ -148,91 +188,117 @@
       "ar": "أوفروولف",
       "category": "Gaming",
       "domain": "overwolf.com",
-      "icon": "overwolf"
+      "icon": "overwolf",
+      "desc": "A platform for in-game apps and mods that add overlays, stats, and tools to popular games.",
+      "descAr": "منصة لتطبيقات وإضافات داخل الألعاب تضيف واجهات وإحصائيات وأدوات للألعاب الشهيرة."
     },
     {
       "id": "MoonlightGameStreamingProject.Moonlight",
       "en": "Moonlight",
       "ar": "مون لايت",
       "category": "Gaming",
-      "domain": "moonlight-stream.org"
+      "domain": "moonlight-stream.org",
+      "desc": "Streams games from your gaming PC to another device with low latency (NVIDIA/Sunshine hosts).",
+      "descAr": "يبث ألعاب جهازك القوي إلى جهاز آخر بزمن استجابة منخفض (يعمل مع NVIDIA وSunshine)."
     },
     {
       "id": "Parsec.Parsec",
       "en": "Parsec",
       "ar": "بارسك",
       "category": "Gaming",
-      "domain": "parsec.app"
+      "domain": "parsec.app",
+      "desc": "Low-latency remote desktop built for gaming, great for remote play and cloud PCs.",
+      "descAr": "سطح مكتب بعيد بزمن استجابة منخفض مصمم للألعاب، ممتاز للعب عن بعد."
     },
     {
       "id": "Guru3D.Afterburner",
       "en": "MSI Afterburner",
       "ar": "إم إس آي أفتربيرنر",
       "category": "Gaming",
-      "domain": "msi.com"
+      "domain": "msi.com",
+      "desc": "The most popular GPU tool for overclocking, fan curves, and live on-screen performance stats.",
+      "descAr": "أشهر أداة لرفع تردد كرت الشاشة وضبط المراوح وعرض الأداء المباشر على الشاشة."
     },
     {
       "id": "Discord.Discord",
       "en": "Discord",
       "ar": "ديسكورد",
       "category": "Communication",
-      "domain": "discord.com"
+      "domain": "discord.com",
+      "desc": "Discord is a popular communication platform with voice, video, and text chat, designed for gamers but used by a wide range of communities.",
+      "descAr": "ديسكورد منصة تواصل شهيرة بالصوت والفيديو والدردشة النصية، صُممت للاعبين ويستخدمها مجتمعات متنوعة."
     },
     {
       "id": "Discord.Discord.Canary",
       "en": "Discord Canary",
       "ar": "ديسكورد كناري",
       "category": "Communication",
-      "domain": "discord.com"
+      "domain": "discord.com",
+      "desc": "The experimental Discord build that gets new features first. Can be unstable.",
+      "descAr": "النسخة التجريبية من ديسكورد التي تصلها الميزات الجديدة أولًا. قد تكون غير مستقرة."
     },
     {
       "id": "Discord.Discord.PTB",
       "en": "Discord PTB",
       "ar": "ديسكورد PTB",
       "category": "Communication",
-      "domain": "discord.com"
+      "domain": "discord.com",
+      "desc": "Discord's Public Test Build: gets new features before the stable version, more stable than Canary.",
+      "descAr": "نسخة الاختبار العامة من ديسكورد: تصلها الميزات قبل النسخة المستقرة وأكثر ثباتًا من كناري."
     },
     {
       "id": "Telegram.TelegramDesktop",
       "en": "Telegram",
       "ar": "تيليجرام",
       "category": "Communication",
-      "domain": "telegram.org"
+      "domain": "telegram.org",
+      "desc": "Fast, cloud-based messaging app with large groups, channels, bots, and file sharing.",
+      "descAr": "تطبيق مراسلة سريع قائم على السحابة، يدعم المجموعات الكبيرة والقنوات والبوتات ومشاركة الملفات."
     },
     {
       "id": "Zoom.Zoom",
       "en": "Zoom",
       "ar": "زووم",
       "category": "Communication",
-      "domain": "zoom.us"
+      "domain": "zoom.us",
+      "desc": "Popular video conferencing app for meetings, webinars, and screen sharing.",
+      "descAr": "تطبيق اجتماعات فيديو شائع للاجتماعات والندوات ومشاركة الشاشة."
     },
     {
       "id": "Microsoft.Teams",
       "en": "Microsoft Teams",
       "ar": "مايكروسوفت تيمز",
       "category": "Communication",
-      "domain": "teams.microsoft.com"
+      "domain": "teams.microsoft.com",
+      "desc": "Microsoft's chat and meetings app for teams, schools, and businesses.",
+      "descAr": "تطبيق مايكروسوفت للمحادثات والاجتماعات للفرق والمدارس والشركات."
     },
     {
       "id": "SlackTechnologies.Slack",
       "en": "Slack",
       "ar": "سلاك",
       "category": "Communication",
-      "domain": "slack.com"
+      "domain": "slack.com",
+      "desc": "A workplace messaging app with channels, integrations, and file sharing for teams.",
+      "descAr": "تطبيق مراسلة للعمل بقنوات وتكاملات ومشاركة ملفات للفرق."
     },
     {
       "id": "OpenWhisperSystems.Signal",
       "en": "Signal",
       "ar": "سيجنال",
       "category": "Communication",
-      "domain": "signal.org"
+      "domain": "signal.org",
+      "desc": "A secure messenger with end-to-end encryption by default and minimal data collection.",
+      "descAr": "تطبيق مراسلة آمن بتشفير تام افتراضيًا وجمع شبه معدوم للبيانات."
     },
     {
       "id": "Mozilla.Thunderbird",
       "en": "Thunderbird",
       "ar": "ثندربيرد",
       "category": "Communication",
-      "domain": "thunderbird.net"
+      "domain": "thunderbird.net",
+      "desc": "A free, open-source email client with calendar, contacts, and multi-account support.",
+      "descAr": "برنامج بريد إلكتروني مجاني مفتوح المصدر مع تقويم وجهات اتصال ودعم عدة حسابات."
     },
     {
       "id": "VideoLAN.VLC",
@@ -240,161 +306,207 @@
       "ar": "مشغّل VLC",
       "category": "Media",
       "domain": "videolan.org",
-      "icon": "vlc"
+      "icon": "vlc",
+      "desc": "A free player that plays almost any video or audio format without extra codecs.",
+      "descAr": "مشغّل مجاني يشغّل تقريبًا أي صيغة فيديو أو صوت دون حزم ترميز إضافية."
     },
     {
       "id": "OBSProject.OBSStudio",
       "en": "OBS Studio",
       "ar": "أو بي إس ستوديو",
       "category": "Media",
-      "domain": "obsproject.com"
+      "domain": "obsproject.com",
+      "desc": "Free, open-source software for screen recording and live streaming.",
+      "descAr": "برنامج مجاني مفتوح المصدر لتسجيل الشاشة والبث المباشر."
     },
     {
       "id": "Spotify.Spotify",
       "en": "Spotify",
       "ar": "سبوتيفاي",
       "category": "Media",
-      "domain": "spotify.com"
+      "domain": "spotify.com",
+      "desc": "Music and podcast streaming with millions of songs and personalized playlists.",
+      "descAr": "بث موسيقى وبودكاست بملايين الأغاني وقوائم تشغيل مخصصة لك."
     },
     {
       "id": "Audacity.Audacity",
       "en": "Audacity",
       "ar": "أوداسيتي",
       "category": "Media",
-      "domain": "audacityteam.org"
+      "domain": "audacityteam.org",
+      "desc": "A free audio editor and recorder for cleaning, mixing, and exporting sound.",
+      "descAr": "محرر ومسجّل صوت مجاني لتنقية الصوت ودمجه وتصديره."
     },
     {
       "id": "HandBrake.HandBrake",
       "en": "HandBrake",
       "ar": "هاند بريك",
       "category": "Media",
-      "domain": "handbrake.fr"
+      "domain": "handbrake.fr",
+      "desc": "A free video converter that re-encodes videos to MP4/MKV with presets for any device.",
+      "descAr": "محوّل فيديو مجاني يعيد ترميز الفيديو إلى MP4 وMKV بإعدادات جاهزة لأي جهاز."
     },
     {
       "id": "XBMCFoundation.Kodi",
       "en": "Kodi",
       "ar": "كودي",
       "category": "Media",
-      "domain": "kodi.tv"
+      "domain": "kodi.tv",
+      "desc": "An open-source home theater app that organizes and plays your media library.",
+      "descAr": "تطبيق مفتوح المصدر للمسرح المنزلي ينظّم مكتبة وسائطك ويشغّلها."
     },
     {
       "id": "Daum.PotPlayer",
       "en": "PotPlayer",
       "ar": "بوت بلاير",
       "category": "Media",
-      "domain": "potplayer.daum.net"
+      "domain": "potplayer.daum.net",
+      "desc": "A powerful, customizable video player with strong format support and smooth playback.",
+      "descAr": "مشغّل فيديو قوي وقابل للتخصيص يدعم صيغًا كثيرة ويقدم تشغيلًا سلسًا."
     },
     {
       "id": "CodecGuide.K-LiteCodecPack.Standard",
       "en": "K-Lite Codec Pack",
       "ar": "حزمة الترميز K-Lite",
       "category": "Media",
-      "domain": "codecguide.com"
+      "domain": "codecguide.com",
+      "desc": "A bundle of codecs and filters so Windows can play nearly any media file, with Media Player Classic.",
+      "descAr": "حزمة ترميزات ومرشحات تمكّن ويندوز من تشغيل أغلب الملفات، وتتضمن Media Player Classic."
     },
     {
       "id": "Gyan.FFmpeg",
       "en": "FFmpeg",
       "ar": "إف إف إم بيج",
       "category": "Media",
-      "domain": "ffmpeg.org"
+      "domain": "ffmpeg.org",
+      "desc": "The command-line toolkit that converts, records, and processes video and audio.",
+      "descAr": "أداة سطر أوامر لتحويل وتسجيل ومعالجة الفيديو والصوت."
     },
     {
       "id": "Apple.iTunes",
       "en": "iTunes",
       "ar": "آي تيونز",
       "category": "Media",
-      "domain": "apple.com"
+      "domain": "apple.com",
+      "desc": "Apple's media player and store for music, podcasts, and managing iPhone/iPad backups.",
+      "descAr": "مشغّل ومتجر آبل للموسيقى والبودكاست وإدارة النسخ الاحتياطية لأجهزة آيفون وآيباد."
     },
     {
       "id": "PeterPawlowski.foobar2000",
       "en": "foobar2000",
       "ar": "فوبار 2000",
       "category": "Media",
-      "domain": "foobar2000.org"
+      "domain": "foobar2000.org",
+      "desc": "A lightweight, highly customizable audio player loved by audio enthusiasts.",
+      "descAr": "مشغّل صوت خفيف وقابل للتخصيص بدرجة عالية، محبوب لدى عشاق الصوت."
     },
     {
       "id": "Microsoft.VisualStudioCode",
       "en": "Visual Studio Code",
       "ar": "فيجوال ستوديو كود",
       "category": "Development",
-      "domain": "code.visualstudio.com"
+      "domain": "code.visualstudio.com",
+      "desc": "Microsoft's free, lightweight code editor with extensions, debugging, and Git built in.",
+      "descAr": "محرر أكواد مجاني وخفيف من مايكروسوفت مع إضافات وتصحيح أخطاء وGit مدمج."
     },
     {
       "id": "Microsoft.VisualStudio.2022.Community",
       "en": "Visual Studio 2022",
       "ar": "فيجوال ستوديو 2022",
       "category": "Development",
-      "domain": "visualstudio.microsoft.com"
+      "domain": "visualstudio.microsoft.com",
+      "desc": "Microsoft's full IDE for .NET, C++, and game development. Free for individuals.",
+      "descAr": "بيئة تطوير متكاملة من مايكروسوفت لـ .NET وC++ وتطوير الألعاب، مجانية للأفراد."
     },
     {
       "id": "Git.Git",
       "en": "Git",
       "ar": "جيت",
       "category": "Development",
-      "domain": "git-scm.com"
+      "domain": "git-scm.com",
+      "desc": "The standard version control system for tracking code changes and collaborating.",
+      "descAr": "نظام التحكم بالإصدارات القياسي لتتبع تغييرات الكود والعمل الجماعي."
     },
     {
       "id": "GitHub.GitHubDesktop",
       "en": "GitHub Desktop",
       "ar": "جيت هب ديسكتوب",
       "category": "Development",
-      "domain": "desktop.github.com"
+      "domain": "desktop.github.com",
+      "desc": "A simple graphical app to manage Git repositories and GitHub projects.",
+      "descAr": "تطبيق رسومي بسيط لإدارة مستودعات Git ومشاريع GitHub."
     },
     {
       "id": "OpenJS.NodeJS.LTS",
       "en": "Node.js LTS",
       "ar": "نود جي إس",
       "category": "Development",
-      "domain": "nodejs.org"
+      "domain": "nodejs.org",
+      "desc": "The long-term-support version of Node.js, for running JavaScript outside the browser.",
+      "descAr": "نسخة الدعم طويل الأمد من Node.js لتشغيل جافاسكربت خارج المتصفح."
     },
     {
       "id": "EclipseAdoptium.Temurin.21.JDK",
       "en": "Java JDK 21",
       "ar": "جافا JDK 21",
       "category": "Development",
-      "domain": "adoptium.net"
+      "domain": "adoptium.net",
+      "desc": "A free, open-source Java Development Kit (version 21) for building and running Java apps.",
+      "descAr": "حزمة تطوير جافا مجانية ومفتوحة المصدر (الإصدار 21) لبناء وتشغيل تطبيقات جافا."
     },
     {
       "id": "Notepad++.Notepad++",
       "en": "Notepad++",
       "ar": "نوتباد++",
       "category": "Development",
-      "domain": "notepad-plus-plus.org"
+      "domain": "notepad-plus-plus.org",
+      "desc": "A fast, free text and source-code editor with syntax highlighting and tabs.",
+      "descAr": "محرر نصوص وأكواد سريع ومجاني مع تلوين الصياغة والتبويبات."
     },
     {
       "id": "SublimeHQ.SublimeText.4",
       "en": "Sublime Text",
       "ar": "سبلايم تكست",
       "category": "Development",
-      "domain": "sublimetext.com"
+      "domain": "sublimetext.com",
+      "desc": "A fast, minimal code editor with powerful search and multi-cursor editing.",
+      "descAr": "محرر أكواد سريع وبسيط مع بحث قوي وتحرير بمؤشرات متعددة."
     },
     {
       "id": "Docker.DockerDesktop",
       "en": "Docker Desktop",
       "ar": "دوكر ديسكتوب",
       "category": "Development",
-      "domain": "docker.com"
+      "domain": "docker.com",
+      "desc": "Build, run, and share containerized apps on your PC.",
+      "descAr": "لبناء وتشغيل ومشاركة التطبيقات المعبأة في حاويات على جهازك."
     },
     {
       "id": "JetBrains.IntelliJIDEA.Community",
       "en": "IntelliJ IDEA CE",
       "ar": "إنتليج آيديا",
       "category": "Development",
-      "domain": "jetbrains.com"
+      "domain": "jetbrains.com",
+      "desc": "A free, smart IDE for Java and Kotlin development.",
+      "descAr": "بيئة تطوير ذكية ومجانية لجافا وكوتلن."
     },
     {
       "id": "Google.AndroidStudio",
       "en": "Android Studio",
       "ar": "أندرويد ستوديو",
       "category": "Development",
-      "domain": "developer.android.com"
+      "domain": "developer.android.com",
+      "desc": "The official IDE for building Android apps, with emulator and debugging tools.",
+      "descAr": "البيئة الرسمية لبناء تطبيقات أندرويد، مع محاكي وأدوات تصحيح."
     },
     {
       "id": "Unity.UnityHub",
       "en": "Unity Hub",
       "ar": "يونيتي هب",
       "category": "Development",
-      "domain": "unity.com"
+      "domain": "unity.com",
+      "desc": "Manages Unity editor versions and projects for game and app development.",
+      "descAr": "يدير إصدارات محرر Unity ومشاريعه لتطوير الألعاب والتطبيقات."
     },
     {
       "id": "Microsoft.WindowsTerminal",
@@ -402,7 +514,9 @@
       "ar": "طرفية ويندوز",
       "category": "Development",
       "domain": "microsoft.com",
-      "icon": "windows-terminal"
+      "icon": "windows-terminal",
+      "desc": "A modern terminal with tabs and panes for PowerShell, CMD, and WSL.",
+      "descAr": "طرفية حديثة بتبويبات ونوافذ مقسّمة لـ PowerShell وCMD وWSL."
     },
     {
       "id": "Microsoft.PowerShell",
@@ -410,42 +524,54 @@
       "ar": "باورشل 7",
       "category": "Development",
       "domain": "microsoft.com",
-      "icon": "powershell"
+      "icon": "powershell",
+      "desc": "The modern cross-platform PowerShell for automation and scripting.",
+      "descAr": "نسخة PowerShell الحديثة المتعددة المنصات للأتمتة والبرمجة النصية."
     },
     {
       "id": "Postman.Postman",
       "en": "Postman",
       "ar": "بوستمان",
       "category": "Development",
-      "domain": "postman.com"
+      "domain": "postman.com",
+      "desc": "A tool to design, test, and document APIs.",
+      "descAr": "أداة لتصميم واختبار وتوثيق واجهات API."
     },
     {
       "id": "WinSCP.WinSCP",
       "en": "WinSCP",
       "ar": "وين إس سي بي",
       "category": "Development",
-      "domain": "winscp.net"
+      "domain": "winscp.net",
+      "desc": "A free SFTP, FTP, and SCP client for transferring files to servers.",
+      "descAr": "عميل SFTP وFTP وSCP مجاني لنقل الملفات إلى الخوادم."
     },
     {
       "id": "PuTTY.PuTTY",
       "en": "PuTTY",
       "ar": "باتي",
       "category": "Development",
-      "domain": "putty.org"
+      "domain": "putty.org",
+      "desc": "A classic SSH and telnet client for connecting to remote servers.",
+      "descAr": "عميل SSH وTelnet كلاسيكي للاتصال بالخوادم البعيدة."
     },
     {
       "id": "7zip.7zip",
       "en": "7-Zip",
       "ar": "سفن زيب",
       "category": "Utilities",
-      "domain": "7-zip.org"
+      "domain": "7-zip.org",
+      "desc": "A free file archiver with a high compression ratio that opens most archive formats.",
+      "descAr": "ضاغط ملفات مجاني بنسبة ضغط عالية ويفتح أغلب صيغ الأرشيف."
     },
     {
       "id": "RARLab.WinRAR",
       "en": "WinRAR",
       "ar": "وين رار",
       "category": "Utilities",
-      "domain": "win-rar.com"
+      "domain": "win-rar.com",
+      "desc": "The well-known archiver for creating and opening RAR and ZIP files.",
+      "descAr": "ضاغط الملفات المعروف لإنشاء وفتح ملفات RAR وZIP."
     },
     {
       "id": "Microsoft.PowerToys",
@@ -453,385 +579,495 @@
       "ar": "باور توايز",
       "category": "Utilities",
       "domain": "microsoft.com",
-      "icon": "powertoys"
+      "icon": "powertoys",
+      "desc": "Microsoft's utilities for power users: FancyZones, quick launcher, color picker, and more.",
+      "descAr": "أدوات مايكروسوفت للمستخدم المتقدم: تقسيم النوافذ ومشغّل سريع وملتقط ألوان وغيرها."
     },
     {
       "id": "voidtools.Everything",
       "en": "Everything",
       "ar": "إيفري ثينج",
       "category": "Utilities",
-      "domain": "voidtools.com"
+      "domain": "voidtools.com",
+      "desc": "Instant file search for Windows that finds files by name in a split second.",
+      "descAr": "بحث فوري عن الملفات في ويندوز يجد الملف بالاسم في لحظات."
     },
     {
       "id": "Flow-Launcher.Flow-Launcher",
       "en": "Flow Launcher",
       "ar": "فلو لانشر",
       "category": "Utilities",
-      "domain": "flowlauncher.com"
+      "domain": "flowlauncher.com",
+      "desc": "A quick launcher to search apps, files, and the web with a single hotkey.",
+      "descAr": "مشغّل سريع للبحث في البرامج والملفات والويب باختصار واحد."
     },
     {
       "id": "ShareX.ShareX",
       "en": "ShareX",
       "ar": "شير إكس",
       "category": "Utilities",
-      "domain": "getsharex.com"
+      "domain": "getsharex.com",
+      "desc": "A free tool for screenshots, screen recording, and one-click uploading.",
+      "descAr": "أداة مجانية للقطات الشاشة وتسجيلها ورفعها بنقرة واحدة."
     },
     {
       "id": "CPUID.CPU-Z",
       "en": "CPU-Z",
       "ar": "سي بي يو زد",
       "category": "Utilities",
-      "domain": "cpuid.com"
+      "domain": "cpuid.com",
+      "desc": "Shows detailed information about your processor, memory, and motherboard.",
+      "descAr": "يعرض معلومات تفصيلية عن المعالج والذاكرة واللوحة الأم."
     },
     {
       "id": "TechPowerUp.GPU-Z",
       "en": "GPU-Z",
       "ar": "جي بي يو زد",
       "category": "Utilities",
-      "domain": "techpowerup.com"
+      "domain": "techpowerup.com",
+      "desc": "Shows detailed graphics card information and live sensor readings.",
+      "descAr": "يعرض معلومات تفصيلية عن كرت الشاشة وقراءات الحساسات المباشرة."
     },
     {
       "id": "REALiX.HWiNFO",
       "en": "HWiNFO",
       "ar": "إتش دبليو إنفو",
       "category": "Utilities",
-      "domain": "hwinfo.com"
+      "domain": "hwinfo.com",
+      "desc": "Deep hardware information and real-time monitoring of temperatures and sensors.",
+      "descAr": "معلومات عميقة عن العتاد ومراقبة مباشرة للحرارة والحساسات."
     },
     {
       "id": "CrystalDewWorld.CrystalDiskInfo",
       "en": "CrystalDiskInfo",
       "ar": "كريستال ديسك إنفو",
       "category": "Utilities",
-      "domain": "crystalmark.info"
+      "domain": "crystalmark.info",
+      "desc": "Checks the health, temperature, and S.M.A.R.T. status of your drives.",
+      "descAr": "يفحص صحة الأقراص وحرارتها وحالة S.M.A.R.T."
     },
     {
       "id": "Wagnardsoft.DisplayDriverUninstaller",
       "en": "Display Driver Uninstaller",
       "ar": "أداة إزالة تعريفات الشاشة",
       "category": "Utilities",
-      "domain": "wagnardsoft.com"
+      "domain": "wagnardsoft.com",
+      "desc": "Completely removes graphics drivers (NVIDIA/AMD/Intel) for a clean reinstall.",
+      "descAr": "يحذف تعريفات كرت الشاشة (NVIDIA/AMD/Intel) بالكامل لإعادة تثبيت نظيفة."
     },
     {
       "id": "Piriform.CCleaner",
       "en": "CCleaner",
       "ar": "سي كلينر",
       "category": "Utilities",
-      "domain": "ccleaner.com"
+      "domain": "ccleaner.com",
+      "desc": "Cleans junk files, browser traces, and manages startup programs.",
+      "descAr": "ينظّف الملفات المؤقتة وآثار المتصفح ويدير برامج بدء التشغيل."
     },
     {
       "id": "WinDirStat.WinDirStat",
       "en": "WinDirStat",
       "ar": "وين دير ستات",
       "category": "Utilities",
-      "domain": "windirstat.net"
+      "domain": "windirstat.net",
+      "desc": "Visualizes disk usage so you can find what is taking up space.",
+      "descAr": "يعرض استخدام القرص بصريًا لتعرف ما الذي يشغل المساحة."
     },
     {
       "id": "Rufus.Rufus",
       "en": "Rufus",
       "ar": "روفوس",
       "category": "Utilities",
-      "domain": "rufus.ie"
+      "domain": "rufus.ie",
+      "desc": "Creates bootable USB drives from ISO files, fast and simple.",
+      "descAr": "ينشئ فلاش USB قابلًا للإقلاع من ملفات ISO بسرعة وبساطة."
     },
     {
       "id": "Balena.Etcher",
       "en": "balenaEtcher",
       "ar": "بالينا إتشر",
       "category": "Utilities",
-      "domain": "etcher.balena.io"
+      "domain": "etcher.balena.io",
+      "desc": "Safely flashes OS images to USB drives and SD cards.",
+      "descAr": "يكتب صور أنظمة التشغيل على فلاشات وبطاقات SD بأمان."
     },
     {
       "id": "Ventoy.Ventoy",
       "en": "Ventoy",
       "ar": "فينتوي",
       "category": "Utilities",
-      "domain": "ventoy.net"
+      "domain": "ventoy.net",
+      "desc": "Make one USB drive boot many ISO files just by copying them onto it.",
+      "descAr": "يجعل فلاشًا واحدًا يقلع بعدة ملفات ISO بمجرد نسخها إليه."
     },
     {
       "id": "TeamViewer.TeamViewer",
       "en": "TeamViewer",
       "ar": "تيم فيور",
       "category": "Utilities",
-      "domain": "teamviewer.com"
+      "domain": "teamviewer.com",
+      "desc": "Remote access and support tool to control another PC over the internet.",
+      "descAr": "أداة وصول ودعم عن بعد للتحكم بجهاز آخر عبر الإنترنت."
     },
     {
       "id": "qBittorrent.qBittorrent",
       "en": "qBittorrent",
       "ar": "كيو بت تورنت",
       "category": "Utilities",
-      "domain": "qbittorrent.org"
+      "domain": "qbittorrent.org",
+      "desc": "A free, ad-free open-source BitTorrent client.",
+      "descAr": "عميل تورنت مجاني ومفتوح المصدر بدون إعلانات."
     },
     {
       "id": "AutoHotkey.AutoHotkey",
       "en": "AutoHotkey",
       "ar": "أوتو هوت كي",
       "category": "Utilities",
-      "domain": "autohotkey.com"
+      "domain": "autohotkey.com",
+      "desc": "A scripting language to automate keyboard, mouse, and repetitive tasks.",
+      "descAr": "لغة برمجة نصية لأتمتة لوحة المفاتيح والماوس والمهام المتكررة."
     },
     {
       "id": "Malwarebytes.Malwarebytes",
       "en": "Malwarebytes",
       "ar": "مالوير بايتس",
       "category": "Security",
-      "domain": "malwarebytes.com"
+      "domain": "malwarebytes.com",
+      "desc": "An anti-malware scanner that detects and removes viruses, spyware, and ransomware.",
+      "descAr": "برنامج مضاد للبرمجيات الخبيثة يكتشف الفيروسات والتجسس وبرامج الفدية ويزيلها."
     },
     {
       "id": "Bitwarden.Bitwarden",
       "en": "Bitwarden",
       "ar": "بيتواردن",
       "category": "Security",
-      "domain": "bitwarden.com"
+      "domain": "bitwarden.com",
+      "desc": "An open-source password manager that stores and fills your logins securely.",
+      "descAr": "مدير كلمات مرور مفتوح المصدر يخزّن بيانات دخولك ويعبئها بأمان."
     },
     {
       "id": "KeePassXCTeam.KeePassXC",
       "en": "KeePassXC",
       "ar": "كي باس إكس سي",
       "category": "Security",
-      "domain": "keepassxc.org"
+      "domain": "keepassxc.org",
+      "desc": "A free offline password manager with a local encrypted database.",
+      "descAr": "مدير كلمات مرور مجاني يعمل دون اتصال بقاعدة بيانات مشفّرة محلية."
     },
     {
       "id": "IDRIX.VeraCrypt",
       "en": "VeraCrypt",
       "ar": "فيرا كريبت",
       "category": "Security",
-      "domain": "veracrypt.fr"
+      "domain": "veracrypt.fr",
+      "desc": "Encrypts drives and creates secure encrypted volumes for your files.",
+      "descAr": "يشفّر الأقراص وينشئ وحدات تخزين مشفّرة آمنة لملفاتك."
     },
     {
       "id": "WireGuard.WireGuard",
       "en": "WireGuard",
       "ar": "وايرجارد",
       "category": "Security",
-      "domain": "wireguard.com"
+      "domain": "wireguard.com",
+      "desc": "A fast, modern VPN protocol client with a simple setup.",
+      "descAr": "عميل لبروتوكول VPN حديث وسريع وبإعداد بسيط."
     },
     {
       "id": "Cloudflare.Warp",
       "en": "Cloudflare WARP",
       "ar": "كلاودفلير وارب",
       "category": "Security",
-      "domain": "cloudflare.com"
+      "domain": "cloudflare.com",
+      "desc": "Cloudflare's free VPN-like app that encrypts your traffic and speeds up DNS.",
+      "descAr": "تطبيق مجاني من كلاودفلير يشفّر حركة الإنترنت ويسرّع DNS."
     },
     {
       "id": "NordVPN.NordVPN",
       "en": "NordVPN",
       "ar": "نورد في بي إن",
       "category": "Security",
-      "domain": "nordvpn.com"
+      "domain": "nordvpn.com",
+      "desc": "A popular paid VPN service with servers worldwide and extra security features.",
+      "descAr": "خدمة VPN مدفوعة شائعة بخوادم حول العالم وميزات أمان إضافية."
     },
     {
       "id": "WiresharkFoundation.Wireshark",
       "en": "Wireshark",
       "ar": "وايرشارك",
       "category": "Security",
-      "domain": "wireshark.org"
+      "domain": "wireshark.org",
+      "desc": "The standard network protocol analyzer for inspecting traffic.",
+      "descAr": "محلل بروتوكولات الشبكة القياسي لفحص حركة البيانات."
     },
     {
       "id": "Insecure.Nmap",
       "en": "Nmap",
       "ar": "إن ماب",
       "category": "Security",
-      "domain": "nmap.org"
+      "domain": "nmap.org",
+      "desc": "A network scanner used to discover devices and open ports.",
+      "descAr": "ماسح شبكات لاكتشاف الأجهزة والمنافذ المفتوحة."
     },
     {
       "id": "TheDocumentFoundation.LibreOffice",
       "en": "LibreOffice",
       "ar": "ليبر أوفيس",
       "category": "Productivity",
-      "domain": "libreoffice.org"
+      "domain": "libreoffice.org",
+      "desc": "A free office suite with Writer, Calc, and Impress, compatible with Microsoft Office files.",
+      "descAr": "حزمة مكتبية مجانية (Writer وCalc وImpress) متوافقة مع ملفات مايكروسوفت أوفيس."
     },
     {
       "id": "ONLYOFFICE.DesktopEditors",
       "en": "ONLYOFFICE",
       "ar": "أونلي أوفيس",
       "category": "Productivity",
-      "domain": "onlyoffice.com"
+      "domain": "onlyoffice.com",
+      "desc": "A free office suite with strong Microsoft Office compatibility and collaboration.",
+      "descAr": "حزمة مكتبية مجانية بتوافق قوي مع أوفيس ودعم العمل الجماعي."
     },
     {
       "id": "Adobe.Acrobat.Reader.64-bit",
       "en": "Adobe Acrobat Reader",
       "ar": "أدوبي أكروبات ريدر",
       "category": "Productivity",
-      "domain": "adobe.com"
+      "domain": "adobe.com",
+      "desc": "Adobe's standard PDF reader for viewing, commenting, and signing PDFs.",
+      "descAr": "قارئ PDF القياسي من أدوبي لعرض الملفات والتعليق عليها وتوقيعها."
     },
     {
       "id": "SumatraPDF.SumatraPDF",
       "en": "SumatraPDF",
       "ar": "سوماترا PDF",
       "category": "Productivity",
-      "domain": "sumatrapdfreader.org"
+      "domain": "sumatrapdfreader.org",
+      "desc": "An ultra-light, fast reader for PDF, EPUB, and comic book files.",
+      "descAr": "قارئ خفيف جدًا وسريع لملفات PDF وEPUB والكوميكس."
     },
     {
       "id": "Foxit.FoxitReader",
       "en": "Foxit Reader",
       "ar": "فوكسيت ريدر",
       "category": "Productivity",
-      "domain": "foxit.com"
+      "domain": "foxit.com",
+      "desc": "A lightweight PDF reader with annotation and form filling.",
+      "descAr": "قارئ PDF خفيف يدعم التعليقات وتعبئة النماذج."
     },
     {
       "id": "Notion.Notion",
       "en": "Notion",
       "ar": "نوشن",
       "category": "Productivity",
-      "domain": "notion.so"
+      "domain": "notion.so",
+      "desc": "An all-in-one workspace for notes, docs, databases, and project planning.",
+      "descAr": "مساحة عمل شاملة للملاحظات والمستندات وقواعد البيانات وتخطيط المشاريع."
     },
     {
       "id": "Obsidian.Obsidian",
       "en": "Obsidian",
       "ar": "أوبسيديان",
       "category": "Productivity",
-      "domain": "obsidian.md"
+      "domain": "obsidian.md",
+      "desc": "A powerful note-taking app that links Markdown notes into a knowledge base, stored locally.",
+      "descAr": "تطبيق ملاحظات قوي يربط ملاحظات Markdown في قاعدة معرفة، ويحفظها محليًا."
     },
     {
       "id": "Joplin.Joplin",
       "en": "Joplin",
       "ar": "جوبلين",
       "category": "Productivity",
-      "domain": "joplinapp.org"
+      "domain": "joplinapp.org",
+      "desc": "A free, open-source note-taking app with Markdown and encrypted sync.",
+      "descAr": "تطبيق ملاحظات مجاني مفتوح المصدر يدعم Markdown ومزامنة مشفّرة."
     },
     {
       "id": "calibre.calibre",
       "en": "calibre",
       "ar": "كاليبر",
       "category": "Productivity",
-      "domain": "calibre-ebook.com"
+      "domain": "calibre-ebook.com",
+      "desc": "An e-book library manager and converter that supports most e-reader formats.",
+      "descAr": "مدير مكتبة كتب إلكترونية ومحوّل يدعم أغلب صيغ القارئات."
     },
     {
       "id": "Inkscape.Inkscape",
       "en": "Inkscape",
       "ar": "إنكسكيب",
       "category": "Design",
-      "domain": "inkscape.org"
+      "domain": "inkscape.org",
+      "desc": "A free vector graphics editor, an alternative to Adobe Illustrator.",
+      "descAr": "محرر رسومات متجهية مجاني، بديل لأدوبي إليستريتر."
     },
     {
       "id": "KDE.Krita",
       "en": "Krita",
       "ar": "كريتا",
       "category": "Design",
-      "domain": "krita.org"
+      "domain": "krita.org",
+      "desc": "A free digital painting and illustration app made for artists.",
+      "descAr": "برنامج رسم رقمي وتوضيح مجاني مصمم للفنانين."
     },
     {
       "id": "BlenderFoundation.Blender",
       "en": "Blender",
       "ar": "بلندر",
       "category": "Design",
-      "domain": "blender.org"
+      "domain": "blender.org",
+      "desc": "A free 3D suite for modeling, animation, rendering, and video editing.",
+      "descAr": "حزمة ثلاثية الأبعاد مجانية للنمذجة والرسوم المتحركة والريندر وتحرير الفيديو."
     },
     {
       "id": "dotPDN.PaintDotNet",
       "en": "Paint.NET",
       "ar": "بينت دوت نت",
       "category": "Design",
-      "domain": "getpaint.net"
+      "domain": "getpaint.net",
+      "desc": "A simple, fast image editor with layers and effects, easier than Photoshop.",
+      "descAr": "محرر صور بسيط وسريع بطبقات وتأثيرات، أسهل من فوتوشوب."
     },
     {
       "id": "IrfanSkiljan.IrfanView",
       "en": "IrfanView",
       "ar": "إرفان فيو",
       "category": "Design",
-      "domain": "irfanview.com"
+      "domain": "irfanview.com",
+      "desc": "A very fast and light image viewer with basic editing and batch conversion.",
+      "descAr": "عارض صور خفيف وسريع جدًا مع تحرير بسيط وتحويل دفعي."
     },
     {
       "id": "darktable.darktable",
       "en": "darktable",
       "ar": "دارك تيبل",
       "category": "Design",
-      "domain": "darktable.org"
+      "domain": "darktable.org",
+      "desc": "A free RAW photo workflow app for editing and organizing photographs.",
+      "descAr": "برنامج مجاني لمعالجة صور RAW وتحريرها وتنظيمها."
     },
     {
       "id": "Figma.Figma",
       "en": "Figma",
       "ar": "فيجما",
       "category": "Design",
-      "domain": "figma.com"
+      "domain": "figma.com",
+      "desc": "A collaborative design tool for UI/UX, prototypes, and graphics.",
+      "descAr": "أداة تصميم تعاونية لواجهات المستخدم والنماذج الأولية والرسومات."
     },
     {
       "id": "BlackmagicDesign.DaVinciResolve",
       "en": "DaVinci Resolve",
       "ar": "دافنشي ريزولف",
       "category": "Design",
-      "domain": "blackmagicdesign.com"
+      "domain": "blackmagicdesign.com",
+      "desc": "A professional video editor with color grading, audio, and effects. Free version available.",
+      "descAr": "محرر فيديو احترافي مع تصحيح ألوان وصوت وتأثيرات. تتوفر نسخة مجانية."
     },
     {
       "id": "Meltytech.Shotcut",
       "en": "Shotcut",
       "ar": "شوت كت",
       "category": "Design",
-      "domain": "shotcut.org"
+      "domain": "shotcut.org",
+      "desc": "A free, open-source video editor with many formats and filters.",
+      "descAr": "محرر فيديو مجاني مفتوح المصدر يدعم صيغًا ومرشحات كثيرة."
     },
     {
       "id": "KDE.Kdenlive",
       "en": "Kdenlive",
       "ar": "كدن لايف",
       "category": "Design",
-      "domain": "kdenlive.org"
+      "domain": "kdenlive.org",
+      "desc": "A free, open-source multi-track video editor.",
+      "descAr": "محرر فيديو مجاني مفتوح المصدر بمسارات متعددة."
     },
     {
       "id": "Dropbox.Dropbox",
       "en": "Dropbox",
       "ar": "دروب بوكس",
       "category": "Cloud",
-      "domain": "dropbox.com"
+      "domain": "dropbox.com",
+      "desc": "Cloud storage that syncs your files across devices and shares them easily.",
+      "descAr": "تخزين سحابي يزامن ملفاتك بين أجهزتك ويسهّل مشاركتها."
     },
     {
       "id": "Google.GoogleDrive",
       "en": "Google Drive",
       "ar": "جوجل درايف",
       "category": "Cloud",
-      "domain": "drive.google.com"
+      "domain": "drive.google.com",
+      "desc": "Google's cloud storage that syncs your files and works with Docs, Sheets, and Photos.",
+      "descAr": "تخزين جوجل السحابي الذي يزامن ملفاتك ويعمل مع Docs وSheets وPhotos."
     },
     {
       "id": "Microsoft.OneDrive",
       "en": "OneDrive",
       "ar": "ون درايف",
       "category": "Cloud",
-      "domain": "onedrive.live.com"
+      "domain": "onedrive.live.com",
+      "desc": "Microsoft's cloud storage built into Windows, syncing files and PC folders.",
+      "descAr": "تخزين مايكروسوفت السحابي المدمج مع ويندوز لمزامنة الملفات ومجلدات الجهاز."
     },
     {
       "id": "Mega.MEGASync",
       "en": "MEGAsync",
       "ar": "ميجا سينك",
       "category": "Cloud",
-      "domain": "mega.io"
+      "domain": "mega.io",
+      "desc": "The sync client for MEGA cloud storage with end-to-end encryption.",
+      "descAr": "عميل مزامنة لتخزين MEGA السحابي بتشفير تام."
     },
     {
       "id": "Syncthing.Syncthing",
       "en": "Syncthing",
       "ar": "سينك ثينج",
       "category": "Cloud",
-      "domain": "syncthing.net"
+      "domain": "syncthing.net",
+      "desc": "Private, peer-to-peer file sync between your devices with no cloud server.",
+      "descAr": "مزامنة ملفات خاصة بين أجهزتك مباشرة دون خادم سحابي."
     },
     {
       "id": "Nextcloud.NextcloudDesktop",
       "en": "Nextcloud",
       "ar": "نيكست كلاود",
       "category": "Cloud",
-      "domain": "nextcloud.com"
+      "domain": "nextcloud.com",
+      "desc": "The sync client for your own Nextcloud private cloud server.",
+      "descAr": "عميل المزامنة لخادم Nextcloud السحابي الخاص بك."
     },
     {
       "id": "Microsoft.VCRedist.2015+.x64",
       "en": "Visual C++ Redist x64",
       "ar": "مكتبات Visual C++ (64)",
       "category": "Runtimes",
-      "domain": "microsoft.com"
+      "domain": "microsoft.com",
+      "desc": "Required runtime libraries (64-bit) that many apps and games need to run.",
+      "descAr": "مكتبات تشغيل مطلوبة (64 بت) تحتاجها كثير من البرامج والألعاب."
     },
     {
       "id": "Microsoft.VCRedist.2015+.x86",
       "en": "Visual C++ Redist x86",
       "ar": "مكتبات Visual C++ (32)",
       "category": "Runtimes",
-      "domain": "microsoft.com"
+      "domain": "microsoft.com",
+      "desc": "Required runtime libraries (32-bit) that many apps and games need to run.",
+      "descAr": "مكتبات تشغيل مطلوبة (32 بت) تحتاجها كثير من البرامج والألعاب."
     },
     {
       "id": "Microsoft.DotNet.DesktopRuntime.8",
       "en": ".NET Desktop Runtime 8",
       "ar": "بيئة .NET 8",
       "category": "Runtimes",
-      "domain": "dotnet.microsoft.com"
+      "domain": "dotnet.microsoft.com",
+      "desc": "The .NET 8 runtime needed to run modern Windows desktop apps.",
+      "descAr": "بيئة تشغيل .NET 8 اللازمة لتشغيل تطبيقات سطح المكتب الحديثة."
     },
     {
       "id": "Microsoft.DirectX",
       "en": "DirectX Runtime",
       "ar": "مكتبات DirectX",
       "category": "Runtimes",
-      "domain": "microsoft.com"
+      "domain": "microsoft.com",
+      "desc": "DirectX runtime components that older games and graphics apps rely on.",
+      "descAr": "مكونات DirectX التي تعتمد عليها الألعاب القديمة وتطبيقات الرسوم."
     },
     {
       "id": "Oracle.JavaRuntimeEnvironment",
@@ -839,56 +1075,72 @@
       "ar": "بيئة جافا JRE",
       "category": "Runtimes",
       "domain": "java.com",
-      "icon": "java"
+      "icon": "java",
+      "desc": "Java Runtime needed to run Java-based programs.",
+      "descAr": "بيئة تشغيل جافا اللازمة لتشغيل البرامج المبنية بجافا."
     },
     {
       "id": "Microsoft.EdgeWebView2Runtime",
       "en": "WebView2 Runtime",
       "ar": "بيئة WebView2",
       "category": "Runtimes",
-      "domain": "microsoft.com"
+      "domain": "microsoft.com",
+      "desc": "A component that lets apps show web content; needed by many modern programs.",
+      "descAr": "مكوّن يتيح للتطبيقات عرض محتوى الويب، تحتاجه برامج حديثة كثيرة."
     },
     {
       "id": "Hibbiki.Chromium",
       "en": "Chromium",
       "ar": "كروميوم",
       "category": "Browsers",
-      "domain": "chromium.org"
+      "domain": "chromium.org",
+      "desc": "An open-source browser project that Chrome is built on, without Google's extras.",
+      "descAr": "المتصفح مفتوح المصدر الذي يقوم عليه كروم، بدون إضافات جوجل."
     },
     {
       "id": "Mozilla.Firefox.ESR",
       "en": "Firefox ESR",
       "ar": "فايرفوكس ESR",
       "category": "Browsers",
-      "domain": "mozilla.org"
+      "domain": "mozilla.org",
+      "desc": "Firefox Extended Support Release: slower feature updates, ideal for stability.",
+      "descAr": "نسخة الدعم الممتد من فايرفوكس: تحديثات ميزات أبطأ، مناسبة للاستقرار."
     },
     {
       "id": "Ablaze.Floorp",
       "en": "Floorp",
       "ar": "فلورب",
       "category": "Browsers",
-      "domain": "floorp.app"
+      "domain": "floorp.app",
+      "desc": "A Firefox-based browser with vertical tabs, workspaces, and deep customization.",
+      "descAr": "متصفح مبني على فايرفوكس بتبويبات عمودية ومساحات عمل وتخصيص عميق."
     },
     {
       "id": "ImputNet.Helium",
       "en": "Helium",
       "ar": "هيليوم",
       "category": "Browsers",
-      "domain": "helium.computer"
+      "domain": "helium.computer",
+      "desc": "A clean, privacy-focused Chromium-based browser.",
+      "descAr": "متصفح نظيف يركّز على الخصوصية مبني على كروميوم."
     },
     {
       "id": "LibreWolf.LibreWolf",
       "en": "LibreWolf",
       "ar": "ليبر وولف",
       "category": "Browsers",
-      "domain": "librewolf.net"
+      "domain": "librewolf.net",
+      "desc": "A hardened Firefox fork with strong privacy and security defaults.",
+      "descAr": "نسخة معززة من فايرفوكس بإعدادات خصوصية وأمان قوية افتراضيًا."
     },
     {
       "id": "MullvadVPN.MullvadBrowser",
       "en": "Mullvad Browser",
       "ar": "متصفح مولفاد",
       "category": "Browsers",
-      "domain": "mullvad.net"
+      "domain": "mullvad.net",
+      "desc": "A privacy browser from Mullvad and the Tor Project that reduces browser fingerprinting.",
+      "descAr": "متصفح خصوصية من Mullvad ومشروع تور يقلل بصمة المتصفح."
     },
     {
       "id": "eloston.ungoogled-chromium",
@@ -896,147 +1148,189 @@
       "ar": "أنجوجلد كروميوم",
       "category": "Browsers",
       "domain": "ungoogled-software.github.io",
-      "icon": "ungoogled-chromium"
+      "icon": "ungoogled-chromium",
+      "desc": "Chromium with Google services and tracking removed for more privacy.",
+      "descAr": "كروميوم بعد إزالة خدمات جوجل والتتبع لخصوصية أكبر."
     },
     {
       "id": "Waterfox.Waterfox",
       "en": "Waterfox",
       "ar": "ووترفوكس",
       "category": "Browsers",
-      "domain": "waterfox.net"
+      "domain": "waterfox.net",
+      "desc": "A privacy-conscious Firefox-based browser focused on speed and user control.",
+      "descAr": "متصفح مبني على فايرفوكس يهتم بالخصوصية والسرعة وتحكم المستخدم."
     },
     {
       "id": "Zen-Team.Zen-Browser",
       "en": "Zen Browser",
       "ar": "متصفح زين",
       "category": "Browsers",
-      "domain": "zen-browser.app"
+      "domain": "zen-browser.app",
+      "desc": "A modern, calm Firefox-based browser with split views, workspaces, and a clean design.",
+      "descAr": "متصفح حديث وهادئ مبني على فايرفوكس مع عرض مقسّم ومساحات عمل وتصميم نظيف."
     },
     {
       "id": "Cemu.Cemu",
       "en": "Cemu",
       "ar": "سيمو",
       "category": "Gaming",
-      "domain": "cemu.info"
+      "domain": "cemu.info",
+      "desc": "A Wii U emulator for PC.",
+      "descAr": "محاكي Wii U للكمبيوتر."
     },
     {
       "id": "Overwolf.CurseForge",
       "en": "CurseForge",
       "ar": "كيرس فورج",
       "category": "Gaming",
-      "domain": "curseforge.com"
+      "domain": "curseforge.com",
+      "desc": "A mod manager and launcher for Minecraft and many other games.",
+      "descAr": "مدير مودات ومشغّل لماينكرافت وألعاب كثيرة."
     },
     {
       "id": "ES-DE.EmulationStation-DE",
       "en": "EmulationStation Desktop Edition",
       "ar": "إميوليشن ستيشن",
       "category": "Gaming",
-      "domain": "es-de.org"
+      "domain": "es-de.org",
+      "desc": "A front-end that organizes your retro games and launches them in your emulators.",
+      "descAr": "واجهة تنظّم ألعابك الكلاسيكية وتشغّلها عبر المحاكيات."
     },
     {
       "id": "Modrinth.ModrinthApp",
       "en": "Modrinth App",
       "ar": "مودرينث",
       "category": "Gaming",
-      "domain": "modrinth.com"
+      "domain": "modrinth.com",
+      "desc": "A launcher and mod manager for Minecraft, with Modrinth's mod library.",
+      "descAr": "مشغّل ومدير مودات لماينكرافت مع مكتبة مودات Modrinth."
     },
     {
       "id": "PrismLauncher.PrismLauncher",
       "en": "Prism Launcher",
       "ar": "بريزم لانشر",
       "category": "Gaming",
-      "domain": "prismlauncher.org"
+      "domain": "prismlauncher.org",
+      "desc": "An open-source Minecraft launcher with multiple instances and mod support.",
+      "descAr": "مشغّل ماينكرافت مفتوح المصدر يدعم عدة نسخ منفصلة والمودات."
     },
     {
       "id": "Roblox.Roblox",
       "en": "Roblox",
       "ar": "روبلوكس",
       "category": "Gaming",
-      "domain": "roblox.com"
+      "domain": "roblox.com",
+      "desc": "The platform to play and create millions of user-made games.",
+      "descAr": "منصة للعب وإنشاء ملايين الألعاب التي يصنعها المستخدمون."
     },
     {
       "id": "RiotGames.Valorant.EU",
       "en": "Riot Client (VALORANT)",
       "ar": "لانشر رايوت (فالورانت)",
       "category": "Gaming",
-      "domain": "playvalorant.com"
+      "domain": "playvalorant.com",
+      "desc": "The Riot Client to install and play VALORANT.",
+      "descAr": "عميل Riot لتثبيت ولعب VALORANT."
     },
     {
       "id": "VirtualDesktop.Streamer",
       "en": "Virtual Desktop Streamer",
       "ar": "فيرتشوال ديسكتوب ستريمر",
       "category": "Gaming",
-      "domain": "vrdesktop.net"
+      "domain": "vrdesktop.net",
+      "desc": "Streams your PC to a VR headset with Virtual Desktop.",
+      "descAr": "يبث جهازك إلى نظارة الواقع الافتراضي مع Virtual Desktop."
     },
     {
       "id": "Betterbird.Betterbird",
       "en": "Betterbird",
       "ar": "بيتربيرد",
       "category": "Communication",
-      "domain": "betterbird.eu"
+      "domain": "betterbird.eu",
+      "desc": "A Thunderbird fork with extra fixes and features for email.",
+      "descAr": "نسخة معدّلة من ثندربيرد بإصلاحات وميزات إضافية للبريد."
     },
     {
       "id": "ChatterinoTeam.Chatterino",
       "en": "Chatterino",
       "ar": "تشاتيرينو",
       "category": "Communication",
-      "domain": "chatterino.com"
+      "domain": "chatterino.com",
+      "desc": "A fast chat client for Twitch.",
+      "descAr": "عميل دردشة سريع لمنصة تويتش."
     },
     {
       "id": "SpikeHD.Dorion",
       "en": "Dorion",
       "ar": "دوريون",
       "category": "Communication",
-      "domain": "spikehd.dev"
+      "domain": "spikehd.dev",
+      "desc": "A lightweight Discord client with plugin and theme support.",
+      "descAr": "عميل ديسكورد خفيف يدعم الإضافات والثيمات."
     },
     {
       "id": "Element.Element",
       "en": "Element",
       "ar": "إلمنت",
       "category": "Communication",
-      "domain": "element.io"
+      "domain": "element.io",
+      "desc": "A secure, decentralized chat app built on the Matrix network.",
+      "descAr": "تطبيق دردشة آمن ولامركزي مبني على شبكة Matrix."
     },
     {
       "id": "Proton.ProtonMail",
       "en": "Proton Mail",
       "ar": "بروتون ميل",
       "category": "Communication",
-      "domain": "proton.me"
+      "domain": "proton.me",
+      "desc": "Encrypted email from Proton for private communication.",
+      "descAr": "بريد إلكتروني مشفّر من Proton لتواصل خاص."
     },
     {
       "id": "Tox.qTox",
       "en": "QTox",
       "ar": "كيو توكس",
       "category": "Communication",
-      "domain": "qtox.github.io"
+      "domain": "qtox.github.io",
+      "desc": "A free, encrypted, peer-to-peer messenger with no central server.",
+      "descAr": "مراسل مجاني ومشفّر نظير لنظير دون خادم مركزي."
     },
     {
       "id": "TeamSpeakSystems.TeamSpeakClient",
       "en": "TeamSpeak 3",
       "ar": "تيم سبيك 3",
       "category": "Communication",
-      "domain": "teamspeak.com"
+      "domain": "teamspeak.com",
+      "desc": "Voice chat software with low latency, popular for gaming communities.",
+      "descAr": "برنامج دردشة صوتية بزمن استجابة منخفض، شائع لدى مجتمعات الألعاب."
     },
     {
       "id": "TeamSpeakSystems.TeamSpeakClient.Beta.6",
       "en": "TeamSpeak 6",
       "ar": "تيم سبيك 6",
       "category": "Communication",
-      "domain": "teamspeak.com"
+      "domain": "teamspeak.com",
+      "desc": "The beta of the new TeamSpeak 6 voice chat client.",
+      "descAr": "النسخة التجريبية من عميل TeamSpeak 6 الجديد للدردشة الصوتية."
     },
     {
       "id": "Vencord.Vesktop",
       "en": "Vesktop",
       "ar": "فيسكتوب",
       "category": "Communication",
-      "domain": "vesktop.dev"
+      "domain": "vesktop.dev",
+      "desc": "A custom Discord app with Vencord built in, better screen sharing, and Linux/Windows features.",
+      "descAr": "تطبيق ديسكورد مخصص يتضمن Vencord ومشاركة شاشة أفضل."
     },
     {
       "id": "Rakuten.Viber",
       "en": "Viber",
       "ar": "فايبر",
       "category": "Communication",
-      "domain": "viber.com"
+      "domain": "viber.com",
+      "desc": "A messaging and calling app with groups, stickers, and free calls.",
+      "descAr": "تطبيق مراسلة واتصال بمجموعات وملصقات ومكالمات مجانية."
     },
     {
       "id": "9NKSQGP7F2NH",
@@ -1044,98 +1338,126 @@
       "ar": "واتساب",
       "category": "Communication",
       "domain": "whatsapp.com",
-      "source": "msstore"
+      "source": "msstore",
+      "desc": "The official WhatsApp app for messaging and calling on your PC.",
+      "descAr": "تطبيق واتساب الرسمي للمراسلة والاتصال على حاسوبك."
     },
     {
       "id": "AIMP.AIMP",
       "en": "AIMP",
       "ar": "مشغّل AIMP",
       "category": "Media",
-      "domain": "aimp.ru"
+      "domain": "aimp.ru",
+      "desc": "A lightweight, feature-rich audio player with an equalizer and playlists.",
+      "descAr": "مشغّل صوت خفيف وغني بالميزات مع معادل وقوائم تشغيل."
     },
     {
       "id": "File-New-Project.EarTrumpet",
       "en": "EarTrumpet",
       "ar": "إير ترمبت",
       "category": "Media",
-      "domain": "eartrumpet.app"
+      "domain": "eartrumpet.app",
+      "desc": "A better volume mixer for Windows: control each app's volume.",
+      "descAr": "مازج صوت أفضل لويندوز: تحكّم بمستوى صوت كل تطبيق."
     },
     {
       "id": "AdrienAllard.FileConverter",
       "en": "File Converter",
       "ar": "محوّل الملفات",
       "category": "Media",
-      "domain": "file-converter.io"
+      "domain": "file-converter.io",
+      "desc": "Converts audio, video, images, and documents from the right-click menu.",
+      "descAr": "يحوّل الصوت والفيديو والصور من قائمة النقر بالزر الأيمن."
     },
     {
       "id": "GIMP.GIMP.3",
       "en": "GIMP",
       "ar": "جيمب 3",
       "category": "Design",
-      "domain": "gimp.org"
+      "domain": "gimp.org",
+      "desc": "A powerful free image editor, the leading open-source alternative to Photoshop.",
+      "descAr": "محرر صور مجاني قوي، أبرز بديل مفتوح المصدر لفوتوشوب."
     },
     {
       "id": "DuongDieuPhap.ImageGlass",
       "en": "ImageGlass",
       "ar": "عارض ImageGlass",
       "category": "Design",
-      "domain": "imageglass.org"
+      "domain": "imageglass.org",
+      "desc": "A clean, fast image viewer supporting many formats.",
+      "descAr": "عارض صور نظيف وسريع يدعم صيغًا كثيرة."
     },
     {
       "id": "clsid2.mpc-hc",
       "en": "Media Player Classic - Home Cinema",
       "ar": "مشغّل MPC-HC",
       "category": "Media",
-      "domain": "mpc-hc.org"
+      "domain": "mpc-hc.org",
+      "desc": "A classic lightweight media player for video and audio.",
+      "descAr": "مشغّل وسائط كلاسيكي خفيف للفيديو والصوت."
     },
     {
       "id": "mpc-qt.mpc-qt",
       "en": "mpc-qt",
       "ar": "مشغّل mpc-qt",
       "category": "Media",
-      "domain": "mpc-qt.github.io"
+      "domain": "mpc-qt.github.io",
+      "desc": "A modern Media Player Classic style player built on mpv.",
+      "descAr": "مشغّل بأسلوب Media Player Classic الحديث مبني على mpv."
     },
     {
       "id": "shinchiro.mpv",
       "en": "mpv",
       "ar": "مشغّل mpv",
       "category": "Media",
-      "domain": "mpv.io"
+      "domain": "mpv.io",
+      "desc": "A minimal, powerful command-line media player.",
+      "descAr": "مشغّل وسائط بسيط وقوي يعمل من سطر الأوامر."
     },
     {
       "id": "nomacs.nomacs",
       "en": "nomacs",
       "ar": "نوماكس",
       "category": "Design",
-      "domain": "nomacs.org"
+      "domain": "nomacs.org",
+      "desc": "A free image viewer that supports RAW files and image sync between windows.",
+      "descAr": "عارض صور مجاني يدعم ملفات RAW ومزامنة العرض بين النوافذ."
     },
     {
       "id": "Amazon.Corretto.21.JDK",
       "en": "Amazon Corretto 21",
       "ar": "أمازون كوريتو 21",
       "category": "Development",
-      "domain": "aws.amazon.com"
+      "domain": "aws.amazon.com",
+      "desc": "Amazon's free, long-term-supported Java 21 JDK.",
+      "descAr": "حزمة جافا 21 المجانية ذات الدعم الطويل من أمازون."
     },
     {
       "id": "Amazon.Corretto.25.JDK",
       "en": "Amazon Corretto 25",
       "ar": "أمازون كوريتو 25",
       "category": "Development",
-      "domain": "aws.amazon.com"
+      "domain": "aws.amazon.com",
+      "desc": "Amazon's free, long-term-supported Java 25 JDK.",
+      "descAr": "حزمة جافا 25 المجانية ذات الدعم الطويل من أمازون."
     },
     {
       "id": "Amazon.Corretto.8.JDK",
       "en": "Amazon Corretto 8",
       "ar": "أمازون كوريتو 8",
       "category": "Development",
-      "domain": "aws.amazon.com"
+      "domain": "aws.amazon.com",
+      "desc": "Amazon's free Java 8 JDK for older applications.",
+      "descAr": "حزمة جافا 8 المجانية من أمازون للتطبيقات القديمة."
     },
     {
       "id": "Bruno.Bruno",
       "en": "Bruno",
       "ar": "برونو",
       "category": "Development",
-      "domain": "usebruno.com"
+      "domain": "usebruno.com",
+      "desc": "An open-source API client that stores collections as plain files.",
+      "descAr": "عميل API مفتوح المصدر يحفظ المجموعات كملفات عادية."
     },
     {
       "id": "9NT1R1C2HH7J",
@@ -1143,756 +1465,972 @@
       "ar": "تشات جي بي تي",
       "category": "Development",
       "domain": "openai.com",
-      "source": "msstore"
+      "source": "msstore",
+      "desc": "OpenAI's ChatGPT app for your desktop: chat, ask questions, and get help with writing and code.",
+      "descAr": "تطبيق ChatGPT من OpenAI لسطح المكتب: دردشة وأسئلة ومساعدة في الكتابة والبرمجة."
     },
     {
       "id": "Anthropic.ClaudeCode",
       "en": "Claude Code",
       "ar": "كلود كود",
       "category": "Development",
-      "domain": "code.claude.com"
+      "domain": "code.claude.com",
+      "desc": "Anthropic's AI coding assistant that works in your terminal and project.",
+      "descAr": "مساعد البرمجة بالذكاء الاصطناعي من Anthropic يعمل في الطرفية ومشروعك."
     },
     {
       "id": "Anthropic.Claude",
       "en": "Claude Desktop",
       "ar": "كلود (سطح المكتب)",
       "category": "Development",
-      "domain": "claude.ai"
+      "domain": "claude.ai",
+      "desc": "Anthropic's Claude AI assistant app for your desktop.",
+      "descAr": "تطبيق مساعد Claude للذكاء الاصطناعي من Anthropic لسطح المكتب."
     },
     {
       "id": "Kitware.CMake",
       "en": "CMake",
       "ar": "سي ميك",
       "category": "Development",
-      "domain": "cmake.org"
+      "domain": "cmake.org",
+      "desc": "A cross-platform tool to configure and build C/C++ projects.",
+      "descAr": "أداة متعددة المنصات لإعداد وبناء مشاريع C/C++."
     },
     {
       "id": "OpenAI.Codex",
       "en": "Codex",
       "ar": "كوديكس",
       "category": "Development",
-      "domain": "developers.openai.com"
+      "domain": "developers.openai.com",
+      "desc": "OpenAI's AI coding agent that runs in your terminal.",
+      "descAr": "وكيل البرمجة من OpenAI الذي يعمل في الطرفية."
     },
     {
       "id": "Anysphere.Cursor",
       "en": "Cursor",
       "ar": "كيرسر",
       "category": "Development",
-      "domain": "cursor.com"
+      "domain": "cursor.com",
+      "desc": "An AI-powered code editor built for pair programming with AI.",
+      "descAr": "محرر أكواد مدعوم بالذكاء الاصطناعي للبرمجة المشتركة معه."
     },
     {
       "id": "Schniz.fnm",
       "en": "Fast Node Manager",
       "ar": "مدير نود السريع",
       "category": "Development",
-      "domain": ""
+      "domain": "",
+      "desc": "A fast tool to install and switch between Node.js versions.",
+      "descAr": "أداة سريعة لتثبيت إصدارات Node.js والتبديل بينها."
     },
     {
       "id": "GitExtensionsTeam.GitExtensions",
       "en": "Git Extensions",
       "ar": "جيت إكستنشنز",
       "category": "Development",
-      "domain": "gitextensions.github.io"
+      "domain": "gitextensions.github.io",
+      "desc": "A graphical interface for Git with history and branch tools.",
+      "descAr": "واجهة رسومية لـ Git مع أدوات السجل والفروع."
     },
     {
       "id": "GitHub.cli",
       "en": "GitHub CLI",
       "ar": "جيت هب CLI",
       "category": "Development",
-      "domain": "cli.github.com"
+      "domain": "cli.github.com",
+      "desc": "GitHub from the command line: pull requests, issues, and more.",
+      "descAr": "GitHub من سطر الأوامر: طلبات الدمج والمشاكل وغيرها."
     },
     {
       "id": "GoLang.Go",
       "en": "Go",
       "ar": "لغة جو (Go)",
       "category": "Development",
-      "domain": "go.dev"
+      "domain": "go.dev",
+      "desc": "The Go programming language toolchain from Google.",
+      "descAr": "أدوات لغة البرمجة Go من جوجل."
     },
     {
       "id": "JetBrains.Toolbox",
       "en": "Jetbrains Toolbox",
       "ar": "جيت براينز تولبوكس",
       "category": "Development",
-      "domain": "jetbrains.com"
+      "domain": "jetbrains.com",
+      "desc": "Installs and updates JetBrains IDEs like IntelliJ, PyCharm, and WebStorm.",
+      "descAr": "يثبّت ويحدّث بيئات JetBrains مثل IntelliJ وPyCharm وWebStorm."
     },
     {
       "id": "JesseDuffield.lazygit",
       "en": "Lazygit",
       "ar": "ليزي جيت",
       "category": "Development",
-      "domain": ""
+      "domain": "",
+      "desc": "A simple terminal UI for Git commands.",
+      "descAr": "واجهة طرفية بسيطة لأوامر Git."
     },
     {
       "id": "rjpcomputing.luaforwindows",
       "en": "Lua",
       "ar": "لوا",
       "category": "Development",
-      "domain": "lua.org"
+      "domain": "lua.org",
+      "desc": "The Lua scripting language environment for Windows.",
+      "descAr": "بيئة لغة Lua البرمجية لويندوز."
     },
     {
       "id": "Neovim.Neovim",
       "en": "Neovim",
       "ar": "نيوفيم",
       "category": "Development",
-      "domain": "neovim.io"
+      "domain": "neovim.io",
+      "desc": "A modern, extensible Vim-based text editor for the terminal.",
+      "descAr": "محرر نصوص حديث وقابل للتوسعة مبني على Vim للطرفية."
     },
     {
       "id": "OpenJS.NodeJS",
       "en": "NodeJS",
       "ar": "نود جي إس (الأحدث)",
       "category": "Development",
-      "domain": "nodejs.org"
+      "domain": "nodejs.org",
+      "desc": "The current version of Node.js for running JavaScript outside the browser.",
+      "descAr": "النسخة الحالية من Node.js لتشغيل جافاسكربت خارج المتصفح."
     },
     {
       "id": "JanDeDobbeleer.OhMyPosh",
       "en": "Oh My Posh",
       "ar": "أوه ماي بوش",
       "category": "Development",
-      "domain": "ohmyposh.dev"
+      "domain": "ohmyposh.dev",
+      "desc": "Makes your terminal prompt beautiful and informative.",
+      "descAr": "يجعل سطر الطرفية جميلًا وغنيًا بالمعلومات."
     },
     {
       "id": "pnpm.pnpm",
       "en": "pnpm",
       "ar": "بي إن بي إم",
       "category": "Development",
-      "domain": "pnpm.io"
+      "domain": "pnpm.io",
+      "desc": "A fast, disk-efficient package manager for JavaScript projects.",
+      "descAr": "مدير حزم سريع وموفّر للمساحة لمشاريع جافاسكربت."
     },
     {
       "id": "Python.Python.3.14",
       "en": "Python3",
       "ar": "بايثون 3.14",
       "category": "Development",
-      "domain": "python.org"
+      "domain": "python.org",
+      "desc": "The Python 3.14 programming language and interpreter.",
+      "descAr": "لغة البرمجة بايثون 3.14 ومفسّرها."
     },
     {
       "id": "RubyInstallerTeam.Ruby.4.0",
       "en": "Ruby",
       "ar": "روبي",
       "category": "Development",
-      "domain": "rubyinstaller.org"
+      "domain": "rubyinstaller.org",
+      "desc": "The Ruby programming language for Windows.",
+      "descAr": "لغة البرمجة روبي لويندوز."
     },
     {
       "id": "Rustlang.Rust.MSVC",
       "en": "Rust",
       "ar": "راست",
       "category": "Development",
-      "domain": "rust-lang.org"
+      "domain": "rust-lang.org",
+      "desc": "The Rust programming language toolchain for Windows (MSVC).",
+      "descAr": "أدوات لغة Rust لويندوز (MSVC)."
     },
     {
       "id": "Starship.Starship",
       "en": "Starship",
       "ar": "ستارشيب",
       "category": "Development",
-      "domain": "starship.rs"
+      "domain": "starship.rs",
+      "desc": "A fast, customizable prompt for any shell.",
+      "descAr": "سطر أوامر سريع وقابل للتخصيص لأي طرفية."
     },
     {
       "id": "WinsiderSS.SystemInformer",
       "en": "System Informer",
       "ar": "سيستم إنفورمر",
       "category": "Development",
-      "domain": "systeminformer.com"
+      "domain": "systeminformer.com",
+      "desc": "An advanced task manager to monitor processes, services, and network usage.",
+      "descAr": "مدير مهام متقدم لمراقبة العمليات والخدمات واستخدام الشبكة."
     },
     {
       "id": "astral-sh.uv",
       "en": "uv",
       "ar": "يو في (uv)",
       "category": "Development",
-      "domain": "docs.astral.sh"
+      "domain": "docs.astral.sh",
+      "desc": "An extremely fast Python package and project manager.",
+      "descAr": "مدير حزم ومشاريع بايثون فائق السرعة."
     },
     {
       "id": "Hashicorp.Vagrant",
       "en": "Vagrant",
       "ar": "فاجرانت",
       "category": "Development",
-      "domain": "developer.hashicorp.com"
+      "domain": "developer.hashicorp.com",
+      "desc": "Builds and manages reproducible virtual machine environments.",
+      "descAr": "ينشئ ويدير بيئات أجهزة افتراضية قابلة للتكرار."
     },
     {
       "id": "Microsoft.VisualStudio.Community",
       "en": "Visual Studio 2026",
       "ar": "فيجوال ستوديو 2026",
       "category": "Development",
-      "domain": "visualstudio.microsoft.com"
+      "domain": "visualstudio.microsoft.com",
+      "desc": "Microsoft's latest full IDE for .NET, C++, and game development. Free for individuals.",
+      "descAr": "أحدث بيئة تطوير متكاملة من مايكروسوفت لـ .NET وC++ والألعاب، مجانية للأفراد."
     },
     {
       "id": "VSCodium.VSCodium",
       "en": "VS Codium",
       "ar": "في إس كوديوم",
       "category": "Development",
-      "domain": "vscodium.com"
+      "domain": "vscodium.com",
+      "desc": "VS Code builds without Microsoft's telemetry and branding.",
+      "descAr": "نسخة VS Code بدون تتبّع مايكروسوفت وعلاماتها."
     },
     {
       "id": "Yarn.Yarn",
       "en": "Yarn",
       "ar": "يارن",
       "category": "Development",
-      "domain": "yarnpkg.com"
+      "domain": "yarnpkg.com",
+      "desc": "A JavaScript package manager for installing project dependencies.",
+      "descAr": "مدير حزم جافاسكربت لتثبيت اعتماديات المشاريع."
     },
     {
       "id": "ZedIndustries.Zed",
       "en": "Zed",
       "ar": "زد",
       "category": "Development",
-      "domain": "zed.dev"
+      "domain": "zed.dev",
+      "desc": "A fast, modern code editor with built-in collaboration and AI.",
+      "descAr": "محرر أكواد سريع وحديث مع تعاون وذكاء اصطناعي مدمجين."
     },
     {
       "id": "AgileBits.1Password",
       "en": "1Password",
       "ar": "ون باسوورد",
       "category": "Security",
-      "domain": "1password.com"
+      "domain": "1password.com",
+      "desc": "A premium password manager with vaults, passkeys, and secure sharing.",
+      "descAr": "مدير كلمات مرور متميز بخزائن ومفاتيح مرور ومشاركة آمنة."
     },
     {
       "id": "amir1376.ABDownloadManager",
       "en": "AB Download Manager",
       "ar": "مدير التحميل AB",
       "category": "Utilities",
-      "domain": "abdownloadmanager.com"
+      "domain": "abdownloadmanager.com",
+      "desc": "A fast download manager with queues and browser integration.",
+      "descAr": "مدير تحميل سريع بقوائم انتظار وتكامل مع المتصفح."
     },
     {
       "id": "AnyDesk.AnyDesk",
       "en": "AnyDesk",
       "ar": "أني ديسك",
       "category": "Utilities",
-      "domain": "anydesk.com"
+      "domain": "anydesk.com",
+      "desc": "A fast remote desktop app for controlling another PC.",
+      "descAr": "تطبيق سطح مكتب بعيد سريع للتحكم بجهاز آخر."
     },
     {
       "id": "Blur009.BlurAutoClicker",
       "en": "BlurAutoClicker",
       "ar": "النقر التلقائي Blur",
       "category": "Utilities",
-      "domain": "blur009.vercel.app"
+      "domain": "blur009.vercel.app",
+      "desc": "An auto clicker that repeats mouse clicks for you.",
+      "descAr": "نقر تلقائي يكرر نقرات الماوس عنك."
     },
     {
       "id": "Klocman.BulkCrapUninstaller",
       "en": "Bulk Crap Uninstaller",
       "ar": "أداة إزالة البرامج BCU",
       "category": "Utilities",
-      "domain": "bcuninstaller.com"
+      "domain": "bcuninstaller.com",
+      "desc": "Removes many programs at once, including leftovers.",
+      "descAr": "يحذف برامج كثيرة دفعة واحدة مع بقاياها."
     },
     {
       "id": "CrystalDewWorld.CrystalDiskMark",
       "en": "Crystal Disk Mark",
       "ar": "كريستال ديسك مارك",
       "category": "Utilities",
-      "domain": "crystalmark.info"
+      "domain": "crystalmark.info",
+      "desc": "Benchmarks the read and write speed of your drives.",
+      "descAr": "يقيس سرعة قراءة وكتابة أقراصك."
     },
     {
       "id": "Deskflow.Deskflow",
       "en": "Deskflow",
       "ar": "ديسك فلو",
       "category": "Utilities",
-      "domain": "deskflow.org"
+      "domain": "deskflow.org",
+      "desc": "Share one keyboard and mouse between multiple computers.",
+      "descAr": "شارك لوحة مفاتيح وماوس واحدة بين عدة أجهزة."
     },
     {
       "id": "ente-io.auth-desktop",
       "en": "Ente Auth",
       "ar": "إنتي أوث",
       "category": "Security",
-      "domain": "ente.io"
+      "domain": "ente.io",
+      "desc": "An open-source two-factor authentication (2FA) code app with encrypted backups.",
+      "descAr": "تطبيق مفتوح المصدر لرموز التحقق بخطوتين مع نسخ احتياطي مشفّر."
     },
     {
       "id": "flux.flux",
       "en": "F.lux",
       "ar": "إف لكس",
       "category": "Utilities",
-      "domain": "justgetflux.com"
+      "domain": "justgetflux.com",
+      "desc": "Adjusts your screen's color warmth by time of day to ease eye strain.",
+      "descAr": "يعدّل دفء ألوان الشاشة حسب الوقت لتخفيف إجهاد العين."
     },
     {
       "id": "FilesCommunity.Files",
       "en": "Files",
       "ar": "فايلز",
       "category": "Utilities",
-      "domain": "files.community"
+      "domain": "files.community",
+      "desc": "A modern file manager for Windows with tabs and a clean design.",
+      "descAr": "مدير ملفات حديث لويندوز بتبويبات وتصميم نظيف."
     },
     {
       "id": "glzr-io.glazewm",
       "en": "GlazeWM",
       "ar": "جليز دبليو إم",
       "category": "Utilities",
-      "domain": "glzr.io"
+      "domain": "glzr.io",
+      "desc": "A tiling window manager for Windows, inspired by i3.",
+      "descAr": "مدير نوافذ مقسّمة لويندوز مستوحى من i3."
     },
     {
       "id": "Hugo.Hugo.Extended",
       "en": "Hugo",
       "ar": "هوغو",
       "category": "Development",
-      "domain": "gohugo.io"
+      "domain": "gohugo.io",
+      "desc": "A very fast static site generator for building websites.",
+      "descAr": "مولّد مواقع ثابتة سريع جدًا لبناء المواقع."
     },
     {
       "id": "MHNexus.HxD",
       "en": "HxD Hex Editor",
       "ar": "محرر HxD",
       "category": "Utilities",
-      "domain": "mh-nexus.de"
+      "domain": "mh-nexus.de",
+      "desc": "A fast hex editor for viewing and editing files and disk contents.",
+      "descAr": "محرر هكس سريع لعرض وتعديل الملفات ومحتوى الأقراص."
     },
     {
       "id": "Tonec.InternetDownloadManager",
       "en": "Internet Download Manager",
       "ar": "إنترنت داونلود مانجر",
       "category": "Utilities",
-      "domain": "internetdownloadmanager.com"
+      "domain": "internetdownloadmanager.com",
+      "desc": "A popular download manager that speeds up and resumes downloads (paid).",
+      "descAr": "مدير تحميل شهير يسرّع التحميل ويستأنفه (مدفوع)."
     },
     {
       "id": "sylikc.JPEGView",
       "en": "JPEG View",
       "ar": "عارض JPEG",
       "category": "Utilities",
-      "domain": ""
+      "domain": "",
+      "desc": "A tiny, fast image viewer for JPEG and other formats.",
+      "descAr": "عارض صور صغير وسريع لصيغة JPEG وغيرها."
     },
     {
       "id": "MiniTool.PartitionWizard.Free",
       "en": "MiniTool Partition Wizard",
       "ar": "ميني تول لإدارة الأقراص",
       "category": "Utilities",
-      "domain": "partitionwizard.com"
+      "domain": "partitionwizard.com",
+      "desc": "Manages disk partitions: resize, merge, clone, and recover.",
+      "descAr": "يدير أقسام القرص: تغيير الحجم والدمج والاستنساخ والاسترجاع."
     },
     {
       "id": "rcmaehl.MSEdgeRedirect",
       "en": "MSEdgeRedirect",
       "ar": "MSEdgeRedirect",
       "category": "Utilities",
-      "domain": ""
+      "domain": "",
+      "desc": "Redirects Windows links and searches to your default browser instead of Edge.",
+      "descAr": "يحوّل روابط وبحث ويندوز إلى متصفحك الافتراضي بدل إيدج."
     },
     {
       "id": "M2Team.NanaZip",
       "en": "NanaZip",
       "ar": "نانا زيب",
       "category": "Utilities",
-      "domain": "nanazip.org"
+      "domain": "nanazip.org",
+      "desc": "A modern 7-Zip fork with a Windows 11 style and context menu.",
+      "descAr": "نسخة حديثة من 7-Zip بتصميم ويندوز 11 وقائمة نقر أيمن."
     },
     {
       "id": "Nilesoft.Shell",
       "en": "Nilesoft Shell",
       "ar": "نايل سوفت شل",
       "category": "Utilities",
-      "domain": "nilesoft.org"
+      "domain": "nilesoft.org",
+      "desc": "Customizes the Windows right-click context menu.",
+      "descAr": "يخصص قائمة النقر بالزر الأيمن في ويندوز."
     },
     {
       "id": "TechPowerUp.NVCleanstall",
       "en": "NVCleanstall",
       "ar": "إن في كلين ستول",
       "category": "Utilities",
-      "domain": "techpowerup.com"
+      "domain": "techpowerup.com",
+      "desc": "Installs NVIDIA drivers without the extra bloatware, with tweaks.",
+      "descAr": "يثبّت تعريفات NVIDIA بدون البرامج الإضافية مع تعديلات."
     },
     {
       "id": "xM4ddy.OFGB",
       "en": "OFGB",
       "ar": "OFGB",
       "category": "Utilities",
-      "domain": ""
+      "domain": "",
+      "desc": "Turns off ads and suggestions across Windows 11 settings.",
+      "descAr": "يعطّل الإعلانات والاقتراحات في إعدادات ويندوز 11."
     },
     {
       "id": "OPAutoClicker.OPAutoClicker",
       "en": "OPAutoClicker",
       "ar": "OP Auto Clicker",
       "category": "Utilities",
-      "domain": "opautoclicker.com"
+      "domain": "opautoclicker.com",
+      "desc": "A simple auto clicker for mouse clicks.",
+      "descAr": "نقر تلقائي بسيط لنقرات الماوس."
     },
     {
       "id": "OpenRGB.OpenRGB",
       "en": "OpenRGB",
       "ar": "أوبن آر جي بي",
       "category": "Peripherals",
-      "domain": "openrgb.org"
+      "domain": "openrgb.org",
+      "desc": "Controls RGB lighting from many brands in one app, with no bloat.",
+      "descAr": "يتحكم بإضاءة RGB لعلامات كثيرة في تطبيق واحد وبدون زوائد."
     },
     {
       "id": "Oracle.VirtualBox",
       "en": "Oracle VirtualBox",
       "ar": "فيرتشوال بوكس",
       "category": "Utilities",
-      "domain": "virtualbox.org"
+      "domain": "virtualbox.org",
+      "desc": "Free virtualization software to run other operating systems in a virtual machine.",
+      "descAr": "برنامج افتراضية مجاني لتشغيل أنظمة أخرى داخل جهاز افتراضي."
     },
     {
       "id": "Giorgiotani.Peazip",
       "en": "PeaZip",
       "ar": "بي زيب",
       "category": "Utilities",
-      "domain": "peazip.github.io"
+      "domain": "peazip.github.io",
+      "desc": "A free file archiver supporting many formats with encryption.",
+      "descAr": "ضاغط ملفات مجاني يدعم صيغًا كثيرة مع التشفير."
     },
     {
       "id": "Fleex255.PolicyPlus",
       "en": "Policy Plus",
       "ar": "بوليسي بلس",
       "category": "Utilities",
-      "domain": ""
+      "domain": "",
+      "desc": "A local group policy editor that works on Windows Home too.",
+      "descAr": "محرر سياسات المجموعة المحلية يعمل حتى على ويندوز Home."
     },
     {
       "id": "BitSum.ProcessLasso",
       "en": "Process Lasso",
       "ar": "بروسس لاسو",
       "category": "Utilities",
-      "domain": "bitsum.com"
+      "domain": "bitsum.com",
+      "desc": "Optimizes CPU priority and process behavior to keep your PC responsive.",
+      "descAr": "يحسّن أولوية المعالج وسلوك العمليات لإبقاء جهازك سريع الاستجابة."
     },
     {
       "id": "Proton.ProtonAuthenticator",
       "en": "Proton Authenticator",
       "ar": "مصادق بروتون",
       "category": "Security",
-      "domain": "proton.me"
+      "domain": "proton.me",
+      "desc": "A 2FA code generator from Proton with encrypted backup.",
+      "descAr": "مولّد رموز تحقق بخطوتين من Proton مع نسخ احتياطي مشفّر."
     },
     {
       "id": "Proton.ProtonDrive",
       "en": "Proton Drive",
       "ar": "بروتون درايف",
       "category": "Cloud",
-      "domain": "proton.me"
+      "domain": "proton.me",
+      "desc": "Encrypted cloud storage from Proton.",
+      "descAr": "تخزين سحابي مشفّر من Proton."
     },
     {
       "id": "Proton.ProtonPass",
       "en": "Proton Pass",
       "ar": "بروتون باس",
       "category": "Security",
-      "domain": "proton.me"
+      "domain": "proton.me",
+      "desc": "A password manager from Proton with email aliases and passkeys.",
+      "descAr": "مدير كلمات مرور من Proton مع بريد مستعار ومفاتيح مرور."
     },
     {
       "id": "RevoUninstaller.RevoUninstaller",
       "en": "Revo Uninstaller",
       "ar": "ريفو أنإنستالر",
       "category": "Utilities",
-      "domain": "revouninstaller.com"
+      "domain": "revouninstaller.com",
+      "desc": "Removes programs completely, including leftover files and registry entries.",
+      "descAr": "يحذف البرامج بالكامل مع الملفات المتبقية وإدخالات السجل."
     },
     {
       "id": "WhirlwindFX.SignalRgb",
       "en": "SignalRGB",
       "ar": "سيجنال آر جي بي",
       "category": "Peripherals",
-      "domain": "signalrgb.com"
+      "domain": "signalrgb.com",
+      "desc": "Sync RGB lighting across devices and brands with effects.",
+      "descAr": "يزامن إضاءة RGB بين الأجهزة والعلامات مع مؤثرات."
     },
     {
       "id": "GlennDelahoy.SnappyDriverInstallerOrigin",
       "en": "Snappy Driver Installer Origin",
       "ar": "منزّل التعريفات Snappy",
       "category": "Utilities",
-      "domain": "glenn.delahoy.com"
+      "domain": "glenn.delahoy.com",
+      "desc": "Finds and installs missing or outdated drivers, even offline.",
+      "descAr": "يجد التعريفات المفقودة أو القديمة ويثبّتها حتى دون إنترنت."
     },
     {
       "id": "StartIsBack.StartAllBack",
       "en": "StartAllBack",
       "ar": "ستارت أول باك",
       "category": "Utilities",
-      "domain": "startallback.com"
+      "domain": "startallback.com",
+      "desc": "Customizes the Windows 11 Start menu and taskbar to look classic (paid).",
+      "descAr": "يخصص قائمة ابدأ وشريط المهام في ويندوز 11 بشكل كلاسيكي (مدفوع)."
     },
     {
       "id": "Tailscale.Tailscale",
       "en": "Tailscale",
       "ar": "تيل سكيل",
       "category": "Security",
-      "domain": "tailscale.com"
+      "domain": "tailscale.com",
+      "desc": "A simple, secure VPN mesh that connects your devices privately.",
+      "descAr": "شبكة VPN بسيطة وآمنة تربط أجهزتك ببعضها بخصوصية."
     },
     {
       "id": "GlavSoft.TightVNC",
       "en": "TightVNC",
       "ar": "تايت في إن سي",
       "category": "Utilities",
-      "domain": "tightvnc.com"
+      "domain": "tightvnc.com",
+      "desc": "A free remote desktop tool using the VNC protocol.",
+      "descAr": "أداة سطح مكتب بعيد مجانية تعتمد بروتوكول VNC."
     },
     {
       "id": "Ghisler.TotalCommander",
       "en": "Total Commander",
       "ar": "توتال كوماندر",
       "category": "Utilities",
-      "domain": "ghisler.com"
+      "domain": "ghisler.com",
+      "desc": "A classic dual-pane file manager with powerful tools.",
+      "descAr": "مدير ملفات كلاسيكي بلوحتين مع أدوات قوية."
     },
     {
       "id": "CharlesMilette.TranslucentTB",
       "en": "TranslucentTB",
       "ar": "شريط مهام شفاف",
       "category": "Utilities",
-      "domain": "translucenttb.github.io"
+      "domain": "translucenttb.github.io",
+      "desc": "Makes the Windows taskbar transparent or blurred.",
+      "descAr": "يجعل شريط مهام ويندوز شفافًا أو ضبابيًا."
     },
     {
       "id": "JAMSoftware.TreeSize.Free",
       "en": "TreeSize Free",
       "ar": "تري سايز",
       "category": "Utilities",
-      "domain": "jam-software.com"
+      "domain": "jam-software.com",
+      "desc": "Shows which folders take up the most disk space.",
+      "descAr": "يعرض أي المجلدات تشغل أكبر مساحة على القرص."
     },
     {
       "id": "Devolutions.UniGetUI",
       "en": "UniGetUI",
       "ar": "يوني جيت يو آي",
       "category": "Utilities",
-      "domain": "devolutions.net"
+      "domain": "devolutions.net",
+      "desc": "A graphical interface for winget, Scoop, and other package managers.",
+      "descAr": "واجهة رسومية لـ winget وScoop وغيرها من مديري الحزم."
     },
     {
       "id": "WiseCleaner.WiseProgramUninstaller",
       "en": "Wise Program Uninstaller",
       "ar": "وايز لإزالة البرامج",
       "category": "Utilities",
-      "domain": "wisecleaner.com"
+      "domain": "wisecleaner.com",
+      "desc": "Uninstalls programs and removes their leftovers.",
+      "descAr": "يحذف البرامج وبقاياها."
     },
     {
       "id": "AntibodySoftware.WizTree",
       "en": "WizTree",
       "ar": "ويز تري",
       "category": "Utilities",
-      "domain": "wiztreefree.com"
+      "domain": "wiztreefree.com",
+      "desc": "The fastest disk space analyzer for finding large files.",
+      "descAr": "أسرع محلل لمساحة القرص لإيجاد الملفات الكبيرة."
     },
     {
       "id": "Cyanfish.NAPS2",
       "en": "NAPS2",
       "ar": "ماسح الوثائق NAPS2",
       "category": "Productivity",
-      "domain": "naps2.com"
+      "domain": "naps2.com",
+      "desc": "A simple scanner app to scan documents to PDF or images.",
+      "descAr": "تطبيق بسيط للماسح الضوئي لتحويل المستندات إلى PDF أو صور."
     },
     {
       "id": "KDE.Okular",
       "en": "Okular",
       "ar": "أوكولار",
       "category": "Productivity",
-      "domain": "okular.kde.org"
+      "domain": "okular.kde.org",
+      "desc": "A versatile document viewer for PDF, EPUB, and more.",
+      "descAr": "عارض مستندات متعدد الاستخدامات لـ PDF وEPUB وغيرها."
     },
     {
       "id": "TrackerSoftware.PDF-XChangeEditor",
       "en": "PDF-XChange Editor",
       "ar": "محرر PDF-XChange",
       "category": "Productivity",
-      "domain": "pdf-xchange.com"
+      "domain": "pdf-xchange.com",
+      "desc": "A lightweight PDF editor and viewer with annotation tools.",
+      "descAr": "محرر وعارض PDF خفيف مع أدوات تعليق."
     },
     {
       "id": "geeksoftwareGmbH.PDF24Creator",
       "en": "PDF24 Creator",
       "ar": "PDF24",
       "category": "Productivity",
-      "domain": "tools.pdf24.org"
+      "domain": "tools.pdf24.org",
+      "desc": "Free tools to create, merge, and convert PDF files.",
+      "descAr": "أدوات مجانية لإنشاء ودمج وتحويل ملفات PDF."
     },
     {
       "id": "PDFgear.PDFgear",
       "en": "PDFgear",
       "ar": "بي دي إف جير",
       "category": "Productivity",
-      "domain": "pdfgear.com"
+      "domain": "pdfgear.com",
+      "desc": "A free PDF editor, converter, and reader with AI features.",
+      "descAr": "محرر ومحوّل وقارئ PDF مجاني بميزات ذكاء اصطناعي."
     },
     {
       "id": "PDFsam.PDFsam",
       "en": "PDFsam Basic",
       "ar": "PDFsam",
       "category": "Productivity",
-      "domain": "pdfsam.org"
+      "domain": "pdfsam.org",
+      "desc": "A free tool to split, merge, rotate, and extract PDF pages.",
+      "descAr": "أداة مجانية لتقسيم ودمج وتدوير واستخراج صفحات PDF."
     },
     {
       "id": "pbek.QOwnNotes",
       "en": "QOwnNotes",
       "ar": "كيو أون نوتس",
       "category": "Productivity",
-      "domain": "qownnotes.org"
+      "domain": "qownnotes.org",
+      "desc": "A plain-text Markdown notebook that syncs with Nextcloud.",
+      "descAr": "دفتر ملاحظات Markdown نصي يزامن مع Nextcloud."
     },
     {
       "id": "Automattic.Simplenote",
       "en": "Simplenote",
       "ar": "سيمبل نوت",
       "category": "Productivity",
-      "domain": "simplenote.com"
+      "domain": "simplenote.com",
+      "desc": "A simple, free note-taking app that syncs across devices.",
+      "descAr": "تطبيق ملاحظات بسيط ومجاني يزامن بين الأجهزة."
     },
     {
       "id": "Xournal++.Xournal++",
       "en": "Xournal++",
       "ar": "زورنال++",
       "category": "Productivity",
-      "domain": "xournalpp.github.io"
+      "domain": "xournalpp.github.io",
+      "desc": "A handwriting notetaking and PDF annotation app for pen tablets.",
+      "descAr": "تطبيق ملاحظات بخط اليد وتعليق على PDF لأجهزة القلم."
     },
     {
       "id": "DigitalScholar.Zotero",
       "en": "Zotero",
       "ar": "زوتيرو",
       "category": "Productivity",
-      "domain": "zotero.org"
+      "domain": "zotero.org",
+      "desc": "A research assistant that collects, organizes, and cites sources.",
+      "descAr": "مساعد بحثي يجمع المصادر وينظمها ويوثّقها."
     },
     {
       "id": "Famatech.AdvancedIPScanner",
       "en": "Advanced IP Scanner",
       "ar": "ماسح IP المتقدم",
       "category": "Security",
-      "domain": "advanced-ip-scanner.com"
+      "domain": "advanced-ip-scanner.com",
+      "desc": "A fast network scanner to find devices on your local network.",
+      "descAr": "ماسح شبكة سريع لإيجاد الأجهزة على شبكتك المحلية."
     },
     {
       "id": "angryziber.AngryIPScanner",
       "en": "Angry IP Scanner",
       "ar": "أنجري آي بي سكانر",
       "category": "Security",
-      "domain": "angryip.org"
+      "domain": "angryip.org",
+      "desc": "A fast, simple network scanner for IPs and ports.",
+      "descAr": "ماسح شبكة سريع وبسيط للعناوين والمنافذ."
     },
     {
       "id": "Maxon.CinebenchR23",
       "en": "Cinebench R23",
       "ar": "سينيبنش R23",
       "category": "ProTools",
-      "domain": "maxon.net"
+      "domain": "maxon.net",
+      "desc": "A CPU benchmark that measures processor performance.",
+      "descAr": "اختبار أداء يقيس قوة المعالج."
     },
     {
       "id": "gerardog.gsudo",
       "en": "gsudo",
       "ar": "جي سودو",
       "category": "ProTools",
-      "domain": "gerardog.github.io"
+      "domain": "gerardog.github.io",
+      "desc": "A sudo for Windows: run commands as administrator from the terminal.",
+      "descAr": "أمر sudo لويندوز: شغّل الأوامر كمسؤول من الطرفية."
     },
     {
       "id": "CPUID.HWMonitor",
       "en": "HWMonitor",
       "ar": "إتش دبليو مونيتور",
       "category": "ProTools",
-      "domain": "cpuid.com"
+      "domain": "cpuid.com",
+      "desc": "Monitors temperatures, voltages, and fan speeds of your hardware.",
+      "descAr": "يراقب حرارة وجهد وسرعة مراوح العتاد."
     },
     {
       "id": "MullvadVPN.MullvadVPN",
       "en": "Mullvad VPN",
       "ar": "مولفاد VPN",
       "category": "Security",
-      "domain": "mullvad.net"
+      "domain": "mullvad.net",
+      "desc": "A privacy-focused VPN with no account email and a strict no-logs policy.",
+      "descAr": "خدمة VPN تركز على الخصوصية دون بريد حساب وبسياسة عدم حفظ سجلات."
     },
     {
       "id": "OpenVPNTechnologies.OpenVPNConnect",
       "en": "OpenVPN Connect",
       "ar": "أوبن في بي إن",
       "category": "Security",
-      "domain": "openvpn.net"
+      "domain": "openvpn.net",
+      "desc": "The official OpenVPN client to connect to VPN servers.",
+      "descAr": "عميل OpenVPN الرسمي للاتصال بخوادم VPN."
     },
     {
       "id": "Proton.ProtonVPN",
       "en": "Proton VPN",
       "ar": "بروتون VPN",
       "category": "Security",
-      "domain": "protonvpn.com"
+      "domain": "protonvpn.com",
+      "desc": "A secure VPN from Proton with a free plan and a no-logs policy.",
+      "descAr": "خدمة VPN آمنة من Proton بخطة مجانية وسياسة بلا سجلات."
     },
     {
       "id": "Henry++.simplewall",
       "en": "Simplewall",
       "ar": "سيمبل وول",
       "category": "Security",
-      "domain": "henrypp.org"
+      "domain": "henrypp.org",
+      "desc": "A lightweight firewall tool that blocks apps from the internet.",
+      "descAr": "أداة جدار ناري خفيفة تمنع التطبيقات من الإنترنت."
     },
     {
       "id": "Microsoft.DotNet.DesktopRuntime.10",
       "en": ".NET Desktop Runtime 10",
       "ar": "بيئة .NET 10",
       "category": "Runtimes",
-      "domain": "dotnet.microsoft.com"
+      "domain": "dotnet.microsoft.com",
+      "desc": "The .NET 10 runtime for running modern Windows desktop apps.",
+      "descAr": "بيئة تشغيل .NET 10 لتشغيل تطبيقات سطح المكتب الحديثة."
     },
     {
       "id": "Microsoft.DotNet.DesktopRuntime.6",
       "en": ".NET Desktop Runtime 6",
       "ar": "بيئة .NET 6",
       "category": "Runtimes",
-      "domain": "dotnet.microsoft.com"
+      "domain": "dotnet.microsoft.com",
+      "desc": "The .NET 6 runtime for running older Windows desktop apps.",
+      "descAr": "بيئة تشغيل .NET 6 لتشغيل تطبيقات سطح المكتب الأقدم."
     },
     {
       "id": "Microsoft.DotNet.DesktopRuntime.9",
       "en": ".NET Desktop Runtime 9",
       "ar": "بيئة .NET 9",
       "category": "Runtimes",
-      "domain": "dotnet.microsoft.com"
+      "domain": "dotnet.microsoft.com",
+      "desc": "The .NET 9 runtime for running modern Windows desktop apps.",
+      "descAr": "بيئة تشغيل .NET 9 لتشغيل تطبيقات سطح المكتب الحديثة."
     },
     {
       "id": "Microsoft.Sysinternals.Autoruns",
       "en": "Autoruns",
       "ar": "أوتورانز",
       "category": "Microsoft",
-      "domain": "learn.microsoft.com"
+      "domain": "learn.microsoft.com",
+      "desc": "Shows every program that starts with Windows, so you can disable what you don't need.",
+      "descAr": "يعرض كل برنامج يبدأ مع ويندوز لتعطّل ما لا تحتاجه."
     },
     {
       "id": "CodingWondersSoftware.DISMTools.Stable",
       "en": "DISMTools",
       "ar": "أدوات DISM",
       "category": "Microsoft",
-      "domain": ""
+      "domain": "",
+      "desc": "A graphical tool to manage Windows images with DISM.",
+      "descAr": "أداة رسومية لإدارة صور ويندوز عبر DISM."
     },
     {
       "id": "Nlitesoft.NTLite",
       "en": "NTLite",
       "ar": "إن تي لايت",
       "category": "Microsoft",
-      "domain": "ntlite.com"
+      "domain": "ntlite.com",
+      "desc": "Customizes and slims down Windows installation images.",
+      "descAr": "يخصص صور تثبيت ويندوز ويخفّفها."
     },
     {
       "id": "Microsoft.NuGet",
       "en": "NuGet",
       "ar": "نوجيت",
       "category": "Development",
-      "domain": "nuget.org"
+      "domain": "nuget.org",
+      "desc": "The package manager for .NET libraries.",
+      "descAr": "مدير الحزم لمكتبات .NET."
     },
     {
       "id": "Microsoft.Sysinternals.ProcessExplorer",
       "en": "Process Explorer",
       "ar": "مستكشف العمليات",
       "category": "Microsoft",
-      "domain": "learn.microsoft.com"
+      "domain": "learn.microsoft.com",
+      "desc": "An advanced task manager that shows which files and DLLs processes use.",
+      "descAr": "مدير مهام متقدم يعرض الملفات والمكتبات التي تستخدمها العمليات."
     },
     {
       "id": "Microsoft.Sysinternals.ProcessMonitor",
       "en": "Process Monitor",
       "ar": "مراقب العمليات",
       "category": "Microsoft",
-      "domain": "docs.microsoft.com"
+      "domain": "docs.microsoft.com",
+      "desc": "Real-time file, registry, and process monitoring for troubleshooting.",
+      "descAr": "مراقبة مباشرة للملفات والسجل والعمليات لتشخيص المشاكل."
     },
     {
       "id": "Microsoft.Sysinternals.RDCMan",
       "en": "RDCMan",
       "ar": "مدير سطح المكتب البعيد",
       "category": "Microsoft",
-      "domain": "learn.microsoft.com"
+      "domain": "learn.microsoft.com",
+      "desc": "Manages multiple Remote Desktop connections in one window.",
+      "descAr": "يدير عدة اتصالات سطح مكتب بعيد في نافذة واحدة."
     },
     {
       "id": "Microsoft.Sysinternals.TCPView",
       "en": "TCPView",
       "ar": "TCPView",
       "category": "Microsoft",
-      "domain": "docs.microsoft.com"
+      "domain": "docs.microsoft.com",
+      "desc": "Shows all TCP/UDP network connections and which app owns each one.",
+      "descAr": "يعرض كل اتصالات TCP/UDP والتطبيق المالك لكل منها."
     },
     {
       "id": "Jellyfin.JellyfinMediaPlayer",
       "en": "Jellyfin Media Player",
       "ar": "مشغّل جيليفين",
       "category": "Selfhosted",
-      "domain": "jellyfin.org"
+      "domain": "jellyfin.org",
+      "desc": "The desktop client for your Jellyfin media server.",
+      "descAr": "عميل سطح المكتب لخادم وسائط Jellyfin الخاص بك."
     },
     {
       "id": "Jellyfin.Server",
       "en": "Jellyfin Server",
       "ar": "خادم جيليفين",
       "category": "Selfhosted",
-      "domain": "jellyfin.org"
+      "domain": "jellyfin.org",
+      "desc": "A free, self-hosted media server for your movies, shows, and music.",
+      "descAr": "خادم وسائط مجاني تستضيفه بنفسك لأفلامك ومسلسلاتك وموسيقاك."
     },
     {
       "id": "LocalSend.LocalSend",
       "en": "LocalSend",
       "ar": "لوكال سيند",
       "category": "Selfhosted",
-      "domain": "localsend.org"
+      "domain": "localsend.org",
+      "desc": "Share files with nearby devices over your local network, no internet needed.",
+      "descAr": "شارك الملفات مع الأجهزة القريبة عبر شبكتك المحلية دون إنترنت."
     },
     {
       "id": "Netbird.Netbird",
       "en": "NetBird",
       "ar": "نت بيرد",
       "category": "Security",
-      "domain": "netbird.io"
+      "domain": "netbird.io",
+      "desc": "A simple WireGuard-based private network for connecting your devices.",
+      "descAr": "شبكة خاصة بسيطة مبنية على WireGuard لربط أجهزتك."
     },
     {
       "id": "Plex.Plex",
       "en": "Plex Desktop",
       "ar": "بليكس",
       "category": "Selfhosted",
-      "domain": "plex.tv"
+      "domain": "plex.tv",
+      "desc": "The Plex desktop app for streaming your media library and online content.",
+      "descAr": "تطبيق Plex لسطح المكتب لبث مكتبتك ومحتوى الإنترنت."
     },
     {
       "id": "Plex.PlexMediaServer",
       "en": "Plex Media Server",
       "ar": "خادم بليكس",
       "category": "Selfhosted",
-      "domain": "plex.tv"
+      "domain": "plex.tv",
+      "desc": "Runs a media server that streams your movies, shows, and music to any device.",
+      "descAr": "يشغّل خادم وسائط يبث أفلامك ومسلسلاتك وموسيقاك لأي جهاز."
     },
     {
       "id": "LizardByte.Sunshine",
       "en": "Sunshine/GameStream Server",
       "ar": "سنشاين (خادم البث)",
       "category": "Selfhosted",
-      "domain": "app.lizardbyte.dev"
+      "domain": "app.lizardbyte.dev",
+      "desc": "A self-hosted game streaming server that works with Moonlight.",
+      "descAr": "خادم بث ألعاب تستضيفه بنفسك يعمل مع Moonlight."
     },
     {
       "id": "GermanCoding.SyncTrayzor",
       "en": "SyncTrayzor",
       "ar": "سينك تريزور",
       "category": "Cloud",
-      "domain": ""
+      "domain": "",
+      "desc": "A Windows tray app and wrapper for Syncthing file sync.",
+      "descAr": "تطبيق شريط مهام لويندوز يغلّف Syncthing لمزامنة الملفات."
     },
     {
       "id": "9NZBF4GT040C",
@@ -1900,7 +2438,9 @@
       "ar": "بحث Bing",
       "category": "Store",
       "domain": "bing.com",
-      "source": "msstore"
+      "source": "msstore",
+      "desc": "Microsoft Bing search app for Windows.",
+      "descAr": "تطبيق بحث Bing من مايكروسوفت لويندوز."
     },
     {
       "id": "9WZDNCRFHVN5",
@@ -1908,7 +2448,9 @@
       "ar": "الآلة الحاسبة",
       "category": "Store",
       "domain": "",
-      "source": "msstore"
+      "source": "msstore",
+      "desc": "The built-in Windows calculator with standard, scientific, and programmer modes.",
+      "descAr": "آلة حاسبة ويندوز بأوضاع عادية وعلمية ومبرمج."
     },
     {
       "id": "9WZDNCRFJBBG",
@@ -1916,7 +2458,9 @@
       "ar": "الكاميرا",
       "category": "Store",
       "domain": "",
-      "source": "msstore"
+      "source": "msstore",
+      "desc": "The Windows camera app for photos and videos.",
+      "descAr": "تطبيق الكاميرا في ويندوز للصور والفيديو."
     },
     {
       "id": "9P1J8S7CCWWT",
@@ -1924,7 +2468,9 @@
       "ar": "كليب تشامب",
       "category": "Store",
       "domain": "clipchamp.com",
-      "source": "msstore"
+      "source": "msstore",
+      "desc": "Microsoft's simple video editor with templates and effects.",
+      "descAr": "محرر فيديو بسيط من مايكروسوفت بقوالب وتأثيرات."
     },
     {
       "id": "9WZDNCRFJ3PR",
@@ -1932,7 +2478,9 @@
       "ar": "الساعة",
       "category": "Store",
       "domain": "",
-      "source": "msstore"
+      "source": "msstore",
+      "desc": "Alarms, timer, stopwatch, and world clocks for Windows.",
+      "descAr": "منبّهات ومؤقت وساعة إيقاف وساعات عالمية لويندوز."
     },
     {
       "id": "9NHT9RB2F4HD",
@@ -1940,7 +2488,9 @@
       "ar": "كوبايلوت",
       "category": "Store",
       "domain": "copilot.microsoft.com",
-      "source": "msstore"
+      "source": "msstore",
+      "desc": "Microsoft's AI assistant for chat, writing, and answers.",
+      "descAr": "مساعد مايكروسوفت بالذكاء الاصطناعي للدردشة والكتابة والإجابات."
     },
     {
       "id": "9N8MHTPHNGVV",
@@ -1948,7 +2498,9 @@
       "ar": "مركز المطوّر Dev Home",
       "category": "Store",
       "domain": "",
-      "source": "msstore"
+      "source": "msstore",
+      "desc": "A dashboard for developers to set up and monitor their dev environment.",
+      "descAr": "لوحة للمطورين لإعداد ومراقبة بيئة التطوير."
     },
     {
       "id": "9NBLGGH4R32N",
@@ -1956,7 +2508,9 @@
       "ar": "مركز الملاحظات",
       "category": "Store",
       "domain": "",
-      "source": "msstore"
+      "source": "msstore",
+      "desc": "Send feedback and report problems to Microsoft.",
+      "descAr": "أرسل ملاحظاتك وأبلغ عن المشاكل لمايكروسوفت."
     },
     {
       "id": "9PKDZBMV1H3T",
@@ -1964,7 +2518,9 @@
       "ar": "الحصول على مساعدة",
       "category": "Store",
       "domain": "",
-      "source": "msstore"
+      "source": "msstore",
+      "desc": "Microsoft's help app to troubleshoot problems and contact support.",
+      "descAr": "تطبيق مساعدة مايكروسوفت لحل المشاكل وطلب الدعم."
     },
     {
       "id": "9WZDNCRFJ3PT",
@@ -1972,7 +2528,9 @@
       "ar": "مشغّل الوسائط",
       "category": "Store",
       "domain": "",
-      "source": "msstore"
+      "source": "msstore",
+      "desc": "The modern Windows media player for music and video.",
+      "descAr": "مشغّل وسائط ويندوز الحديث للموسيقى والفيديو."
     },
     {
       "id": "9WZDNCRD29V9",
@@ -1980,7 +2538,9 @@
       "ar": "مايكروسوفت 365",
       "category": "Store",
       "domain": "microsoft365.com",
-      "source": "msstore"
+      "source": "msstore",
+      "desc": "The Microsoft 365 hub for Word, Excel, PowerPoint and your files.",
+      "descAr": "مركز Microsoft 365 لـ Word وExcel وPowerPoint وملفاتك."
     },
     {
       "id": "9NTXGKQ8P7N0",
@@ -1988,7 +2548,9 @@
       "ar": "الأجهزة المحمولة",
       "category": "Store",
       "domain": "",
-      "source": "msstore"
+      "source": "msstore",
+      "desc": "Manage your connected Android and iOS devices from Windows.",
+      "descAr": "إدارة أجهزة أندرويد وiOS المتصلة بويندوز."
     },
     {
       "id": "9WZDNCRFJ3P2",
@@ -1996,7 +2558,9 @@
       "ar": "الأفلام والتلفزيون",
       "category": "Store",
       "domain": "",
-      "source": "msstore"
+      "source": "msstore",
+      "desc": "Rent, buy, and watch movies and TV shows on Windows.",
+      "descAr": "استأجر واشترِ وشاهد الأفلام والمسلسلات على ويندوز."
     },
     {
       "id": "9WZDNCRFHVFW",
@@ -2004,7 +2568,9 @@
       "ar": "الأخبار",
       "category": "Store",
       "domain": "bing.com",
-      "source": "msstore"
+      "source": "msstore",
+      "desc": "News, headlines, and weather tailored for you.",
+      "descAr": "الأخبار والعناوين مخصصة لك."
     },
     {
       "id": "9MSMLRH6LZF3",
@@ -2012,7 +2578,9 @@
       "ar": "المفكرة",
       "category": "Store",
       "domain": "",
-      "source": "msstore"
+      "source": "msstore",
+      "desc": "The Windows text editor, with tabs and automatic saving.",
+      "descAr": "محرر نصوص ويندوز بتبويبات وحفظ تلقائي."
     },
     {
       "id": "9NRX63209R7B",
@@ -2020,7 +2588,9 @@
       "ar": "Outlook لنظام ويندوز",
       "category": "Store",
       "domain": "outlook.live.com",
-      "source": "msstore"
+      "source": "msstore",
+      "desc": "The new Outlook app for mail and calendar.",
+      "descAr": "تطبيق Outlook الجديد للبريد والتقويم."
     },
     {
       "id": "9PCFS5B6T72H",
@@ -2028,7 +2598,9 @@
       "ar": "الرسام (Paint)",
       "category": "Store",
       "domain": "",
-      "source": "msstore"
+      "source": "msstore",
+      "desc": "The Windows drawing app with layers and AI tools.",
+      "descAr": "تطبيق الرسم في ويندوز بطبقات وأدوات ذكاء اصطناعي."
     },
     {
       "id": "9NMPJ99VJBWV",
@@ -2036,7 +2608,9 @@
       "ar": "رابط الهاتف",
       "category": "Store",
       "domain": "",
-      "source": "msstore"
+      "source": "msstore",
+      "desc": "Connect your phone to your PC for calls, texts, and photos.",
+      "descAr": "اربط هاتفك بالحاسوب للمكالمات والرسائل والصور."
     },
     {
       "id": "9WZDNCRFJBH4",
@@ -2044,7 +2618,9 @@
       "ar": "الصور",
       "category": "Store",
       "domain": "",
-      "source": "msstore"
+      "source": "msstore",
+      "desc": "View and edit your photos and videos in Windows.",
+      "descAr": "اعرض وعدّل صورك وفيديوهاتك في ويندوز."
     },
     {
       "id": "9NFTCH6J7FHV",
@@ -2052,7 +2628,9 @@
       "ar": "باور أوتوميت",
       "category": "Store",
       "domain": "powerautomate.microsoft.com",
-      "source": "msstore"
+      "source": "msstore",
+      "desc": "Automate repetitive tasks and workflows with Microsoft Power Automate.",
+      "descAr": "أتمتة المهام المتكررة وسير العمل مع Microsoft Power Automate."
     },
     {
       "id": "9P7BP5VNWKX5",
@@ -2060,7 +2638,9 @@
       "ar": "المساعدة السريعة",
       "category": "Store",
       "domain": "",
-      "source": "msstore"
+      "source": "msstore",
+      "desc": "Get or give remote help to another PC.",
+      "descAr": "قدّم أو احصل على مساعدة عن بعد على جهاز آخر."
     },
     {
       "id": "9MZ95KL8MR0L",
@@ -2068,7 +2648,9 @@
       "ar": "أداة القصاصة",
       "category": "Store",
       "domain": "",
-      "source": "msstore"
+      "source": "msstore",
+      "desc": "Take screenshots and screen recordings in Windows.",
+      "descAr": "التقط لقطات الشاشة وسجّلها في ويندوز."
     },
     {
       "id": "9WZDNCRFHWD2",
@@ -2076,7 +2658,9 @@
       "ar": "مجموعة سوليتير",
       "category": "Store",
       "domain": "",
-      "source": "msstore"
+      "source": "msstore",
+      "desc": "Classic Microsoft card games: Solitaire, FreeCell, Spider, and more.",
+      "descAr": "ألعاب أوراق مايكروسوفت الكلاسيكية: سوليتير وفري سيل وسبايدر وغيرها."
     },
     {
       "id": "9WZDNCRFHWKN",
@@ -2084,7 +2668,9 @@
       "ar": "مسجّل الصوت",
       "category": "Store",
       "domain": "",
-      "source": "msstore"
+      "source": "msstore",
+      "desc": "Record audio with the Windows voice recorder.",
+      "descAr": "سجّل الصوت بمسجّل ويندوز."
     },
     {
       "id": "9PC1H9VN18CM",
@@ -2092,7 +2678,9 @@
       "ar": "تجارب البداية (الأدوات)",
       "category": "Store",
       "domain": "",
-      "source": "msstore"
+      "source": "msstore",
+      "desc": "A Windows component that powers Start menu and widget experiences.",
+      "descAr": "مكوّن في ويندوز يشغّل تجارب قائمة ابدأ والأدوات."
     },
     {
       "id": "9NBLGGH4QGHW",
@@ -2100,7 +2688,9 @@
       "ar": "الملاحظات اللاصقة",
       "category": "Store",
       "domain": "",
-      "source": "msstore"
+      "source": "msstore",
+      "desc": "Quick digital sticky notes on your desktop.",
+      "descAr": "ملاحظات لاصقة رقمية سريعة على سطح مكتبك."
     },
     {
       "id": "9NBLGGH5R558",
@@ -2108,7 +2698,9 @@
       "ar": "المهام (To Do)",
       "category": "Store",
       "domain": "todo.microsoft.com",
-      "source": "msstore"
+      "source": "msstore",
+      "desc": "A to-do and task list app that syncs across devices.",
+      "descAr": "تطبيق قوائم مهام يزامن بين الأجهزة."
     },
     {
       "id": "9WZDNCRFJ3Q2",
@@ -2116,7 +2708,9 @@
       "ar": "الطقس",
       "category": "Store",
       "domain": "bing.com",
-      "source": "msstore"
+      "source": "msstore",
+      "desc": "Forecasts and current weather for your location.",
+      "descAr": "التوقعات والطقس الحالي لموقعك."
     },
     {
       "id": "9MV0B5HZVK9Z",
@@ -2124,7 +2718,9 @@
       "ar": "تطبيق Xbox",
       "category": "Store",
       "domain": "xbox.com",
-      "source": "msstore"
+      "source": "msstore",
+      "desc": "The Xbox app for your game library, Game Pass, and friends.",
+      "descAr": "تطبيق Xbox لمكتبة ألعابك وGame Pass وأصدقائك."
     },
     {
       "id": "9NZKPSTSNW4P",
@@ -2132,7 +2728,9 @@
       "ar": "شريط ألعاب Xbox",
       "category": "Store",
       "domain": "xbox.com",
-      "source": "msstore"
+      "source": "msstore",
+      "desc": "The in-game overlay for capturing clips, chatting, and monitoring performance.",
+      "descAr": "واجهة داخل اللعبة لتسجيل المقاطع والدردشة ومراقبة الأداء."
     },
     {
       "id": "9WZDNCRD1HKW",
@@ -2140,42 +2738,54 @@
       "ar": "موفّر هوية Xbox",
       "category": "Store",
       "domain": "xbox.com",
-      "source": "msstore"
+      "source": "msstore",
+      "desc": "A background component that signs you in to Xbox services.",
+      "descAr": "مكوّن خلفي يسجّل دخولك إلى خدمات Xbox."
     },
     {
       "id": "RazerInc.RazerInstaller.Synapse4",
       "en": "Razer Synapse 4",
       "ar": "رايزر سيناپس 4",
       "category": "Peripherals",
-      "domain": "razer.com"
+      "domain": "razer.com",
+      "desc": "Razer's software to configure Razer mice, keyboards, and lighting.",
+      "descAr": "برنامج Razer لضبط فأرات ولوحات مفاتيح وإضاءة Razer."
     },
     {
       "id": "Logitech.GHUB",
       "en": "Logitech G HUB",
       "ar": "لوجيتك G HUB",
       "category": "Peripherals",
-      "domain": "logitechg.com"
+      "domain": "logitechg.com",
+      "desc": "Logitech G's software for gaming mice, keyboards, headsets, and lighting.",
+      "descAr": "برنامج Logitech G لفأرات ولوحات مفاتيح وسماعات وإضاءة الألعاب."
     },
     {
       "id": "Logitech.OptionsPlus",
       "en": "Logitech Options+",
       "ar": "لوجيتك أوبشنز+",
       "category": "Peripherals",
-      "domain": "logitech.com"
+      "domain": "logitech.com",
+      "desc": "Customizes Logitech mice and keyboards: buttons, gestures, and settings.",
+      "descAr": "يخصص فأرات ولوحات مفاتيح Logitech: الأزرار والإيماءات والإعدادات."
     },
     {
       "id": "SteelSeries.GG",
       "en": "SteelSeries GG",
       "ar": "ستيل سيريز GG",
       "category": "Peripherals",
-      "domain": "steelseries.com"
+      "domain": "steelseries.com",
+      "desc": "SteelSeries software for gear settings, Sonar audio, and Moments clips.",
+      "descAr": "برنامج SteelSeries لإعدادات الأجهزة وصوت Sonar ومقاطع Moments."
     },
     {
       "id": "Corsair.iCUE.5",
       "en": "Corsair iCUE",
       "ar": "كورسير iCUE",
       "category": "Peripherals",
-      "domain": "corsair.com"
+      "domain": "corsair.com",
+      "desc": "Controls Corsair RGB lighting, fans, and peripherals.",
+      "descAr": "يتحكم بإضاءة RGB ومراوح وملحقات Corsair."
     },
     {
       "id": "https://hyperx.com/pages/ngenuity",
@@ -2183,7 +2793,9 @@
       "ar": "هايبر إكس NGENUITY",
       "category": "Peripherals",
       "domain": "hyperx.com",
-      "source": "web"
+      "source": "web",
+      "desc": "HyperX software to customize HyperX keyboards, mice, and headsets. (Opens the download page.)",
+      "descAr": "برنامج HyperX لتخصيص لوحات مفاتيح وفأرات وسماعات HyperX. (يفتح صفحة التحميل.)"
     },
     {
       "id": "https://www.gloriousgaming.com/pages/software",
@@ -2191,7 +2803,9 @@
       "ar": "جلوريوس CORE",
       "category": "Peripherals",
       "domain": "gloriousgaming.com",
-      "source": "web"
+      "source": "web",
+      "desc": "Glorious software to configure Glorious mice and keyboards. (Opens the download page.)",
+      "descAr": "برنامج Glorious لضبط فأرات ولوحات مفاتيح Glorious. (يفتح صفحة التحميل.)"
     },
     {
       "id": "https://wooting.io/wootility",
@@ -2199,7 +2813,9 @@
       "ar": "ووتيليتي",
       "category": "Peripherals",
       "domain": "wooting.io",
-      "source": "web"
+      "source": "web",
+      "desc": "Wootility configures Wooting analog keyboards. (Opens the web app.)",
+      "descAr": "Wootility يضبط لوحات مفاتيح Wooting التناظرية. (يفتح تطبيق الويب.)"
     },
     {
       "id": "https://usevia.app",
@@ -2207,84 +2823,108 @@
       "ar": "في آي إيه (VIA)",
       "category": "Peripherals",
       "domain": "usevia.app",
-      "source": "web"
+      "source": "web",
+      "desc": "VIA is a web tool to remap and customize compatible keyboards. (Opens the web app.)",
+      "descAr": "VIA أداة ويب لإعادة تعيين وتخصيص لوحات المفاتيح المتوافقة. (يفتح تطبيق الويب.)"
     },
     {
       "id": "QMK.QMKToolbox",
       "en": "QMK Toolbox",
       "ar": "أداة QMK",
       "category": "Peripherals",
-      "domain": "qmk.fm"
+      "domain": "qmk.fm",
+      "desc": "A tool to flash firmware onto QMK keyboards.",
+      "descAr": "أداة لتحميل البرنامج الثابت على لوحات مفاتيح QMK."
     },
     {
       "id": "Vial.Vial",
       "en": "Vial",
       "ar": "فايال",
       "category": "Peripherals",
-      "domain": "get.vial.today"
+      "domain": "get.vial.today",
+      "desc": "Configure and remap your keyboard live, without flashing.",
+      "descAr": "اضبط لوحة المفاتيح وأعد تعيين مفاتيحها مباشرة دون تفليش."
     },
     {
       "id": "Elgato.StreamDeck",
       "en": "Elgato Stream Deck",
       "ar": "إلجاتو ستريم ديك",
       "category": "Peripherals",
-      "domain": "elgato.com"
+      "domain": "elgato.com",
+      "desc": "Software for the Elgato Stream Deck to set up buttons, macros, and actions.",
+      "descAr": "برنامج Elgato Stream Deck لإعداد الأزرار والماكرو والإجراءات."
     },
     {
       "id": "Elgato.WaveLink",
       "en": "Elgato Wave Link",
       "ar": "إلجاتو ويف لينك",
       "category": "Peripherals",
-      "domain": "elgato.com"
+      "domain": "elgato.com",
+      "desc": "Elgato's audio mixer to route and mix microphones and apps.",
+      "descAr": "مازج صوت Elgato لتوجيه ودمج الميكروفونات والتطبيقات."
     },
     {
       "id": "Elgato.CameraHub",
       "en": "Elgato Camera Hub",
       "ar": "إلجاتو كاميرا هب",
       "category": "Peripherals",
-      "domain": "elgato.com"
+      "domain": "elgato.com",
+      "desc": "Controls Elgato cameras and other webcams with advanced settings.",
+      "descAr": "يتحكم بكاميرات Elgato وكاميرات الويب بإعدادات متقدمة."
     },
     {
       "id": "NZXT.CAM",
       "en": "NZXT CAM",
       "ar": "إن زد إكس تي CAM",
       "category": "Peripherals",
-      "domain": "nzxt.com"
+      "domain": "nzxt.com",
+      "desc": "NZXT software to monitor PC temperatures and control cooling and lighting.",
+      "descAr": "برنامج NZXT لمراقبة حرارة الجهاز والتحكم بالتبريد والإضاءة."
     },
     {
       "id": "TurtleBeach.AudioHub",
       "en": "Turtle Beach Audio Hub",
       "ar": "تيرتل بيتش أوديو هب",
       "category": "Peripherals",
-      "domain": "turtlebeach.com"
+      "domain": "turtlebeach.com",
+      "desc": "Turtle Beach software for headset sound and microphone settings.",
+      "descAr": "برنامج Turtle Beach لإعدادات صوت السماعة والميكروفون."
     },
     {
       "id": "TurtleBeach.ROCCATSwarm",
       "en": "ROCCAT Swarm",
       "ar": "روكات سوارم",
       "category": "Peripherals",
-      "domain": "roccat.com"
+      "domain": "roccat.com",
+      "desc": "ROCCAT Swarm configures ROCCAT mice, keyboards, and headsets.",
+      "descAr": "ROCCAT Swarm يضبط فأرات ولوحات مفاتيح وسماعات ROCCAT."
     },
     {
       "id": "LianLi.LConnect3",
       "en": "Lian Li L-Connect 3",
       "ar": "لي لي L-Connect 3",
       "category": "Peripherals",
-      "domain": "lian-li.com"
+      "domain": "lian-li.com",
+      "desc": "Controls Lian Li fans and RGB lighting.",
+      "descAr": "يتحكم بمراوح وإضاءة RGB من Lian Li."
     },
     {
       "id": "Wacom.WacomTabletDriver",
       "en": "Wacom Tablet Driver",
       "ar": "تعريف واكوم",
       "category": "Peripherals",
-      "domain": "wacom.com"
+      "domain": "wacom.com",
+      "desc": "The driver and settings for Wacom pen tablets.",
+      "descAr": "تعريف وإعدادات أجهزة القلم Wacom."
     },
     {
       "id": "Highresolution.X-MouseButtonControl",
       "en": "X-Mouse Button Control",
       "ar": "التحكم بأزرار الماوس",
       "category": "Peripherals",
-      "domain": "highrez.co.uk"
+      "domain": "highrez.co.uk",
+      "desc": "Remap mouse buttons per application.",
+      "descAr": "أعد تعيين أزرار الماوس لكل تطبيق."
     }
   ]
 }
