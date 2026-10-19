@@ -1828,24 +1828,51 @@ $worker = {
         }
 
         # runs one winget command (output captured through a temp file so Stop can kill it at any moment)
-        function Run-Winget([string]$wcmd, [string]$lineId, [string]$lineMode) {
+        function Run-Winget([string]$wcmd, [string]$lineId, [string]$lineMode, [bool]$limited = $false) {
             $code = -1
             $logFile = Join-Path $env:TEMP ('meshalbox_' + [guid]::NewGuid().ToString('N') + '.log')
+            $codeFile = $logFile + '.code'
+            $batFile = $logFile + '.cmd'
+            $taskName = 'MeshalBox_' + [guid]::NewGuid().ToString('N')
             $p = $null
             try {
-                $psi = New-Object System.Diagnostics.ProcessStartInfo
-                $psi.FileName = $env:ComSpec
-                $psi.Arguments = '/d /c "' + $wcmd + ' > "' + $logFile + '" 2>&1"'
-                $psi.UseShellExecute = $false
-                $psi.CreateNoWindow = $true
-                $p = [System.Diagnostics.Process]::Start($psi)
-                $sync.Proc = $p
+                if ($limited) {
+                    # Run winget WITHOUT administrator rights (needed to remove apps installed for the current user only).
+                    # A scheduled task with RunLevel Limited starts a normal, non-elevated process in the user's session.
+                    $bat = "@echo off`r`n" + $wcmd + ' > "' + $logFile + '" 2>&1' + "`r`n" + 'echo %errorlevel% > "' + $codeFile + '"' + "`r`n"
+                    [System.IO.File]::WriteAllText($batFile, $bat, (New-Object System.Text.UTF8Encoding($false)))
+                    $me = [Security.Principal.WindowsIdentity]::GetCurrent().Name
+                    $act = New-ScheduledTaskAction -Execute 'conhost.exe' -Argument ('--headless cmd.exe /d /c "' + $batFile + '"')
+                    $prn = New-ScheduledTaskPrincipal -UserId $me -LogonType Interactive -RunLevel Limited
+                    $set = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -ExecutionTimeLimit (New-TimeSpan -Hours 2)
+                    [void](Register-ScheduledTask -TaskName $taskName -Action $act -Principal $prn -Settings $set -Force)
+                    Start-ScheduledTask -TaskName $taskName
+                }
+                else {
+                    $psi = New-Object System.Diagnostics.ProcessStartInfo
+                    $psi.FileName = $env:ComSpec
+                    $psi.Arguments = '/d /c "' + $wcmd + ' > "' + $logFile + '" 2>&1"'
+                    $psi.UseShellExecute = $false
+                    $psi.CreateNoWindow = $true
+                    $p = [System.Diagnostics.Process]::Start($psi)
+                    $sync.Proc = $p
+                }
                 $dec = [System.Text.Encoding]::UTF8.GetDecoder()
                 $pos = 0L
                 $sb = New-Object System.Text.StringBuilder
                 while ($true) {
-                    if ($sync.Cancel -and -not $p.HasExited) { Stop-Tree $p.Id }
-                    $exited = $p.HasExited
+                    if ($limited) {
+                        $exited = Test-Path -LiteralPath $codeFile
+                        if (-not $exited) {
+                            $ti = Get-ScheduledTask -TaskName $taskName -ErrorAction SilentlyContinue
+                            if ($sync.Cancel) { Stop-ScheduledTask -TaskName $taskName -ErrorAction SilentlyContinue; $exited = $true }
+                            elseif ($ti -and $ti.State -ne 'Running' -and $ti.State -ne 'Queued') { Start-Sleep -Milliseconds 400; $exited = $true }
+                        }
+                    }
+                    else {
+                        if ($sync.Cancel -and -not $p.HasExited) { Stop-Tree $p.Id }
+                        $exited = $p.HasExited
+                    }
                     try {
                         if (Test-Path -LiteralPath $logFile) {
                             $fs = New-Object System.IO.FileStream($logFile, [System.IO.FileMode]::Open, [System.IO.FileAccess]::Read, [System.IO.FileShare]'ReadWrite,Delete')
@@ -1872,8 +1899,14 @@ $worker = {
                     Start-Sleep -Milliseconds 150
                 }
                 if ($sb.Length -gt 0) { Send-Line $lineMode $lineId $sb.ToString() }
-                $p.WaitForExit()
-                $code = $p.ExitCode
+                if ($limited) {
+                    $code = -1
+                    try { if (Test-Path -LiteralPath $codeFile) { $code = [int](([System.IO.File]::ReadAllText($codeFile)).Trim()) } } catch { }
+                }
+                else {
+                    $p.WaitForExit()
+                    $code = $p.ExitCode
+                }
             }
             catch {
                 $sync.Queue.Enqueue("log|$lineId|$($_.Exception.Message)")
@@ -1881,7 +1914,8 @@ $worker = {
             }
             finally {
                 $sync.Proc = $null
-                Remove-Item -LiteralPath $logFile -Force -ErrorAction SilentlyContinue
+                if ($limited) { try { Unregister-ScheduledTask -TaskName $taskName -Confirm:$false -ErrorAction SilentlyContinue } catch { } }
+                Remove-Item -LiteralPath $logFile, $codeFile, $batFile -Force -ErrorAction SilentlyContinue
             }
 
             return [int]$code
@@ -1911,6 +1945,11 @@ $worker = {
                     if ($app.Source -eq 'msstore') { $ucmd += ' --source msstore' }
                 }
                 $code = Run-Winget $ucmd $app.Id 'install'
+                # user-scope package + elevated session -> winget refuses (0x8A15007D-style error); retry without admin rights
+                if (($code -eq -1978335107) -and -not $sync.Cancel) {
+                    $sync.Queue.Enqueue("log|$($app.Id)|User-scope app - retrying the removal without administrator rights...")
+                    $code = Run-Winget $ucmd $app.Id 'install' $true
+                }
                 if ($sync.Cancel -and (@(0, 3010, -1978334967) -notcontains $code)) { $sync.Queue.Enqueue("skip|$($app.Id)|"); continue }
                 $sync.Queue.Enqueue("done|$($app.Id)|$code")
                 continue
