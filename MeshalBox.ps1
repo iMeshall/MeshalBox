@@ -69,7 +69,7 @@ Add-Type -AssemblyName PresentationFramework, PresentationCore, WindowsBase
 # 1. Data classes (INotifyPropertyChanged so the grid updates live)
 # ----------------------------------------------------------------------------
 if (-not ('MeshalApp' -as [type])) {
-    Add-Type -Language CSharp -ReferencedAssemblies System.dll -TypeDefinition @'
+    Add-Type -Language CSharp -ReferencedAssemblies System.dll, System.Drawing.dll -TypeDefinition @'
 using System;
 using System.ComponentModel;
 using System.Runtime.InteropServices;
@@ -86,6 +86,10 @@ public class MeshalApp : INotifyPropertyChanged
     public string Id { get; set; }
     public string NameEn { get; set; }
     public string NameAr { get; set; }
+    public string DescEn { get; set; }
+    public string DescAr { get; set; }
+    private string _tip;
+    public string Tip { get { return _tip; } set { _tip = value; Raise("Tip"); } }
     public string Category { get; set; }
     public string Domain { get; set; }
     public string Source { get; set; }
@@ -113,6 +117,61 @@ public class MeshalApp : INotifyPropertyChanged
 
     private double _iconSize = 44;
     public double IconSize { get { return _iconSize; } set { _iconSize = value; Raise("IconSize"); } }
+}
+
+public static class MeshalImg
+{
+    // Estimates the REAL resolution of a picture. A small icon that was only enlarged has soft edges
+    // (each edge is spread over several pixels); a native icon has crisp edges. Returns <= the pixel width.
+    public static int EffectiveWidth(string path)
+    {
+        using (System.IO.FileStream fs = System.IO.File.OpenRead(path))
+        using (System.Drawing.Image src = System.Drawing.Image.FromStream(fs, false, false))
+        {
+            int w = src.Width, h = src.Height;
+            if (w <= 48 || h <= 48) return w;
+            using (System.Drawing.Bitmap bmp = new System.Drawing.Bitmap(w, h, System.Drawing.Imaging.PixelFormat.Format32bppArgb))
+            {
+                using (System.Drawing.Graphics g = System.Drawing.Graphics.FromImage(bmp)) { g.Clear(System.Drawing.Color.White); g.DrawImage(src, 0, 0, w, h); }
+                System.Drawing.Imaging.BitmapData d = bmp.LockBits(new System.Drawing.Rectangle(0, 0, w, h), System.Drawing.Imaging.ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+                int stride = d.Stride;
+                byte[] buf = new byte[stride * h];
+                Marshal.Copy(d.Scan0, buf, 0, buf.Length);
+                bmp.UnlockBits(d);
+
+                int[] lum = new int[w * h];
+                int lo = 255, hi = 0;
+                for (int y = 0; y < h; y++)
+                    for (int x = 0; x < w; x++)
+                    {
+                        int o = y * stride + x * 4;
+                        int l = (buf[o + 2] * 299 + buf[o + 1] * 587 + buf[o] * 114) / 1000;
+                        lum[y * w + x] = l;
+                        if (l < lo) lo = l;
+                        if (l > hi) hi = l;
+                    }
+                int contrast = hi - lo;
+                if (contrast < 70) return w;          // too flat to judge (e.g. white logo on transparent)
+
+                int[] hist = new int[256];
+                long n = 0;
+                for (int y = 0; y < h; y++)
+                    for (int x = 0; x < w; x++)
+                    {
+                        int i = y * w + x;
+                        if (x + 1 < w) { hist[Math.Abs(lum[i] - lum[i + 1])]++; n++; }
+                        if (y + 1 < h) { hist[Math.Abs(lum[i] - lum[i + w])]++; n++; }
+                    }
+                long want = (long)(n * 0.003);
+                if (want < 20) want = 20;
+                long acc = 0; int J = 1;
+                for (int v = 255; v >= 1; v--) { acc += hist[v]; if (acc >= want) { J = v; break; } }
+                double ratio = (J * 1.5) / contrast;   // 1.0 = native/crisp, 0.25 = enlarged about 4x
+                if (ratio > 1.0) ratio = 1.0;
+                return (int)(w * ratio);
+            }
+        }
+    }
 }
 
 public class MeshalWebClient : System.Net.WebClient
@@ -194,7 +253,26 @@ $Strings = @{
         cat_Utilities = 'Utilities'; cat_Security = 'Security'; cat_Productivity = 'Productivity'
         cat_Design = 'Design'; cat_Cloud = 'Cloud'; cat_Runtimes = 'Runtimes'
         cat_ProTools = 'Pro Tools'; cat_Microsoft = 'Microsoft'; cat_Selfhosted = 'Self-hosted'; cat_Store = 'Store Apps'
-        cat_Peripherals = 'Peripherals'
+        cat_Peripherals = 'Peripherals'; cat_Installed = 'Installed'
+        upgradeAll    = [string][char]0x21BB + '  Upgrade all'
+        uninstallBtn  = [char]::ConvertFromUtf32(0x1F5D1) + '  Uninstall'
+        st_uninstalling = [string][char]0x23F3 + ' Removing...'
+        st_removed    = [string][char]0x2714 + ' Uninstalled'
+        noInstalledSel = 'Select installed apps first (the ones with the green "Installed" badge).'
+        confirmUninst = '{0} app(s) will be REMOVED from this PC. Continue?'
+        confirmUninstTitle = 'Confirm uninstall'
+        startUninst   = 'Starting removal of {0} app(s)...'
+        uninstNow     = 'Uninstalling: {0}  ({1}/{2})'
+        finishedUninst = 'Finished: {0} removed, {1} failed, {2} cancelled.'
+        confirmUpgrade = 'Upgrade every app on this PC that has an update available?'
+        confirmUpgradeTitle = 'Confirm upgrade'
+        startUpgrade  = 'Checking for updates and upgrading all apps...'
+        upgradingNow  = 'Upgrading all apps... please wait'
+        upDone        = 'Upgrade finished: {0} app(s) updated.'
+        upFinished    = 'Upgrade finished.'
+        upNone        = 'Everything is already up to date.'
+        upFailed      = 'Upgrade finished with some errors. Check the log.'
+        upCancelled   = 'Upgrade stopped.'
         st_queued     = [string][char]0x23F3 + ' Queued'
         st_installing = [string][char]0x2B07 + ' Installing...'
         st_done       = [string][char]0x2714 + ' Installed'
@@ -243,7 +321,26 @@ $Strings = @{
         cat_Utilities = 'الأدوات'; cat_Security = 'الأمان'; cat_Productivity = 'الإنتاجية'
         cat_Design = 'التصميم'; cat_Cloud = 'السحابة'; cat_Runtimes = 'المكتبات'
         cat_ProTools = 'أدوات احترافية'; cat_Microsoft = 'مايكروسوفت'; cat_Selfhosted = 'استضافة ذاتية'; cat_Store = 'تطبيقات المتجر'
-        cat_Peripherals = 'الملحقات'
+        cat_Peripherals = 'الملحقات'; cat_Installed = 'المثبّتة'
+        upgradeAll    = [string][char]0x21BB + '  تحديث الكل'
+        uninstallBtn  = [char]::ConvertFromUtf32(0x1F5D1) + '  إزالة'
+        st_uninstalling = [string][char]0x23F3 + ' جارٍ الإزالة...'
+        st_removed    = [string][char]0x2714 + ' تمت الإزالة'
+        noInstalledSel = 'اختر أولًا برامج مثبّتة (التي عليها علامة "مثبّت" الخضراء).'
+        confirmUninst = 'سيتم حذف {0} برنامج من هذا الجهاز. هل تريد المتابعة؟'
+        confirmUninstTitle = 'تأكيد الإزالة'
+        startUninst   = 'بدء إزالة {0} برنامج...'
+        uninstNow     = 'جارٍ إزالة: {0}  ({1}/{2})'
+        finishedUninst = 'اكتمل: {0} تمت إزالته، {1} فشل، {2} أُلغي.'
+        confirmUpgrade = 'سيتم تحديث كل البرامج على هذا الجهاز التي يتوفر لها تحديث. هل تريد المتابعة؟'
+        confirmUpgradeTitle = 'تأكيد التحديث'
+        startUpgrade  = 'جارٍ البحث عن التحديثات وتحديث كل البرامج...'
+        upgradingNow  = 'جارٍ تحديث كل البرامج... الرجاء الانتظار'
+        upDone        = 'اكتمل التحديث: تم تحديث {0} برنامج.'
+        upFinished    = 'اكتمل التحديث.'
+        upNone        = 'كل البرامج محدّثة بالفعل.'
+        upFailed      = 'اكتمل التحديث مع بعض الأخطاء. راجع السجل.'
+        upCancelled   = 'تم إيقاف التحديث.'
         st_queued     = [string][char]0x23F3 + ' في الانتظار'
         st_installing = [string][char]0x2B07 + ' جارٍ التثبيت...'
         st_done       = [string][char]0x2714 + ' تم التثبيت'
@@ -280,11 +377,11 @@ $Strings = @{
 #    { "id": "Publisher.App", "en": "Name", "ar": "الاسم", "category": "Utilities", "domain": "site.com" }
 #    (add  "source": "msstore"  for Store apps).  Find ids with:  winget search <name>
 # ----------------------------------------------------------------------------
-$CategoryOrder = @('All', 'Selected', 'Browsers', 'Gaming', 'Peripherals', 'Communication', 'Media', 'Development',
+$CategoryOrder = @('All', 'Selected', 'Installed', 'Browsers', 'Gaming', 'Peripherals', 'Communication', 'Media', 'Development',
                    'Utilities', 'Security', 'Productivity', 'Design', 'Cloud', 'Runtimes',
                    'ProTools', 'Microsoft', 'Selfhosted', 'Store')
 $CategoryGlyph = @{
-    All = [char]::ConvertFromUtf32(0x1F5C2); Selected = [string][char]0x2705
+    All = [char]::ConvertFromUtf32(0x1F5C2); Selected = [string][char]0x2705; Installed = [char]::ConvertFromUtf32(0x1F4E6)
     Browsers = [char]::ConvertFromUtf32(0x1F310); Gaming = [char]::ConvertFromUtf32(0x1F3AE)
     Peripherals = [char]::ConvertFromUtf32(0x1F5B1)
     Communication = [char]::ConvertFromUtf32(0x1F4AC); Media = [char]::ConvertFromUtf32(0x1F3AC)
@@ -298,7 +395,7 @@ $CategoryGlyph = @{
 
 # Bright colours so the (monochrome) emoji glyphs are clearly visible on the dark background
 $CategoryColor = @{
-    All = '#E5E7EB'; Selected = '#4ADE80'; Browsers = '#60A5FA'; Gaming = '#C084FC'; Peripherals = '#F9A8D4'
+    All = '#E5E7EB'; Selected = '#4ADE80'; Installed = '#A78BFA'; Browsers = '#60A5FA'; Gaming = '#C084FC'; Peripherals = '#F9A8D4'
     Communication = '#34D399'; Media = '#F472B6'; Development = '#38BDF8'; Utilities = '#FBBF24'
     Security = '#F87171'; Productivity = '#A3E635'; Design = '#FB923C'; Cloud = '#7DD3FC'
     Runtimes = '#CBD5E1'
@@ -307,7 +404,7 @@ $CategoryColor = @{
 
 # Darker versions of the same colours so the icons stay readable on the light background
 $CategoryColorLight = @{
-    All = '#6B7280'; Selected = '#16A34A'; Browsers = '#2563EB'; Gaming = '#9333EA'; Peripherals = '#DB2777'
+    All = '#6B7280'; Selected = '#16A34A'; Installed = '#7C3AED'; Browsers = '#2563EB'; Gaming = '#9333EA'; Peripherals = '#DB2777'
     Communication = '#059669'; Media = '#BE185D'; Development = '#0284C7'; Utilities = '#D97706'
     Security = '#DC2626'; Productivity = '#65A30D'; Design = '#EA580C'; Cloud = '#0891B2'
     Runtimes = '#64748B'
@@ -357,6 +454,8 @@ foreach ($e in $catalog.apps) {
     $a.Id = [string]$e.id; $a.NameEn = [string]$e.en
     $a.NameAr = if ($e.ar) { [string]$e.ar } else { [string]$e.en }
     $a.Category = [string]$e.category; $a.Domain = [string]$e.domain
+    $a.DescEn = if ($e.desc) { [string]$e.desc } else { '' }
+    $a.DescAr = if ($e.descAr) { [string]$e.descAr } else { $a.DescEn }
     $a.Source = if ($e.source) { [string]$e.source } else { '' }
     $a.Initial = $a.NameEn.Substring(0, 1).ToUpper()
     if ((-not $a.Domain) -and $StoreGlyph.ContainsKey($a.Id)) { $a.Initial = [char]::ConvertFromUtf32([int]$StoreGlyph[$a.Id]) }
@@ -394,6 +493,14 @@ try { Remove-Item (Join-Path $env:LOCALAPPDATA 'MeshalBox\icons') -Recurse -Forc
 foreach ($d in @($SettingsDir, $IconCache)) {
     if (-not (Test-Path $d)) { New-Item -ItemType Directory -Path $d -Force | Out-Null }
 }
+# Logo logic v5: sharpness-aware downloader -> drop every cached logo once so blurry ones are replaced by sharp ones
+try {
+    $iconMarker5 = Join-Path $IconCache '.logic_v5'
+    if (-not (Test-Path $iconMarker5)) {
+        Get-ChildItem -Path $IconCache -Include '*.png', '*.miss' -Recurse -ErrorAction SilentlyContinue | Remove-Item -Force -ErrorAction SilentlyContinue
+        Set-Content -Path $iconMarker5 -Value ''
+    }
+} catch { }
 # Logo logic v4: forget the old "no logo found" marks once, so the improved downloader retries those apps
 try {
     $iconMarker = Join-Path $IconCache '.logic_v4'
@@ -603,7 +710,12 @@ try {
           <ControlTemplate TargetType="CheckBox">
             <Border x:Name="card" Background="{DynamicResource CardBg}" Width="156" Height="170" Margin="7" CornerRadius="16"
                     BorderBrush="{DynamicResource Edge}" BorderThickness="1.5" Padding="8"
-                    RenderTransformOrigin="0.5,0.5" ToolTip="{Binding Id}">
+                    RenderTransformOrigin="0.5,0.5" ToolTipService.InitialShowDelay="350" ToolTipService.ShowDuration="30000">
+              <Border.ToolTip>
+                <ToolTip Background="{DynamicResource CardBg}" BorderBrush="{DynamicResource Edge}" BorderThickness="1.5" Padding="12,9" MaxWidth="340">
+                  <TextBlock Text="{Binding Tip}" TextWrapping="Wrap" FontSize="13" LineHeight="19" Foreground="{DynamicResource TextPrimary}"/>
+                </ToolTip>
+              </Border.ToolTip>
               <Border.RenderTransform><ScaleTransform x:Name="zoom" ScaleX="1" ScaleY="1"/></Border.RenderTransform>
               <Grid>
                 <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
@@ -641,6 +753,8 @@ try {
                         <Style.Triggers>
                           <DataTrigger Binding="{Binding StatusKey}" Value="st_queued"><Setter Property="Background" Value="{DynamicResource Edge}"/></DataTrigger>
                           <DataTrigger Binding="{Binding StatusKey}" Value="st_installing"><Setter Property="Background" Value="{DynamicResource StInfoBg}"/></DataTrigger>
+                          <DataTrigger Binding="{Binding StatusKey}" Value="st_uninstalling"><Setter Property="Background" Value="{DynamicResource StInfoBg}"/></DataTrigger>
+                          <DataTrigger Binding="{Binding StatusKey}" Value="st_removed"><Setter Property="Background" Value="{DynamicResource StOkBg}"/></DataTrigger>
                           <DataTrigger Binding="{Binding StatusKey}" Value="st_manual"><Setter Property="Background" Value="{DynamicResource StInfoBg}"/></DataTrigger>
                           <DataTrigger Binding="{Binding StatusKey}" Value="st_done"><Setter Property="Background" Value="{DynamicResource StOkBg}"/></DataTrigger>
                           <DataTrigger Binding="{Binding StatusKey}" Value="st_already"><Setter Property="Background" Value="{DynamicResource StOkBg}"/></DataTrigger>
@@ -656,6 +770,8 @@ try {
                           <Setter Property="Foreground" Value="{DynamicResource TextSec2}"/>
                           <Style.Triggers>
                             <DataTrigger Binding="{Binding StatusKey}" Value="st_installing"><Setter Property="Foreground" Value="{DynamicResource StInfoFg}"/></DataTrigger>
+                            <DataTrigger Binding="{Binding StatusKey}" Value="st_uninstalling"><Setter Property="Foreground" Value="{DynamicResource StInfoFg}"/></DataTrigger>
+                            <DataTrigger Binding="{Binding StatusKey}" Value="st_removed"><Setter Property="Foreground" Value="{DynamicResource StOkFg}"/></DataTrigger>
                             <DataTrigger Binding="{Binding StatusKey}" Value="st_manual"><Setter Property="Foreground" Value="{DynamicResource StInfoFg}"/></DataTrigger>
                             <DataTrigger Binding="{Binding StatusKey}" Value="st_done"><Setter Property="Foreground" Value="{DynamicResource StOkFg}"/></DataTrigger>
                             <DataTrigger Binding="{Binding StatusKey}" Value="st_already"><Setter Property="Foreground" Value="{DynamicResource StOkFg}"/></DataTrigger>
@@ -861,6 +977,8 @@ try {
           <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
             <Button x:Name="btnLog" Style="{StaticResource Btn}"/>
             <Button x:Name="btnCancel" Style="{StaticResource BtnDanger}" Visibility="Collapsed"/>
+            <Button x:Name="btnUpgrade" Style="{StaticResource Btn}"/>
+            <Button x:Name="btnUninstall" Style="{StaticResource Btn}"/>
             <Button x:Name="btnInstall" Style="{StaticResource BtnPrimary}" FontSize="15"/>
           </StackPanel>
         </Grid>
@@ -876,7 +994,7 @@ try {
 $reader = New-Object System.Xml.XmlNodeReader $xaml
 $window = [Windows.Markup.XamlReader]::Load($reader)
 foreach ($n in 'imgLogo', 'txtTitle', 'txtSubtitle', 'txtSearch', 'txtPlaceholder', 'btnLang', 'lstCats', 'btnSelectVisible',
-                'btnClear', 'txtCatTitle', 'txtCatCount', 'icApps', 'txtEmpty', 'txtSelected', 'pbar', 'txtProgress', 'btnCancel', 'btnInstall', 'txtLog', 'btnLog', 'txtPercent', 'btnClearSearch', 'btnTheme') {
+                'btnClear', 'txtCatTitle', 'txtCatCount', 'icApps', 'txtEmpty', 'txtSelected', 'pbar', 'txtProgress', 'btnCancel', 'btnInstall', 'btnUpgrade', 'btnUninstall', 'txtLog', 'btnLog', 'txtPercent', 'btnClearSearch', 'btnTheme') {
     Set-Variable -Name $n -Value $window.FindName($n) -Scope Script
 }
 
@@ -1028,6 +1146,7 @@ function Refresh-Grid {
     $list = New-Object 'System.Collections.Generic.List[MeshalApp]'
     foreach ($a in $script:Apps) {
         if ($cat -eq 'Selected') { if (-not $a.IsSelected) { continue } }
+        elseif ($cat -eq 'Installed') { if (-not $script:InstalledIds.ContainsKey($a.Id)) { continue } }
         elseif ($cat -ne 'All' -and $a.Category -ne $cat) { continue }
         if ($hasQ -and -not (($a.NameEn.IndexOf($q, $ic) -ge 0) -or ($a.NameAr.IndexOf($q, $ic) -ge 0) -or ($a.Id.IndexOf($q, $ic) -ge 0))) { continue }
         $list.Add($a)
@@ -1043,8 +1162,23 @@ function Refresh-Grid {
     if ($list.Count -eq 0) { $script:txtEmpty.Visibility = 'Visible' } else { $script:txtEmpty.Visibility = 'Collapsed' }
 }
 
+function Update-InstalledCount {
+    if ($script:CatMap.ContainsKey('Installed')) { $script:CatMap['Installed'].Count = $script:InstalledIds.Count }
+}
+
+function Set-InstalledFlag {
+    param([string]$Id, [bool]$Value)
+    if ($Value) { $script:InstalledIds[$Id] = $true } else { [void]$script:InstalledIds.Remove($Id) }
+    Update-InstalledCount
+    if ($script:Cat -eq 'Installed') { Refresh-Grid }
+}
+
 function Update-Selection {
     $n = @($script:Apps | Where-Object { $_.IsSelected }).Count
+    $ni = @($script:Apps | Where-Object { $_.IsSelected -and $script:InstalledIds.ContainsKey($_.Id) }).Count
+    $script:btnUpgrade.IsEnabled = (-not $script:Busy)
+    $script:btnUninstall.IsEnabled = ($ni -gt 0) -and (-not $script:Busy)
+    if ($ni -gt 0) { $script:btnUninstall.Content = ('{0} ({1})' -f $script:T.uninstallBtn, $ni) } else { $script:btnUninstall.Content = $script:T.uninstallBtn }
     $script:txtSelected.Text = ($script:T.selected -f $n)
     $script:CatMap['Selected'].Count = $n
     $script:btnInstall.IsEnabled = ($n -gt 0) -and (-not $script:Busy)
@@ -1088,13 +1222,15 @@ function Apply-Language {
     $script:btnClear.Content  = $t.clearAll
     $script:btnInstall.Content = $t.install
     $script:btnCancel.Content = $t.cancel
+    $script:btnUpgrade.Content = $t.upgradeAll
     $script:txtEmpty.Text     = [char]::ConvertFromUtf32(0x1F50D) + "`n" + $t.noResults
     $script:btnClearSearch.ToolTip = $t.clearAll
     Set-LogVisible ($script:txtLog.Visibility -eq 'Visible')
     if (-not $script:Busy) { $script:txtProgress.Text = $t.ready }
 
     foreach ($a in $script:Apps) {
-        if ($script:Lang -eq 'ar') { $a.DisplayName = $a.NameAr } else { $a.DisplayName = $a.NameEn }
+        if ($script:Lang -eq 'ar') { $a.DisplayName = $a.NameAr; $a.Tip = $a.DescAr } else { $a.DisplayName = $a.NameEn; $a.Tip = $a.DescEn }
+        if (-not $a.Tip) { $a.Tip = $a.DisplayName + '  (' + $a.Id + ')' }
         if ($a.StatusKey) { $a.Status = $t[$a.StatusKey] }
     }
     foreach ($key in $CategoryOrder) { $script:CatMap[$key].Name = $t["cat_$key"] }
@@ -1174,16 +1310,20 @@ function Start-IconDownloads {
         $wc.Headers.Add('Accept', 'image/png,image/*;q=0.9,*/*;q=0.8')
         $wc.Headers.Add('Accept-Language', 'en-US,en;q=0.9')
 
+        # real (not enlarged) resolution of the picture - an upscaled 32px favicon counts as ~32, not 256
         function Get-ImgWidth([string]$path) {
-            try {
-                $fs = [System.IO.File]::OpenRead($path)
+            try { return [int][MeshalImg]::EffectiveWidth($path) }
+            catch {
                 try {
-                    $img = [System.Drawing.Image]::FromStream($fs, $false, $false)
-                    try { return [int]$img.Width } finally { $img.Dispose() }
+                    $fs = [System.IO.File]::OpenRead($path)
+                    try {
+                        $img = [System.Drawing.Image]::FromStream($fs, $false, $false)
+                        try { return [int]$img.Width } finally { $img.Dispose() }
+                    }
+                    finally { $fs.Dispose() }
                 }
-                finally { $fs.Dispose() }
+                catch { return 0 }
             }
-            catch { return 0 }
         }
 
         $name = ($key -replace '[^a-zA-Z0-9\.\-]', '_') + '.png'
@@ -1196,7 +1336,7 @@ function Start-IconDownloads {
         # $direct = the file comes from the app's own website: even a 16px icon is genuine there.
         # Favicon services return a generic 16px globe for unknown sites, so they must be >= 20px.
         function Try-Url([string]$u, [bool]$direct = $false) {
-            if ($st.best -ge 128) { return }
+            if ($st.best -ge 96) { return }
             $minW = 20; if ($direct) { $minW = 16 }
             $st.n++
             $tmp = "$file.$($st.n).tmp"
@@ -1281,7 +1421,7 @@ function Start-IconDownloads {
         # 4) slower fallbacks, for the site and then its main domain
         foreach ($h in $hosts) {
             Try-Url "https://www.google.com/s2/favicons?domain=$h&sz=256"
-            if ($st.best -lt 128) { foreach ($u in (Get-PageIcons $h)) { Try-Url $u $true } }
+            if ($st.best -lt 96) { foreach ($u in (Get-PageIcons $h)) { Try-Url $u $true } }
             Try-Url "https://$h/apple-touch-icon.png" $true
             Try-Url "https://icon.horse/icon/$h"
             Try-Url "https://favicone.com/$h?s=256"
@@ -1337,7 +1477,7 @@ function Start-IconDownloads {
 # 8. Installation engine (runs winget in a background runspace, UI polls a queue)
 # ----------------------------------------------------------------------------
 $worker = {
-    param($sync, $apps, $desktop)
+    param($sync, $apps, $desktop, $mode)
     try {
         try { [Console]::OutputEncoding = [System.Text.Encoding]::UTF8 } catch { }
 
@@ -1360,6 +1500,91 @@ $worker = {
                 }
             }
             return $h
+        }
+
+        function Get-StoreApps {
+            try { return @(Get-StartApps | Where-Object { $_.AppID -match '!' }) } catch { return @() }
+        }
+        function Get-StoreAppIds {
+            $h = @{}
+            foreach ($x in (Get-StoreApps)) { $h[[string]$x.AppID] = $true }
+            return $h
+        }
+
+        # Store apps have no icon file: take the logo from the app package and convert it to a .ico
+        function New-StoreAppIcon([string]$appId) {
+            try {
+                Add-Type -AssemblyName System.Drawing -ErrorAction Stop
+                $pfn = ($appId -split '!')[0]
+                $global:IconWhy = 'package not found: ' + $pfn
+                $pkg = Get-AppxPackage -PackageFamilyName $pfn -ErrorAction Stop | Select-Object -First 1
+                if (-not $pkg -or -not $pkg.InstallLocation) { return $null }
+                $global:InstallDir = [string]$pkg.InstallLocation
+                $global:IconWhy = 'cannot read manifest in ' + $pkg.InstallLocation
+                $manifest = Get-Content -LiteralPath (Join-Path $pkg.InstallLocation 'AppxManifest.xml') -Raw -ErrorAction Stop
+                $global:AppExe = $null
+                if ($manifest -match 'Executable="([^"]+)"') { $global:AppExe = Join-Path $pkg.InstallLocation ($Matches[1] -replace '/', '\') }
+                $logo = $null
+                foreach ($attr in @('Square44x44Logo', 'Square150x150Logo', 'Logo')) {
+                    if ($manifest -match ($attr + '="([^"]+)"')) { $logo = $Matches[1]; break }
+                }
+                if (-not $logo) { $global:IconWhy = 'no logo entry in manifest'; return $null }
+                $rel  = $logo -replace '/', '\'
+                $dir  = Split-Path -Parent (Join-Path $pkg.InstallLocation $rel)
+                $base = [System.IO.Path]::GetFileNameWithoutExtension($rel)
+                $global:IconWhy = 'cannot list logo folder ' + $dir
+                $files = @(Get-ChildItem -LiteralPath $dir -Filter ($base + '*.png') -ErrorAction Stop)
+                if ($files.Count -eq 0) { $global:IconWhy = 'no png for ' + $base; return $null }
+                $global:IconWhy = 'cannot convert logo to ico'
+                $best = $null; $bestW = 0
+                foreach ($f in $files) {
+                    if ($f.Name -match 'lightunplated|contrast|devicefamily-colorfulunplated') { continue }
+                    try {
+                        $im = [System.Drawing.Image]::FromFile($f.FullName)
+                        $w = $im.Width; $im.Dispose()
+                        $pref = 0; if ($f.Name -match 'targetsize|unplated') { $pref = 1 }
+                        $score = $w + ($pref * 1000)
+                        if ($score -gt $bestW) { $bestW = $score; $best = $f.FullName }
+                    } catch { }
+                }
+                if (-not $best) { return $null }
+                $src = [System.Drawing.Image]::FromFile($best)
+                $bmp = New-Object System.Drawing.Bitmap 256, 256, ([System.Drawing.Imaging.PixelFormat]::Format32bppArgb)
+                $g = [System.Drawing.Graphics]::FromImage($bmp)
+                $g.InterpolationMode = [System.Drawing.Drawing2D.InterpolationMode]::HighQualityBicubic
+                $g.SmoothingMode = [System.Drawing.Drawing2D.SmoothingMode]::HighQuality
+                $g.Clear([System.Drawing.Color]::Transparent)
+                $scale = [math]::Min(256.0 / $src.Width, 256.0 / $src.Height)
+                $w2 = [int]($src.Width * $scale); $h2 = [int]($src.Height * $scale)
+                $g.DrawImage($src, [int]((256 - $w2) / 2), [int]((256 - $h2) / 2), $w2, $h2)
+                $g.Dispose(); $src.Dispose()
+                $ms = New-Object System.IO.MemoryStream
+                $bmp.Save($ms, [System.Drawing.Imaging.ImageFormat]::Png); $bmp.Dispose()
+                $png = $ms.ToArray(); $ms.Dispose()
+
+                $icoDir = Join-Path $env:LOCALAPPDATA 'MeshalBox\icons'
+                [void][System.IO.Directory]::CreateDirectory($icoDir)
+                $icoPath = Join-Path $icoDir (($pfn -replace '[^\w\.\-]', '_') + '.ico')
+                $fs = [System.IO.File]::Create($icoPath)
+                $bw = New-Object System.IO.BinaryWriter($fs)
+                $bw.Write([uint16]0); $bw.Write([uint16]1); $bw.Write([uint16]1)          # ICONDIR
+                $bw.Write([byte]0); $bw.Write([byte]0); $bw.Write([byte]0); $bw.Write([byte]0)   # 256x256, no palette
+                $bw.Write([uint16]1); $bw.Write([uint16]32)
+                $bw.Write([uint32]$png.Length); $bw.Write([uint32]22)
+                $bw.Write($png)
+                $bw.Flush(); $bw.Close(); $fs.Close()
+                $global:IconWhy = 'ok'
+                return $icoPath
+            } catch { $global:IconWhy += ' (' + $_.Exception.Message + ')'; return $null }
+        }
+
+        function Update-ShellIcons {
+            try {
+                if (-not ('MB.ShellNotify' -as [type])) {
+                    Add-Type -Namespace MB -Name ShellNotify -MemberDefinition '[System.Runtime.InteropServices.DllImport("shell32.dll")] public static extern void SHChangeNotify(int e, uint f, System.IntPtr a, System.IntPtr b);'
+                }
+                [MB.ShellNotify]::SHChangeNotify(0x08000000, 0, [System.IntPtr]::Zero, [System.IntPtr]::Zero)
+            } catch { }
         }
 
         function Get-Norm([string]$s) { return (([string]$s).ToLowerInvariant() -replace '[^\p{L}\p{Nd}]', '') }
@@ -1413,18 +1638,67 @@ $worker = {
                 # Microsoft Store (UWP) apps have no .lnk file: create one that launches them
                 if ($made.Count -eq 0 -and -not $existed) {
                     try {
-                        $sa = Get-StartApps | Where-Object { ((Get-Norm $_.Name) -eq $names[0]) -and ($_.AppID -match '!') } | Select-Object -First 1
+                        $sa = $null
+                        $tries = 1; if ($app.Source -eq 'msstore') { $tries = 10 }   # the Store needs a few seconds to register a new app
+                        for ($t = 0; $t -lt $tries -and -not $sa; $t++) {
+                            if ($t -gt 0) { Start-Sleep -Seconds 2 }
+                            $all = @(Get-StoreApps)
+                            # 1) by name: exact, or "ChatGPT" vs "ChatGPT Desktop"
+                            foreach ($x in $all) {
+                                $n = Get-Norm $x.Name
+                                foreach ($c in $names) {
+                                    if ($n -eq $c -or ($n.Length -ge 4 -and $c.Length -ge 5 -and ($c.StartsWith($n) -or $n.StartsWith($c)))) { $sa = $x; break }
+                                }
+                                if ($sa) { break }
+                            }
+                            # 2) a Store app that did not exist before this install
+                            if (-not $sa -and $app.Source -eq 'msstore') {
+                                $fresh = @($all | Where-Object { -not $beforeSA.ContainsKey([string]$_.AppID) })
+                                if ($fresh.Count -eq 1) { $sa = $fresh[0] }
+                            }
+                        }
                         if ($sa) {
                             $fn = ($sa.Name -replace '[\\/:*?"<>|]', '_') + '.lnk'
                             $dest = Join-Path $desktop $fn
-                            if (-not (Test-Path -LiteralPath $dest)) {
-                                $ws = New-Object -ComObject WScript.Shell
-                                $lnk = $ws.CreateShortcut($dest)
-                                $lnk.TargetPath = 'explorer.exe'
-                                $lnk.Arguments = 'shell:AppsFolder\' + $sa.AppID
-                                $lnk.Save()
-                                $made.Add($sa.Name)
+                            $destPub = ''; if ($publicDesktop) { $destPub = Join-Path $publicDesktop $fn }
+                            $appUri = 'shell:AppsFolder\' + [string]$sa.AppID
+                            $ws = New-Object -ComObject WScript.Shell
+                            $changed = $false
+                            # Native Store-app shortcut: TargetPath = shell:AppsFolder\<AppID> (same thing Explorer creates).
+                            # Windows then takes the app's own icon automatically. The old "explorer.exe + arguments" form always shows a folder icon.
+                            foreach ($d2 in @($dest, $destPub)) {
+                                if ($d2 -and (Test-Path -LiteralPath $d2)) {
+                                    try {
+                                        $old = $ws.CreateShortcut($d2)
+                                        if ($old.TargetPath -like '*explorer.exe' -and $old.Arguments -like 'shell:AppsFolder*') { Remove-Item -LiteralPath $d2 -Force -ErrorAction Stop }
+                                    } catch { }
+                                }
                             }
+                            if (-not (Test-Path -LiteralPath $dest) -and -not ($destPub -and (Test-Path -LiteralPath $destPub))) {
+                                $ok = $false
+                                try {
+                                    $lnk = $ws.CreateShortcut($dest)
+                                    $lnk.TargetPath = $appUri
+                                    $lnk.Save()
+                                    if ((Test-Path -LiteralPath $dest) -and ((Get-Item -LiteralPath $dest).Length -gt 0)) { $ok = $true }
+                                } catch { $sync.Queue.Enqueue("log|$($app.Id)|Native shortcut failed: $($_.Exception.Message)") }
+                                if (-not $ok) {
+                                    # fallback: explorer.exe + the app's own logo as icon
+                                    $global:IconWhy = ''; $global:AppExe = $null
+                                    $ico = New-StoreAppIcon ([string]$sa.AppID)
+                                    $iconLoc = ''
+                                    if ($ico) { $iconLoc = $ico + ',0' }
+                                    elseif ($global:AppExe -and (Test-Path -LiteralPath $global:AppExe)) { $iconLoc = $global:AppExe + ',0' }
+                                    if (-not $iconLoc) { $sync.Queue.Enqueue("log|$($app.Id)|Icon not found: $($global:IconWhy)") }
+                                    $lnk = $ws.CreateShortcut($dest)
+                                    $lnk.TargetPath = 'explorer.exe'
+                                    $lnk.Arguments = $appUri
+                                    if ($iconLoc) { $lnk.IconLocation = $iconLoc }
+                                    $lnk.Save()
+                                }
+                                $made.Add($sa.Name); $changed = $true
+                            }
+                            if ($changed) { Update-ShellIcons }
                         }
                     } catch { }
                 }
@@ -1536,11 +1810,115 @@ $worker = {
         }
         # ---------------------------------------------------------------------------------
 
+        function Send-UpgradeLine([string]$raw) {
+            $line = $raw.Trim()
+            if ($line.Length -eq 0) { return }
+            if ($line -match '^\((\d+)/(\d+)\)\s') {
+                $n1 = [int]$Matches[1]; $m1 = [int]$Matches[2]
+                if ($m1 -gt 0) { $sync.Queue.Enqueue('upprog|all|' + (([double]($n1 - 1) / $m1)).ToString([Globalization.CultureInfo]::InvariantCulture)) }
+            }
+            if ($line -match '(?i)successfully installed') { $global:UpCount++ }
+            if ($line.Length -gt 3 -and $line -notmatch '[\u2588\u2592\u2591]' -and $line -notmatch '^\d[\d\.]*\s*(KB|MB|GB)\s*/' -and $line -notmatch '^[-\\|/\s]+$') {
+                $sync.Queue.Enqueue("log|all|$line")
+            }
+        }
+
+        function Send-Line([string]$lineMode, [string]$lineId, [string]$raw) {
+            if ($lineMode -eq 'upgrade') { Send-UpgradeLine $raw } else { Send-WingetLine $lineId $raw }
+        }
+
+        # runs one winget command (output captured through a temp file so Stop can kill it at any moment)
+        function Run-Winget([string]$wcmd, [string]$lineId, [string]$lineMode) {
+            $code = -1
+            $logFile = Join-Path $env:TEMP ('meshalbox_' + [guid]::NewGuid().ToString('N') + '.log')
+            $p = $null
+            try {
+                $psi = New-Object System.Diagnostics.ProcessStartInfo
+                $psi.FileName = $env:ComSpec
+                $psi.Arguments = '/d /c "' + $wcmd + ' > "' + $logFile + '" 2>&1"'
+                $psi.UseShellExecute = $false
+                $psi.CreateNoWindow = $true
+                $p = [System.Diagnostics.Process]::Start($psi)
+                $sync.Proc = $p
+                $dec = [System.Text.Encoding]::UTF8.GetDecoder()
+                $pos = 0L
+                $sb = New-Object System.Text.StringBuilder
+                while ($true) {
+                    if ($sync.Cancel -and -not $p.HasExited) { Stop-Tree $p.Id }
+                    $exited = $p.HasExited
+                    try {
+                        if (Test-Path -LiteralPath $logFile) {
+                            $fs = New-Object System.IO.FileStream($logFile, [System.IO.FileMode]::Open, [System.IO.FileAccess]::Read, [System.IO.FileShare]'ReadWrite,Delete')
+                            try {
+                                if ($fs.Length -gt $pos) {
+                                    [void]$fs.Seek($pos, [System.IO.SeekOrigin]::Begin)
+                                    $bytes = New-Object byte[] ([int]($fs.Length - $pos))
+                                    $n = $fs.Read($bytes, 0, $bytes.Length)
+                                    $pos += $n
+                                    $chars = New-Object char[] ($n + 4)
+                                    $cn = $dec.GetChars($bytes, 0, $n, $chars, 0)
+                                    for ($i = 0; $i -lt $cn; $i++) {
+                                        $ch = $chars[$i]
+                                        if ($ch -eq [char]13 -or $ch -eq [char]10) {
+                                            if ($sb.Length -gt 0) { Send-Line $lineMode $lineId $sb.ToString(); [void]$sb.Clear() }
+                                        }
+                                        else { [void]$sb.Append($ch) }
+                                    }
+                                }
+                            } finally { $fs.Close() }
+                        }
+                    } catch { }
+                    if ($exited) { break }
+                    Start-Sleep -Milliseconds 150
+                }
+                if ($sb.Length -gt 0) { Send-Line $lineMode $lineId $sb.ToString() }
+                $p.WaitForExit()
+                $code = $p.ExitCode
+            }
+            catch {
+                $sync.Queue.Enqueue("log|$lineId|$($_.Exception.Message)")
+                $code = -1
+            }
+            finally {
+                $sync.Proc = $null
+                Remove-Item -LiteralPath $logFile -Force -ErrorAction SilentlyContinue
+            }
+
+            return [int]$code
+        }
+
+        # ---- Upgrade everything that has an update ----------------------------------------
+        if ($mode -eq 'upgradeall') {
+            $global:UpCount = 0
+            $sync.Queue.Enqueue('ustart|all|')
+            $code = Run-Winget 'winget upgrade --all --silent --accept-package-agreements --accept-source-agreements --disable-interactivity' 'all' 'upgrade'
+            if ($sync.Cancel -and (@(0, -1978335189) -notcontains $code)) { $code = -999 }
+            $sync.Queue.Enqueue("upcount|all|$($global:UpCount)")
+            $sync.Queue.Enqueue("done|all|$code")
+            return
+        }
+
         foreach ($app in $apps) {
             if ($sync.Cancel) { $sync.Queue.Enqueue("skip|$($app.Id)|"); continue }
+
+            # ---- Uninstall mode ----
+            if ($mode -eq 'uninstall') {
+                if ($app.Source -eq 'web') { $sync.Queue.Enqueue("log|$($app.Id)|Cannot remove automatically - uninstall it from Windows Settings."); $sync.Queue.Enqueue("skip|$($app.Id)|"); continue }
+                $sync.Queue.Enqueue("start|$($app.Id)|")
+                if ($app.Source -eq 'nvapp') { $ucmd = 'winget uninstall --name "NVIDIA app" --silent --accept-source-agreements --disable-interactivity' }
+                else {
+                    $ucmd = 'winget uninstall --id ' + $app.Id + ' --exact --silent --accept-source-agreements --disable-interactivity'
+                    if ($app.Source -eq 'msstore') { $ucmd += ' --source msstore' }
+                }
+                $code = Run-Winget $ucmd $app.Id 'install'
+                if ($sync.Cancel -and (@(0, 3010, -1978334967) -notcontains $code)) { $sync.Queue.Enqueue("skip|$($app.Id)|"); continue }
+                $sync.Queue.Enqueue("done|$($app.Id)|$code")
+                continue
+            }
             if ($app.Source -eq 'nvapp') {
                 $sync.Queue.Enqueue("start|$($app.Id)|")
                 $before = Get-StartLnks
+                $beforeSA = Get-StoreAppIds
                 $code = -1
                 try { $res = Install-NvidiaApp $app; if ($null -eq $res) { $code = $null } else { $code = [int]$res } }
                 catch { $sync.Queue.Enqueue("log|$($app.Id)|$($_.Exception.Message)"); $code = -1 }
@@ -1569,61 +1947,10 @@ $worker = {
             $sync.Queue.Enqueue("start|$($app.Id)|")
             $code = -1
             $before = Get-StartLnks
-            $logFile = Join-Path $env:TEMP ('meshalbox_' + [guid]::NewGuid().ToString('N') + '.log')
-            $p = $null
-            try {
-                $wcmd = 'winget install --id ' + $app.Id + ' --exact --silent --accept-package-agreements --accept-source-agreements --disable-interactivity'
-                if ($app.Source) { $wcmd += ' --source ' + $app.Source }
-                $psi = New-Object System.Diagnostics.ProcessStartInfo
-                $psi.FileName = $env:ComSpec
-                $psi.Arguments = '/d /c "' + $wcmd + ' > "' + $logFile + '" 2>&1"'
-                $psi.UseShellExecute = $false
-                $psi.CreateNoWindow = $true
-                $p = [System.Diagnostics.Process]::Start($psi)
-                $sync.Proc = $p
-                $dec = [System.Text.Encoding]::UTF8.GetDecoder()
-                $pos = 0L
-                $sb = New-Object System.Text.StringBuilder
-                while ($true) {
-                    if ($sync.Cancel -and -not $p.HasExited) { Stop-Tree $p.Id }
-                    $exited = $p.HasExited
-                    try {
-                        if (Test-Path -LiteralPath $logFile) {
-                            $fs = New-Object System.IO.FileStream($logFile, [System.IO.FileMode]::Open, [System.IO.FileAccess]::Read, [System.IO.FileShare]'ReadWrite,Delete')
-                            try {
-                                if ($fs.Length -gt $pos) {
-                                    [void]$fs.Seek($pos, [System.IO.SeekOrigin]::Begin)
-                                    $bytes = New-Object byte[] ([int]($fs.Length - $pos))
-                                    $n = $fs.Read($bytes, 0, $bytes.Length)
-                                    $pos += $n
-                                    $chars = New-Object char[] ($n + 4)
-                                    $cn = $dec.GetChars($bytes, 0, $n, $chars, 0)
-                                    for ($i = 0; $i -lt $cn; $i++) {
-                                        $ch = $chars[$i]
-                                        if ($ch -eq [char]13 -or $ch -eq [char]10) {
-                                            if ($sb.Length -gt 0) { Send-WingetLine $app.Id $sb.ToString(); [void]$sb.Clear() }
-                                        }
-                                        else { [void]$sb.Append($ch) }
-                                    }
-                                }
-                            } finally { $fs.Close() }
-                        }
-                    } catch { }
-                    if ($exited) { break }
-                    Start-Sleep -Milliseconds 150
-                }
-                if ($sb.Length -gt 0) { Send-WingetLine $app.Id $sb.ToString() }
-                $p.WaitForExit()
-                $code = $p.ExitCode
-            }
-            catch {
-                $sync.Queue.Enqueue("log|$($app.Id)|$($_.Exception.Message)")
-                $code = -1
-            }
-            finally {
-                $sync.Proc = $null
-                Remove-Item -LiteralPath $logFile -Force -ErrorAction SilentlyContinue
-            }
+            $beforeSA = Get-StoreAppIds
+            $wcmd = 'winget install --id ' + $app.Id + ' --exact --silent --accept-package-agreements --accept-source-agreements --disable-interactivity'
+            if ($app.Source) { $wcmd += ' --source ' + $app.Source }
+            $code = Run-Winget $wcmd $app.Id 'install'
 
             # Stop was pressed while this app was running -> report it as cancelled (unless it had already succeeded)
             if ($sync.Cancel -and (@(0, 3010, -1978334967, -1978335135, -1978335189) -notcontains $code)) {
@@ -1659,6 +1986,7 @@ function Stop-Tree {
 # Overall bar = finished apps + how far the running app is (real download % when winget reports it, otherwise a smooth estimate)
 $script:AppFrac   = 0.0
 $script:AppActive = $false
+$script:Mode      = 'install'
 function Update-Bar {
     $r = $script:Res
     if (-not $r -or $r.total -lt 1) { return }
@@ -1696,7 +2024,17 @@ $scanWorker = {
             }
             if (-not $hit) {
                 $nm = ([string]$a.Name).ToLowerInvariant() -replace '[^\p{L}\p{Nd}]', ''
-                if ($nm.Length -ge 3 -and $names.Contains($nm)) { $hit = $true }
+                if ($nm.Length -ge 3) {
+                    if ($names.Contains($nm)) { $hit = $true }
+                    elseif ($a.Source -eq 'nvapp') {
+                        # NVIDIA App is not in winget; its Programs-and-Features entry may carry a version/suffix
+                        foreach ($n in $names) { if ($n.StartsWith('nvidiaapp')) { $hit = $true; break } }
+                    }
+                    else {
+                        # "AppName 1.2.3" -> name followed only by a version number
+                        foreach ($n in $names) { if ($n.StartsWith($nm) -and ($n.Substring($nm.Length) -match '^\d+$')) { $hit = $true; break } }
+                    }
+                }
             }
             if ($hit) { $found.Add($a.Id) }
         }
@@ -1719,7 +2057,7 @@ function Start-InstalledScan {
     $script:ScanBusy = $true
     Write-Log $script:T.scanStart
     $script:ScanResult = [hashtable]::Synchronized(@{ Done = $false; Ids = @() })
-    $list = @($script:Apps | ForEach-Object { [pscustomobject]@{ Id = $_.Id; Name = $_.NameEn } })
+    $list = @($script:Apps | ForEach-Object { [pscustomobject]@{ Id = $_.Id; Name = $_.NameEn; Source = $_.Source } })
     $rs = [runspacefactory]::CreateRunspace()
     $rs.ApartmentState = 'MTA'
     $rs.Open()
@@ -1738,6 +2076,9 @@ function Finish-InstalledScan {
     foreach ($i in @($script:ScanResult.Ids)) { $set[[string]$i] = $true }
     $script:InstalledIds = $set
     Mark-Installed
+    Update-InstalledCount
+    Update-Selection
+    if ($script:Cat -eq 'Installed') { Refresh-Grid }
     Write-Log ($script:T.scanDone -f $set.Count)
     try { $script:ScanPs.EndInvoke($script:ScanHandle) } catch { }
     try { $script:ScanPs.Dispose(); $script:ScanRs.Dispose() } catch { }
@@ -1750,7 +2091,15 @@ function Finish-Install {
     $script:btnCancel.Visibility = 'Collapsed'
     $script:btnCancel.IsEnabled = $true
     $r = $script:Res
-    $summary = $script:T.finished -f $r.ok, $r.already, $r.fail, $r.cancel, $r.manual
+    if ($script:Mode -eq 'upgradeall') {
+        if ($r.cancel -gt 0) { $summary = $script:T.upCancelled }
+        elseif ($r.fail -gt 0) { $summary = $script:T.upFailed }
+        elseif ($r.ok -gt 0) { $summary = $script:T.upDone -f $r.ok }
+        elseif ($r.already -gt 0) { $summary = $script:T.upNone }
+        else { $summary = $script:T.upFinished }
+    }
+    elseif ($script:Mode -eq 'uninstall') { $summary = $script:T.finishedUninst -f $r.ok, $r.fail, $r.cancel }
+    else { $summary = $script:T.finished -f $r.ok, $r.already, $r.fail, $r.cancel, $r.manual }
     $script:AppActive = $false
     $script:AppFrac = 0.0
     $script:txtProgress.Text = $summary
@@ -1796,8 +2145,14 @@ function Process-Queue {
         switch ($type) {
             'start' {
                 $script:AppFrac = 0.0; $script:AppActive = $true
-                Set-Status $item 'st_installing'
-                $script:txtProgress.Text = ($script:T.installingNow -f $item.DisplayName, ($r.done + 1), $r.total)
+                if ($script:Mode -eq 'uninstall') {
+                    Set-Status $item 'st_uninstalling'
+                    $script:txtProgress.Text = ($script:T.uninstNow -f $item.DisplayName, ($r.done + 1), $r.total)
+                }
+                else {
+                    Set-Status $item 'st_installing'
+                    $script:txtProgress.Text = ($script:T.installingNow -f $item.DisplayName, ($r.done + 1), $r.total)
+                }
                 Write-Log ('>> ' + $item.NameEn + '  (' + $id + ')')
             }
             'manual' {
@@ -1813,15 +2168,50 @@ function Process-Queue {
                     if ((0.8 * $f) -gt $script:AppFrac) { $script:AppFrac = 0.8 * $f }
                 } catch { }
             }
+            'ustart' {
+                $script:AppFrac = 0.0; $script:AppActive = $true
+                $script:txtProgress.Text = $script:T.upgradingNow
+            }
+            'upprog' {
+                try {
+                    $f = [double]::Parse($txt, [Globalization.CultureInfo]::InvariantCulture)
+                    if ((0.95 * $f) -gt $script:AppFrac) { $script:AppFrac = 0.95 * $f }
+                } catch { }
+            }
+            'upcount' { try { $r.ok = [int]$txt } catch { } }
             'shortcut' { Write-Log ($script:T.shortcutLog -f $txt) }
             'log' { Write-Log ('     ' + $txt) -Plain }
             'skip' {
-                Set-Status $item 'st_cancelled'
+                # cancelled: no badge on the card (back to its normal state, or "Installed" if it was already on the PC)
+                if ($item) { if ($script:InstalledIds.ContainsKey($item.Id)) { Set-Status $item 'st_installed' } else { Set-Status $item '' } }
                 $r.cancel++; $r.done++
                 $script:AppActive = $false; $script:AppFrac = 0.0; Update-Bar
             }
             'done' {
                 $code = [int]$txt
+                if ($script:Mode -eq 'upgradeall') {
+                    if ($code -eq 0) { }
+                    elseif ($code -eq -1978335189) { $r.already++ }
+                    elseif ($code -eq -999) { $r.cancel++ }
+                    else { $r.fail++ }
+                    $r.done++
+                    $script:AppActive = $false; $script:AppFrac = 1.0; Update-Bar
+                }
+                elseif ($script:Mode -eq 'uninstall') {
+                    if (@(0, 3010, -1978334967) -contains $code) {
+                        Set-Status $item 'st_removed'; $r.ok++
+                        Write-Log ([string][char]0x2714 + ' ' + $item.NameEn + ' - removed')
+                        Set-InstalledFlag $item.Id $false
+                    }
+                    else {
+                        Set-Status $item 'st_failed'; $r.fail++
+                        Write-Log ([string][char]0x2716 + ' ' + $item.NameEn + ' - ' + ($script:T.failedCode -f $code))
+                    }
+                    $r.done++
+                    $script:AppActive = $false; $script:AppFrac = 0.0; Update-Bar
+                    if ($item -and $item.StatusKey -eq 'st_removed') { Clear-Finished $item }
+                }
+                else {
                 switch ($code) {
                     0            { Set-Status $item 'st_done';    $r.ok++;      Write-Log ([string][char]0x2714 + ' ' + $item.NameEn) }
                     -1978335135  { Set-Status $item 'st_already'; $r.already++; Write-Log ([string][char]0x2714 + ' ' + $item.NameEn + ' (already installed)') }
@@ -1833,16 +2223,55 @@ function Process-Queue {
                 $r.done++
                 $script:AppActive = $false; $script:AppFrac = 0.0; Update-Bar
                 # installed / already installed -> remove it from the selected list (failed ones stay so you can retry)
-                if ($item -and ($item.StatusKey -eq 'st_done' -or $item.StatusKey -eq 'st_already')) { Clear-Finished $item }
+                if ($item -and ($item.StatusKey -eq 'st_done' -or $item.StatusKey -eq 'st_already')) { Set-InstalledFlag $item.Id $true; Clear-Finished $item }
+                }
             }
             'finished' { Finish-Install }
         }
     }
     # smooth movement while an app is installing (never goes backwards, never reaches the next app's share)
     if ($script:Busy -and $script:AppActive) {
-        $script:AppFrac += (0.95 - $script:AppFrac) * 0.012
+        $k = 0.012; if ($script:Mode -eq 'upgradeall') { $k = 0.003 }
+        $script:AppFrac += (0.95 - $script:AppFrac) * $k
         Update-Bar
     }
+}
+
+function Start-Work {
+    param([string]$Mode, $Sel)
+    $script:Mode = $Mode
+    $script:Busy = $true
+    $total = 1
+    if ($Mode -ne 'upgradeall') { $total = @($Sel).Count }
+    $script:Res = @{ ok = 0; already = 0; fail = 0; cancel = 0; manual = 0; done = 0; total = $total }
+    $script:ResetTimer.Stop()
+    $script:AppFrac = 0.0; $script:AppActive = $false
+    $script:pbar.Value = 0
+    $script:btnInstall.IsEnabled = $false
+    $script:btnUninstall.IsEnabled = $false
+    $script:btnUpgrade.IsEnabled = $false
+    $script:btnCancel.Visibility = 'Visible'
+    if ($Mode -ne 'upgradeall') { foreach ($a in $Sel) { Set-Status $a 'st_queued' } }
+    if ($Mode -eq 'install') { Write-Log ($script:T.startLog -f $total) }
+    elseif ($Mode -eq 'uninstall') { Write-Log ($script:T.startUninst -f $total) }
+    else { Write-Log $script:T.startUpgrade; $script:txtProgress.Text = $script:T.upgradingNow }
+
+    $script:Sync = [hashtable]::Synchronized(@{ Cancel = $false; Proc = $null })
+    $script:Sync.Queue = New-Object 'System.Collections.Concurrent.ConcurrentQueue[object]'
+
+    $list = @()
+    if ($Mode -ne 'upgradeall') { $list = @($Sel | ForEach-Object { [pscustomobject]@{ Id = $_.Id; Name = $_.NameEn; Source = $_.Source } }) }
+
+    $rs = [runspacefactory]::CreateRunspace()
+    $rs.ApartmentState = 'MTA'
+    $rs.Open()
+    $ps = [powershell]::Create()
+    $ps.Runspace = $rs
+    [void]$ps.AddScript($worker).AddArgument($script:Sync).AddArgument($list).AddArgument([Environment]::GetFolderPath('Desktop')).AddArgument($Mode)
+    $script:WorkerHandle = $ps.BeginInvoke()
+    $script:WorkerPs = $ps
+    $script:WorkerRs = $rs
+    $script:InstallTimer.Start()
 }
 
 function Start-Install {
@@ -1854,32 +2283,27 @@ function Start-Install {
     }
     $answer = Show-Msg ($script:T.confirmMsg -f $sel.Count) $script:T.confirmTitle 'YesNo' 'Question'
     if ($answer -ne 'Yes') { return }
+    Start-Work 'install' $sel
+}
 
-    $script:Busy = $true
-    $script:Res = @{ ok = 0; already = 0; fail = 0; cancel = 0; manual = 0; done = 0; total = $sel.Count }
-    $script:ResetTimer.Stop()
-    $script:AppFrac = 0.0; $script:AppActive = $false
-    $script:pbar.Value = 0
-    $script:btnInstall.IsEnabled = $false
-    $script:btnCancel.Visibility = 'Visible'
-    foreach ($a in $sel) { Set-Status $a 'st_queued' }
-    Write-Log ($script:T.startLog -f $sel.Count)
+function Start-Uninstall {
+    $sel = @($script:Apps | Where-Object { $_.IsSelected -and $script:InstalledIds.ContainsKey($_.Id) })
+    if ($sel.Count -eq 0) { [void](Show-Msg $script:T.noInstalledSel); return }
+    if (-not (Get-Command winget -ErrorAction SilentlyContinue)) {
+        [void](Show-Msg $script:T.noWinget $script:T.title 'OK' 'Error'); return
+    }
+    $answer = Show-Msg ($script:T.confirmUninst -f $sel.Count) $script:T.confirmUninstTitle 'YesNo' 'Warning'
+    if ($answer -ne 'Yes') { return }
+    Start-Work 'uninstall' $sel
+}
 
-    $script:Sync = [hashtable]::Synchronized(@{ Cancel = $false; Proc = $null })
-    $script:Sync.Queue = New-Object 'System.Collections.Concurrent.ConcurrentQueue[object]'
-
-    $list = @($sel | ForEach-Object { [pscustomobject]@{ Id = $_.Id; Name = $_.NameEn; Source = $_.Source } })
-
-    $rs = [runspacefactory]::CreateRunspace()
-    $rs.ApartmentState = 'MTA'
-    $rs.Open()
-    $ps = [powershell]::Create()
-    $ps.Runspace = $rs
-    [void]$ps.AddScript($worker).AddArgument($script:Sync).AddArgument($list).AddArgument([Environment]::GetFolderPath('Desktop'))
-    $script:WorkerHandle = $ps.BeginInvoke()
-    $script:WorkerPs = $ps
-    $script:WorkerRs = $rs
-    $script:InstallTimer.Start()
+function Start-UpgradeAll {
+    if (-not (Get-Command winget -ErrorAction SilentlyContinue)) {
+        [void](Show-Msg $script:T.noWinget $script:T.title 'OK' 'Error'); return
+    }
+    $answer = Show-Msg $script:T.confirmUpgrade $script:T.confirmUpgradeTitle 'YesNo' 'Question'
+    if ($answer -ne 'Yes') { return }
+    Start-Work 'upgradeall' @()
 }
 
 # ----------------------------------------------------------------------------
@@ -1964,6 +2388,8 @@ $btnClear.Add_Click({
     })
 
 $btnInstall.Add_Click({ Start-Install })
+$btnUninstall.Add_Click({ Start-Uninstall })
+$btnUpgrade.Add_Click({ Start-UpgradeAll })
 
 # Ctrl+F jumps to the search box
 $window.Add_KeyDown({
