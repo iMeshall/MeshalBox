@@ -43,7 +43,7 @@ $IsCompiledExe       = '__IS_EXE__' -eq 'yes'
 $EmbeddedCatalogB64  = '__EMBED_CATALOG__'
 
 # Self-update (GitHub Releases). Bump $AppVersion on every release - build.bat reads it for the EXE version.
-$AppVersion = '1.0.0'
+$AppVersion = '1.0.1'
 $UpdateRepo = 'iMeshall/MeshalBox'
 
 # ----------------------------------------------------------------------------
