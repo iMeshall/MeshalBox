@@ -42,6 +42,10 @@ $ErrorActionPreference = 'Stop'
 $IsCompiledExe       = '__IS_EXE__' -eq 'yes'
 $EmbeddedCatalogB64  = '__EMBED_CATALOG__'
 
+# Self-update (GitHub Releases). Bump $AppVersion on every release - build.bat reads it for the EXE version.
+$AppVersion = '1.0.0'
+$UpdateRepo = 'iMeshall/MeshalBox'
+
 # ----------------------------------------------------------------------------
 # 0. Make sure we run in STA (required by WPF) and with Administrator rights
 # ----------------------------------------------------------------------------
@@ -60,6 +64,20 @@ if ($PSCommandPath -and (-not $IsCompiledExe) -and ((-not $isSta) -or ((-not $is
     }
     catch {
         # UAC was declined (or relaunch failed): continue in the current session.
+    }
+}
+
+# Compiled EXE: no admin manifest (so no UAC shield on the icon) - ask for elevation here instead.
+if ($IsCompiledExe -and (-not $isAdmin) -and (-not $NoElevate)) {
+    try {
+        $self    = [Diagnostics.Process]::GetCurrentProcess().MainModule.FileName
+        $argList = "-Language $Language"
+        if ($AppsFile) { $argList += " -AppsFile `"$AppsFile`"" }
+        Start-Process -FilePath $self -ArgumentList $argList -Verb RunAs
+        exit
+    }
+    catch {
+        # UAC was declined: continue without admin rights (a warning is shown in the app).
     }
 }
 
@@ -240,6 +258,18 @@ $Strings = @{
         langBtn       = 'العربية'
         themeToLight  = 'Switch to light mode'
         themeToDark   = 'Switch to dark mode'
+        updBtn        = 'Update available'
+        updTip        = 'A new version of MeshalBox is available'
+        updTitle      = 'Update MeshalBox'
+        updHead       = 'A new version of MeshalBox is available.'
+        updVer        = 'Current version: {0}   >>   New version: {1}'
+        updNotes      = 'What''s new:'
+        updNoNotes    = 'No release notes were provided.'
+        updAsk        = 'Do you want to update to the new version now? MeshalBox will close and reopen automatically.'
+        updAskSrc     = 'Do you want to open the download page of the new version?'
+        updBusy       = 'Please wait until the current operation finishes, then try again.'
+        updDownloading = 'Downloading the update...'
+        updFail       = 'The update failed:{0}{1}'
         selectVisible = 'Select shown'
         clearAll      = 'Clear selection'
         install       = [string][char]0x2B07 + '  Install selected'
@@ -308,6 +338,18 @@ $Strings = @{
         langBtn       = 'English'
         themeToLight  = 'التبديل إلى الوضع الفاتح'
         themeToDark   = 'التبديل إلى الوضع الداكن'
+        updBtn        = 'يتوفر تحديث'
+        updTip        = 'يتوفر إصدار جديد من MeshalBox'
+        updTitle      = 'تحديث MeshalBox'
+        updHead       = 'يتوفر إصدار جديد من MeshalBox.'
+        updVer        = 'الإصدار الحالي: {0}   >>   الإصدار الجديد: {1}'
+        updNotes      = 'ما الجديد:'
+        updNoNotes    = 'لا توجد ملاحظات لهذا الإصدار.'
+        updAsk        = 'هل تريد التحديث إلى الإصدار الجديد الآن؟ سيُغلق MeshalBox ثم يُعاد فتحه تلقائيًا.'
+        updAskSrc     = 'هل تريد فتح صفحة تحميل الإصدار الجديد؟'
+        updBusy       = 'يرجى الانتظار حتى تنتهي العملية الحالية ثم أعد المحاولة.'
+        updDownloading = 'جارٍ تحميل التحديث...'
+        updFail       = 'فشل التحديث:{0}{1}'
         selectVisible = 'تحديد المعروض'
         clearAll      = 'إلغاء التحديد'
         install       = [string][char]0x2B07 + '  تثبيت المحدد'
@@ -648,7 +690,7 @@ try {
       <Setter Property="Template">
         <Setter.Value>
           <ControlTemplate TargetType="TextBox">
-            <Border x:Name="bd" Background="{DynamicResource InputBg}" BorderBrush="{DynamicResource Edge}" BorderThickness="1.5" CornerRadius="12" Padding="{TemplateBinding Padding}">
+            <Border x:Name="bd" Background="{DynamicResource InputBg}" BorderBrush="{DynamicResource Edge}" BorderThickness="1.5" CornerRadius="12" Padding="0,10,0,10">
               <ScrollViewer x:Name="PART_ContentHost"/>
             </Border>
             <ControlTemplate.Triggers>
@@ -864,15 +906,16 @@ try {
             </StackPanel>
           </StackPanel>
           <Grid Grid.Column="1" Margin="34,0" VerticalAlignment="Center" MaxWidth="560">
-            <TextBox x:Name="txtSearch" Style="{StaticResource SearchBox}"/>
+            <TextBox x:Name="txtSearch" Style="{StaticResource SearchBox}" VerticalContentAlignment="Center" TextWrapping="NoWrap" AcceptsReturn="False"/>
             <TextBlock Text="&#xE721;" FontFamily="Segoe MDL2 Assets" FontSize="15" Foreground="{DynamicResource TextMuted}"
                        IsHitTestVisible="False" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="15,0,0,0"/>
             <TextBlock x:Name="txtPlaceholder" IsHitTestVisible="False" Foreground="{DynamicResource TextMuted}" FontSize="14"
-                       VerticalAlignment="Center" Margin="42,0,16,0"/>
+                       VerticalAlignment="Center" Margin="44,0,16,0"/>
             <Button x:Name="btnClearSearch" Style="{StaticResource IconBtn}" HorizontalAlignment="Right"
                     VerticalAlignment="Center" Margin="0,0,9,0" Visibility="Collapsed"/>
           </Grid>
           <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+            <Button x:Name="btnUpdate" Style="{StaticResource BtnPrimary}" Padding="14,9" FontSize="13" Visibility="Collapsed"/>
             <Button x:Name="btnTheme" Style="{StaticResource Btn}" FontFamily="Segoe MDL2 Assets" FontSize="17"
                     Padding="0,9" MinWidth="46" Foreground="{DynamicResource ThemeIcon}"/>
             <Button x:Name="btnLang" Style="{StaticResource Btn}" FontWeight="SemiBold" MinWidth="110"/>
@@ -994,7 +1037,7 @@ try {
 $reader = New-Object System.Xml.XmlNodeReader $xaml
 $window = [Windows.Markup.XamlReader]::Load($reader)
 foreach ($n in 'imgLogo', 'txtTitle', 'txtSubtitle', 'txtSearch', 'txtPlaceholder', 'btnLang', 'lstCats', 'btnSelectVisible',
-                'btnClear', 'txtCatTitle', 'txtCatCount', 'icApps', 'txtEmpty', 'txtSelected', 'pbar', 'txtProgress', 'btnCancel', 'btnInstall', 'btnUpgrade', 'btnUninstall', 'txtLog', 'btnLog', 'txtPercent', 'btnClearSearch', 'btnTheme') {
+                'btnClear', 'txtCatTitle', 'txtCatCount', 'icApps', 'txtEmpty', 'txtSelected', 'pbar', 'txtProgress', 'btnCancel', 'btnInstall', 'btnUpgrade', 'btnUninstall', 'txtLog', 'btnLog', 'txtPercent', 'btnClearSearch', 'btnTheme', 'btnUpdate') {
     Set-Variable -Name $n -Value $window.FindName($n) -Scope Script
 }
 
@@ -1217,6 +1260,8 @@ function Apply-Language {
     $script:txtSubtitle.Text  = $t.subtitle
     $script:txtPlaceholder.Text = $t.search
     $script:btnLang.Content   = $t.langBtn
+    $script:btnUpdate.Content = ([string][char]0x2191 + ' ' + $t.updBtn)
+    $script:btnUpdate.ToolTip = $t.updTip
     Update-ThemeButton
     $script:btnSelectVisible.Content = $t.selectVisible
     $script:btnClear.Content  = $t.clearAll
@@ -2406,6 +2451,16 @@ $txtSearch.Add_TextChanged({
         $script:SearchTimer.Stop(); $script:SearchTimer.Start()
     })
 
+# keep the caret at the start of the box while it is empty
+$txtSearch.Add_GotKeyboardFocus({
+        if ($script:txtSearch.Text.Length -eq 0) {
+            $script:txtSearch.Dispatcher.BeginInvoke([Action]{ $script:txtSearch.CaretIndex = 0; $script:txtSearch.ScrollToHome() }, [System.Windows.Threading.DispatcherPriority]::Input) | Out-Null
+        }
+    })
+$txtSearch.Add_PreviewMouseLeftButtonUp({
+        if ($script:txtSearch.Text.Length -eq 0) { $script:txtSearch.CaretIndex = 0 }
+    })
+
 $btnClearSearch.Add_Click({ $script:txtSearch.Clear(); $script:txtSearch.Focus() | Out-Null })
 $btnLog.Add_Click({ Set-LogVisible ($script:txtLog.Visibility -ne 'Visible') })
 $pbar.Add_ValueChanged({
@@ -2448,6 +2503,223 @@ $btnCancel.Add_Click({
         Write-Log $script:T.cancelling
     })
 
+# ----------------------------------------------------------------------------
+# 9b. Self-update from GitHub Releases
+# ----------------------------------------------------------------------------
+$script:UpdateInfo = $null
+
+function ConvertTo-VersionObject {
+    param([string]$Text)
+    try {
+        $m = [regex]::Match($Text, '\d+(\.\d+){0,3}')
+        if (-not $m.Success) { return $null }
+        $v = $m.Value
+        while (($v -split '\.').Count -lt 4) { $v += '.0' }
+        return [version]$v
+    }
+    catch { return $null }
+}
+
+function Format-ReleaseNotes {
+    param([string]$Md)
+    if ([string]::IsNullOrWhiteSpace($Md)) { return $script:T.updNoNotes }
+    $out = New-Object System.Collections.Generic.List[string]
+    foreach ($raw in ($Md -split "`r?`n")) {
+        $l = $raw.TrimEnd()
+        if ($l -match '^\s*\*\*Full Changelog\*\*') { continue }
+        if ($l -match '^\s*[-*+]\s+(.*)$') { $l = [string][char]0x2022 + ' ' + $Matches[1] }
+        $l = $l -replace '^\s*#{1,6}\s*', ''
+        $l = $l -replace '\*\*|__|`', ''
+        $out.Add($l)
+    }
+    $txt = ((($out -join "`n") -replace "(\n){3,}", "`n`n")).Trim()
+    if ($txt.Length -gt 1500) { $txt = $txt.Substring(0, 1500).TrimEnd() + '...' }
+    if (-not $txt) { return $script:T.updNoNotes }
+    return $txt
+}
+
+function Start-UpdateCheck {
+    $rs = [runspacefactory]::CreateRunspace()
+    $rs.ApartmentState = 'MTA'
+    $rs.Open()
+    $ps = [powershell]::Create()
+    $ps.Runspace = $rs
+    [void]$ps.AddScript({
+            param($repo)
+            try {
+                [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+                $ProgressPreference = 'SilentlyContinue'
+                $h = @{ 'User-Agent' = 'MeshalBox-Updater'; 'Accept' = 'application/vnd.github+json' }
+                $r = Invoke-RestMethod -Uri "https://api.github.com/repos/$repo/releases/latest" -Headers $h -TimeoutSec 12
+                $a = @($r.assets | Where-Object { $_.name -eq 'MeshalBox.exe' }) | Select-Object -First 1
+                $url = ''; $size = [long]0; $dig = ''
+                if ($a) { $url = [string]$a.browser_download_url; $size = [long]$a.size; if ($a.digest) { $dig = [string]$a.digest } }
+                [pscustomobject]@{ Ok = $true; Tag = [string]$r.tag_name; Notes = [string]$r.body; Page = [string]$r.html_url; Url = $url; Size = $size; Digest = $dig }
+            }
+            catch { [pscustomobject]@{ Ok = $false; Error = $_.Exception.Message } }
+        }).AddArgument($script:UpdateRepo)
+    $script:UpdCheck = @{ Ps = $ps; Rs = $rs; Handle = $ps.BeginInvoke(); Ticks = 0 }
+
+    $t = New-Object System.Windows.Threading.DispatcherTimer
+    $t.Interval = [TimeSpan]::FromMilliseconds(500)
+    $script:UpdCheckTimer = $t
+    $t.Add_Tick({
+            $c = $script:UpdCheck
+            $c.Ticks++
+            if (-not $c.Handle.IsCompleted -and $c.Ticks -lt 80) { return }
+            $script:UpdCheckTimer.Stop()
+            $res = $null
+            try { if ($c.Handle.IsCompleted) { $res = @($c.Ps.EndInvoke($c.Handle)) | Select-Object -First 1 } } catch { }
+            try { $c.Ps.Dispose(); $c.Rs.Dispose() } catch { }
+            if ($res -and $res.Ok) {
+                $remote = ConvertTo-VersionObject $res.Tag
+                $local  = ConvertTo-VersionObject $script:AppVersion
+                if ($remote -and $local -and $remote -gt $local) {
+                    $script:UpdateInfo = $res
+                    $script:btnUpdate.Visibility = 'Visible'
+                    Write-Log ($script:T.updHead + ' ' + $res.Tag)
+                }
+            }
+        })
+    $t.Start()
+}
+
+function Start-UpdateDownload {
+    param($U)
+    $script:Busy = $true
+    Update-Selection
+    $script:btnUpdate.IsEnabled = $false
+    $script:txtProgress.Text = $script:T.updDownloading
+
+    $dir  = Join-Path ([IO.Path]::GetTempPath()) 'MeshalBox_update'
+    $dest = Join-Path $dir 'MeshalBox_new.exe'
+
+    $rs = [runspacefactory]::CreateRunspace()
+    $rs.ApartmentState = 'MTA'
+    $rs.Open()
+    $ps = [powershell]::Create()
+    $ps.Runspace = $rs
+    [void]$ps.AddScript({
+            param($url, $dir, $dest)
+            try {
+                [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+                $ProgressPreference = 'SilentlyContinue'
+                if (-not (Test-Path $dir)) { [void](New-Item -ItemType Directory -Path $dir -Force) }
+                if (Test-Path $dest) { Remove-Item $dest -Force }
+                Invoke-WebRequest -Uri $url -OutFile $dest -UseBasicParsing -Headers @{ 'User-Agent' = 'MeshalBox-Updater' } -TimeoutSec 300
+                [pscustomobject]@{ Ok = $true }
+            }
+            catch { [pscustomobject]@{ Ok = $false; Error = $_.Exception.Message } }
+        }).AddArgument($U.Url).AddArgument($dir).AddArgument($dest)
+    $script:UpdDl = @{ Ps = $ps; Rs = $rs; Handle = $ps.BeginInvoke(); Dest = $dest; Dir = $dir; Info = $U }
+
+    $t = New-Object System.Windows.Threading.DispatcherTimer
+    $t.Interval = [TimeSpan]::FromMilliseconds(400)
+    $script:UpdDlTimer = $t
+    $t.Add_Tick({
+            $d = $script:UpdDl
+            if (-not $d.Handle.IsCompleted) { return }
+            $script:UpdDlTimer.Stop()
+            $res = $null
+            try { $res = @($d.Ps.EndInvoke($d.Handle)) | Select-Object -First 1 } catch { }
+            try { $d.Ps.Dispose(); $d.Rs.Dispose() } catch { }
+
+            $err = ''
+            if (-not $res -or -not $res.Ok) { if ($res) { $err = $res.Error } else { $err = 'download failed' } }
+            else {
+                try {
+                    $f = Get-Item -LiteralPath $d.Dest -ErrorAction Stop
+                    if ($f.Length -lt 50000) { $err = 'file too small' }
+                    elseif ($d.Info.Size -gt 0 -and $f.Length -ne $d.Info.Size) { $err = 'size mismatch' }
+                    else {
+                        $head = New-Object byte[] 2
+                        $fs = [IO.File]::OpenRead($d.Dest); try { [void]$fs.Read($head, 0, 2) } finally { $fs.Dispose() }
+                        if ($head[0] -ne 0x4D -or $head[1] -ne 0x5A) { $err = 'not an executable file' }
+                    }
+                    if (-not $err -and $d.Info.Digest -match '^sha256:([0-9a-fA-F]{64})$') {
+                        $hash = (Get-FileHash -LiteralPath $d.Dest -Algorithm SHA256).Hash
+                        if ($hash -ne $Matches[1]) { $err = 'checksum mismatch' }
+                    }
+                }
+                catch { $err = $_.Exception.Message }
+            }
+
+            if ($err) {
+                try { Remove-Item -LiteralPath $d.Dest -Force -ErrorAction SilentlyContinue } catch { }
+                $script:Busy = $false
+                Update-Selection
+                $script:btnUpdate.IsEnabled = $true
+                $script:txtProgress.Text = $script:T.ready
+                [void](Show-Msg ($script:T.updFail -f "`n", $err) $script:T.updTitle 'OK' 'Error')
+                return
+            }
+            Apply-Update $d.Dest $d.Dir
+        })
+    $t.Start()
+}
+
+function Apply-Update {
+    param([string]$NewExe, [string]$Dir)
+    try {
+        $self = [Diagnostics.Process]::GetCurrentProcess().MainModule.FileName
+        $bat  = Join-Path $Dir 'apply_update.cmd'
+        $lines = @(
+            '@echo off',
+            'chcp 65001 >nul',
+            ('set "NEW={0}"' -f $NewExe),
+            ('set "OLD={0}"' -f $self),
+            'set /a N=0',
+            ':retry',
+            'move /y "%NEW%" "%OLD%" >nul 2>&1',
+            'if not errorlevel 1 goto done',
+            'set /a N+=1',
+            'if %N% GEQ 40 goto done',
+            'ping -n 2 127.0.0.1 >nul',
+            'goto retry',
+            ':done',
+            'start "" "%OLD%"',
+            '(goto) 2>nul & del "%~f0"'
+        )
+        [IO.File]::WriteAllText($bat, ($lines -join "`r`n"), (New-Object System.Text.UTF8Encoding($false)))
+        Start-Process -FilePath $env:ComSpec -ArgumentList ('/d /c ""{0}""' -f $bat) -WindowStyle Hidden
+        $script:Busy = $false
+        $window.Close()
+    }
+    catch {
+        $script:Busy = $false
+        Update-Selection
+        $script:btnUpdate.IsEnabled = $true
+        $script:txtProgress.Text = $script:T.ready
+        [void](Show-Msg ($script:T.updFail -f "`n", $_.Exception.Message) $script:T.updTitle 'OK' 'Error')
+    }
+}
+
+function Invoke-UpdateClick {
+    $u = $script:UpdateInfo
+    if (-not $u) { return }
+    if ($script:Busy) { [void](Show-Msg $script:T.updBusy $script:T.updTitle 'OK' 'Information'); return }
+
+    $canAuto = $script:IsCompiledExe -and $u.Url -and ($u.Url -like ('https://github.com/{0}/releases/download/*' -f $script:UpdateRepo))
+    if ($canAuto) { $ask = $script:T.updAsk } else { $ask = $script:T.updAskSrc }
+    $newVer = $u.Tag -replace '^[vV]', ''
+    $msg = $script:T.updHead + "`n`n" + ($script:T.updVer -f $script:AppVersion, $newVer) + "`n`n" +
+    $script:T.updNotes + "`n" + (Format-ReleaseNotes $u.Notes) + "`n`n" + $ask
+    $ans = Show-Msg $msg $script:T.updTitle 'YesNo' 'Question'
+    if ($ans -ne 'Yes') { return }
+
+    if ($canAuto) { Start-UpdateDownload $u }
+    else {
+        $page = $u.Page
+        if (-not $page) { $page = 'https://github.com/{0}/releases/latest' -f $script:UpdateRepo }
+        try { Start-Process $page } catch { }
+    }
+}
+
+$script:IsCompiledExe = $IsCompiledExe
+$script:AppVersion    = $AppVersion
+$script:UpdateRepo    = $UpdateRepo
+$script:btnUpdate.Add_Click({ Invoke-UpdateClick })
+
 $window.Add_Closing({
         param($s, $e)
         if ($script:Busy) {
@@ -2475,6 +2747,7 @@ try {
             $wg = Get-Command winget -ErrorAction SilentlyContinue
             if ($wg) { Write-Log ($script:T.wingetOk -f $wg.Source) } else { Write-Log $script:T.noWinget }
             if (-not $script:IsAdminNow) { Write-Log $script:T.adminWarn }
+            try { Start-UpdateCheck } catch { }
         })
 
     [void]$window.ShowDialog()
