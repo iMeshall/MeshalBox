@@ -37,13 +37,14 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
-# These two placeholders are filled in by build.bat when compiling the portable EXE
+# These placeholders are filled in by build.bat when compiling the portable EXE
 # (the catalog is embedded and the self-relaunch is skipped; the EXE asks for admin itself).
 $IsCompiledExe       = '__IS_EXE__' -eq 'yes'
 $EmbeddedCatalogB64  = '__EMBED_CATALOG__'
+$EmbeddedLogosB64    = '__EMBED_LOGOS__'     # zip of logos\*.png, embedded by build.bat
 
 # Self-update (GitHub Releases). Bump $AppVersion on every release - build.bat reads it for the EXE version.
-$AppVersion = '1.0.1'
+$AppVersion = '1.2.0'
 $UpdateRepo = 'iMeshall/MeshalBox'
 
 # ----------------------------------------------------------------------------
@@ -113,10 +114,12 @@ public class MeshalApp : INotifyPropertyChanged
     public string Source { get; set; }
     public string Initial { get; set; }
     public string Color { get; set; }
+    public string Pkg { get; set; }          // Microsoft Store package name (the logo is read from the installed package)
     public string IconKey { get; set; }      // cache key of the logo (website domain, or "icon-<name>")
     public string IconHost { get; set; }     // website to take the logo from
     public string IconSlug { get; set; }     // name in the open app-icon sets
     public bool IconExplicit { get; set; }   // icon name given in applications.json (tried first)
+    public bool IconMono { get; set; }       // the current logo is black/white/grey -> look for a coloured original
     private string _statusKey;
     public string StatusKey { get { return _statusKey; } set { _statusKey = value; Raise("StatusKey"); } }
 
@@ -139,6 +142,40 @@ public class MeshalApp : INotifyPropertyChanged
 
 public static class MeshalImg
 {
+    // Share of the visible (non-white, non-black) pixels that carry real colour. ~0 = black/white/grey logo, > 0.15 = coloured logo.
+    public static double Colorfulness(byte[] data)
+    {
+        using (System.IO.MemoryStream ms = new System.IO.MemoryStream(data)) return Colorfulness(ms);
+    }
+    public static double Colorfulness(string path)
+    {
+        using (System.IO.FileStream fs = System.IO.File.OpenRead(path)) return Colorfulness(fs);
+    }
+    public static double Colorfulness(System.IO.Stream st)
+    {
+        using (System.Drawing.Image src = System.Drawing.Image.FromStream(st, false, false))
+        using (System.Drawing.Bitmap bmp = new System.Drawing.Bitmap(64, 64, System.Drawing.Imaging.PixelFormat.Format32bppArgb))
+        {
+            using (System.Drawing.Graphics g = System.Drawing.Graphics.FromImage(bmp))
+            {
+                g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
+                g.DrawImage(src, 0, 0, 64, 64);
+            }
+            int n = 0, c = 0;
+            for (int y = 0; y < 64; y++)
+                for (int x = 0; x < 64; x++)
+                {
+                    System.Drawing.Color px = bmp.GetPixel(x, y);
+                    if (px.A < 128) continue;
+                    float b = px.GetBrightness();
+                    if (b < 0.12f || b > 0.93f) continue;
+                    n++;
+                    if (px.GetSaturation() > 0.35f) c++;
+                }
+            return n < 20 ? 0.0 : (double)c / n;
+        }
+    }
+
     // Estimates the REAL resolution of a picture. A small icon that was only enlarged has soft edges
     // (each edge is spread over several pixels); a native icon has crisp edges. Returns <= the pixel width.
     public static int EffectiveWidth(string path)
@@ -258,6 +295,7 @@ $Strings = @{
         langBtn       = 'العربية'
         themeToLight  = 'Switch to light mode'
         themeToDark   = 'Switch to dark mode'
+        refreshTip    = 'Re-scan installed apps'
         updBtn        = 'Update available'
         updTip        = 'A new version of MeshalBox is available'
         updTitle      = 'Update MeshalBox'
@@ -314,6 +352,19 @@ $Strings = @{
         noSel         = 'Please select at least one app.'
         confirmTitle  = 'Confirm installation'
         confirmMsg    = '{0} app(s) will be installed. Continue?'
+        confirmMore   = '...and {0} more'
+        tipInstallNone   = 'Select at least one app to enable installation.'
+        tipUninstallNone = 'Select apps that show the green "Installed" badge to enable removal.'
+        emptyHint     = 'Try another name, or press Esc to clear the search.'
+        emptySelected = 'Nothing selected yet. Click any app card and it will appear here.'
+        emptyInstalled = 'None of the catalog apps were detected on this PC. Press F5 to re-scan.'
+        catSkipped    = 'Skipped {0} invalid entries in applications.json.'
+        exportTitle   = 'Save selection'
+        importTitle   = 'Load selection'
+        exportDone    = 'Saved {0} app(s) to: {1}'
+        importDone    = 'Selected {0} app(s) from the file ({1} not found in the catalog).'
+        importFail    = 'Could not read that file. Use a selection file saved by MeshalBox.'
+        exportNone    = 'Nothing is selected yet - tick some apps first.'
         noWinget      = 'winget was not found. Install "App Installer" from the Microsoft Store, then try again.'
         adminWarn     = 'Note: not running as Administrator. You may see extra permission prompts during installs.'
         wingetOk      = 'winget detected: {0}'
@@ -338,6 +389,7 @@ $Strings = @{
         langBtn       = 'English'
         themeToLight  = 'التبديل إلى الوضع الفاتح'
         themeToDark   = 'التبديل إلى الوضع الداكن'
+        refreshTip    = 'إعادة فحص البرامج المثبّتة'
         updBtn        = 'يتوفر تحديث'
         updTip        = 'يتوفر إصدار جديد من MeshalBox'
         updTitle      = 'تحديث MeshalBox'
@@ -394,6 +446,19 @@ $Strings = @{
         noSel         = 'اختر برنامجًا واحدًا على الأقل.'
         confirmTitle  = 'تأكيد التثبيت'
         confirmMsg    = 'سيتم تثبيت {0} برنامج. هل تريد المتابعة؟'
+        confirmMore   = '...و{0} أخرى'
+        tipInstallNone   = 'حدّد برنامجًا واحدًا على الأقل لتفعيل التثبيت.'
+        tipUninstallNone = 'حدّد برامج عليها علامة "مثبّت" الخضراء لتفعيل الإزالة.'
+        emptyHint     = 'جرّب اسمًا آخر، أو اضغط Esc لمسح البحث.'
+        emptySelected = 'لم تحدد شيئًا بعد. اضغط على أي بطاقة برنامج لتظهر هنا.'
+        emptyInstalled = 'لم يتم رصد أي برنامج من الكتالوج على هذا الجهاز. اضغط F5 لإعادة الفحص.'
+        catSkipped    = 'تم تجاهل {0} عنصر غير صالح في ملف applications.json.'
+        exportTitle   = 'حفظ التحديد'
+        importTitle   = 'تحميل تحديد'
+        exportDone    = 'تم حفظ {0} برنامج في: {1}'
+        importDone    = 'تم تحديد {0} برنامج من الملف (و{1} غير موجود في الكتالوج).'
+        importFail    = 'تعذّرت قراءة الملف. استخدم ملف تحديد محفوظًا من MeshalBox.'
+        exportNone    = 'لم تحدد أي برنامج بعد - حدّد بعض البرامج أولًا.'
         noWinget      = 'لم يتم العثور على winget. ثبّت "App Installer" من متجر Microsoft ثم أعد المحاولة.'
         adminWarn     = 'تنبيه: السكربت لا يعمل بصلاحيات المسؤول، وقد تظهر نوافذ طلب صلاحيات إضافية أثناء التثبيت.'
         wingetOk      = 'تم العثور على winget: {0}'
@@ -455,6 +520,7 @@ $CategoryColorLight = @{
 
 $script:Apps = New-Object System.Collections.Generic.List[MeshalApp]
 $script:ById = @{}
+$script:CatalogSkipped = 0
 $palette = @('#3B82F6', '#8B5CF6', '#EC4899', '#F59E0B', '#10B981', '#06B6D4', '#EF4444', '#6366F1', '#14B8A6', '#F97316')
 
 # Catalog source: embedded copy (portable EXE) or applications.json next to the script (or -AppsFile).
@@ -491,6 +557,9 @@ function Get-IconSlug([string]$Name) {
 }
 foreach ($e in $catalog.apps) {
     if (-not $e.id -or -not $e.en) { continue }
+    # Safety: ids are placed into a cmd.exe command line, so only allow winget-style ids (or https links for 'web' entries)
+    if ([string]$e.source -eq 'web') { if ([string]$e.id -notmatch '^https://[^\s"&|<>^]+$') { $script:CatalogSkipped++; continue } }
+    elseif ([string]$e.id -notmatch '^[A-Za-z0-9][A-Za-z0-9.\-_+]*$') { $script:CatalogSkipped++; continue }
     if ($script:ById.ContainsKey([string]$e.id)) { continue }   # never list the same program twice
     $a = New-Object MeshalApp
     $a.Id = [string]$e.id; $a.NameEn = [string]$e.en
@@ -499,6 +568,7 @@ foreach ($e in $catalog.apps) {
     $a.DescEn = if ($e.desc) { [string]$e.desc } else { '' }
     $a.DescAr = if ($e.descAr) { [string]$e.descAr } else { $a.DescEn }
     $a.Source = if ($e.source) { [string]$e.source } else { '' }
+    if ($e.pkg) { $a.Pkg = [string]$e.pkg }
     $a.Initial = $a.NameEn.Substring(0, 1).ToUpper()
     if ((-not $a.Domain) -and $StoreGlyph.ContainsKey($a.Id)) { $a.Initial = [char]::ConvertFromUtf32([int]$StoreGlyph[$a.Id]) }
     $sum = 0; foreach ($ch in $a.Id.ToCharArray()) { $sum += [int]$ch }
@@ -521,7 +591,7 @@ foreach ($e in $catalog.apps) {
 # ----------------------------------------------------------------------------
 $SettingsDir  = Join-Path $env:APPDATA 'MeshalBox'
 $SettingsFile = Join-Path $SettingsDir 'settings.json'
-$IconCache    = Join-Path $env:LOCALAPPDATA 'MeshalBox\icons_v2'
+$IconCache    = Join-Path $env:LOCALAPPDATA 'MeshalBox\icons_v3'
 # One-time migration from the old name (PSPackageManager) so logos/settings are kept
 try {
     $oldLocal = Join-Path $env:LOCALAPPDATA 'PSPackageManager'
@@ -551,6 +621,15 @@ try {
         Set-Content -Path $iconMarker -Value ''
     }
 } catch { }
+
+$script:DebugLogFile = Join-Path $SettingsDir 'meshalbox.log'
+function Write-DebugLog {
+    param([string]$Text)
+    try {
+        if ((Test-Path $script:DebugLogFile) -and ((Get-Item $script:DebugLogFile).Length -gt 512KB)) { Move-Item $script:DebugLogFile ($script:DebugLogFile + '.old') -Force }
+        Add-Content -Path $script:DebugLogFile -Value ('[{0:yyyy-MM-dd HH:mm:ss}] {1}' -f (Get-Date), $Text) -Encoding UTF8
+    } catch { }
+}
 
 function Save-Settings {
     try { @{ lang = $script:Lang; theme = $script:Theme } | ConvertTo-Json | Set-Content -Path $SettingsFile -Encoding UTF8 } catch { }
@@ -589,9 +668,25 @@ try {
   <Window.Resources>
 
     <LinearGradientBrush x:Key="AccentBrush" StartPoint="0,0" EndPoint="1,1">
-      <GradientStop Color="#3B82F6" Offset="0"/>
-      <GradientStop Color="#7C5CFF" Offset="1"/>
+      <GradientStop Color="#2563EB" Offset="0"/>
+      <GradientStop Color="#6A48E0" Offset="1"/>
     </LinearGradientBrush>
+
+    <!-- Keyboard-only focus rings (FocusVisualStyle is not shown after a mouse click). #3B82F6 has >= 3:1 on both themes. -->
+    <Style x:Key="FocusRingBtn">
+      <Setter Property="Control.Template">
+        <Setter.Value>
+          <ControlTemplate><Rectangle Margin="-3" RadiusX="13" RadiusY="13" Stroke="#3B82F6" StrokeThickness="2" IsHitTestVisible="False"/></ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+    <Style x:Key="FocusRingCard">
+      <Setter Property="Control.Template">
+        <Setter.Value>
+          <ControlTemplate><Rectangle Margin="4" RadiusX="19" RadiusY="19" Stroke="#3B82F6" StrokeThickness="2" IsHitTestVisible="False"/></ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
 
     <!-- Slim dark scrollbar -->
     <Style x:Key="ScrollPage" TargetType="RepeatButton">
@@ -642,6 +737,7 @@ try {
 
     <!-- Rounded button -->
     <Style x:Key="Btn" TargetType="Button">
+      <Setter Property="FocusVisualStyle" Value="{StaticResource FocusRingBtn}"/>
       <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
       <Setter Property="Background" Value="{DynamicResource BtnBg}"/>
       <Setter Property="Padding" Value="16,9"/>
@@ -658,6 +754,42 @@ try {
             <ControlTemplate.Triggers>
               <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="b" Property="Opacity" Value="0.88"/><Setter TargetName="b" Property="BorderBrush" Value="{DynamicResource HoverBorder}"/></Trigger>
               <Trigger Property="IsPressed" Value="True"><Setter TargetName="b" Property="Opacity" Value="0.7"/></Trigger>
+              <Trigger Property="IsEnabled" Value="False"><Setter TargetName="b" Property="Opacity" Value="0.35"/></Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+    <Style x:Key="LangBtn" TargetType="Button">
+      <Setter Property="FocusVisualStyle" Value="{StaticResource FocusRingBtn}"/>
+      <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
+      <Setter Property="Background" Value="{DynamicResource BtnBg}"/>
+      <Setter Property="Margin" Value="4,0"/>
+      <Setter Property="FontSize" Value="13"/>
+      <Setter Property="FontWeight" Value="Bold"/>
+      <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Button">
+            <Border x:Name="b" Background="{TemplateBinding Background}" CornerRadius="19" Padding="14,7,16,7"
+                    BorderBrush="{DynamicResource BtnBorder}" BorderThickness="1">
+              <StackPanel Orientation="Horizontal" FlowDirection="LeftToRight" VerticalAlignment="Center">
+                <Grid Width="22" Height="20" Margin="0,0,9,0" VerticalAlignment="Center">
+                  <TextBlock x:Name="ic1" Text="&#x6587;" FontSize="13" FontWeight="Normal" Foreground="{DynamicResource TextSoft}"
+                             HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,-1,0,0"/>
+                  <TextBlock x:Name="ic2" Text="A" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource TextSoft}"
+                             HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,0,-2"/>
+                </Grid>
+                <ContentPresenter VerticalAlignment="Center" RecognizesAccessKey="False"/>
+              </StackPanel>
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="b" Property="BorderBrush" Value="{DynamicResource HoverBorder}"/>
+                <Setter TargetName="ic1" Property="Foreground" Value="{DynamicResource TextPrimary}"/>
+                <Setter TargetName="ic2" Property="Foreground" Value="{DynamicResource TextPrimary}"/>
+              </Trigger>
+              <Trigger Property="IsPressed" Value="True"><Setter TargetName="b" Property="Opacity" Value="0.75"/></Trigger>
               <Trigger Property="IsEnabled" Value="False"><Setter TargetName="b" Property="Opacity" Value="0.35"/></Trigger>
             </ControlTemplate.Triggers>
           </ControlTemplate>
@@ -703,12 +835,13 @@ try {
     </Style>
 
     <Style x:Key="IconBtn" TargetType="Button">
+      <Setter Property="FocusVisualStyle" Value="{StaticResource FocusRingBtn}"/>
       <Setter Property="Foreground" Value="{DynamicResource TextSec}"/>
       <Setter Property="Cursor" Value="Hand"/>
       <Setter Property="Template">
         <Setter.Value>
           <ControlTemplate TargetType="Button">
-            <Border x:Name="b" Width="24" Height="24" CornerRadius="12" Background="Transparent">
+            <Border x:Name="b" Width="28" Height="28" CornerRadius="14" Background="Transparent">
               <TextBlock Text="&#x2715;" FontSize="11" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{TemplateBinding Foreground}"/>
             </Border>
             <ControlTemplate.Triggers>
@@ -746,6 +879,7 @@ try {
 
     <!-- App card (a CheckBox dressed as a card: click anywhere to select) -->
     <Style x:Key="Card" TargetType="CheckBox">
+      <Setter Property="FocusVisualStyle" Value="{StaticResource FocusRingCard}"/>
       <Setter Property="Cursor" Value="Hand"/>
       <Setter Property="Template">
         <Setter.Value>
@@ -918,7 +1052,7 @@ try {
             <Button x:Name="btnUpdate" Style="{StaticResource BtnPrimary}" Padding="14,9" FontSize="13" Visibility="Collapsed"/>
             <Button x:Name="btnTheme" Style="{StaticResource Btn}" FontFamily="Segoe MDL2 Assets" FontSize="17"
                     Padding="0,9" MinWidth="46" Foreground="{DynamicResource ThemeIcon}"/>
-            <Button x:Name="btnLang" Style="{StaticResource Btn}" FontWeight="SemiBold" MinWidth="110"/>
+            <Button x:Name="btnLang" Style="{StaticResource LangBtn}"/>
           </StackPanel>
         </Grid>
       </Border>
@@ -971,6 +1105,7 @@ try {
             </Border>
           </StackPanel>
           <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+            <Button x:Name="btnRefresh" Style="{StaticResource Btn}" FontFamily="Segoe MDL2 Assets" FontSize="15" Padding="0,9" MinWidth="42" Margin="0,0,6,0" Content="&#xE72C;"/>
             <Button x:Name="btnSelectVisible" Style="{StaticResource Btn}" Margin="0,0,6,0"/>
             <Button x:Name="btnClear" Style="{StaticResource Btn}" Margin="0"/>
           </StackPanel>
@@ -982,7 +1117,8 @@ try {
             </ItemsControl.ItemsPanel>
             <ItemsControl.ItemTemplate>
               <DataTemplate>
-                <CheckBox Style="{StaticResource Card}" IsChecked="{Binding IsSelected, Mode=TwoWay}"/>
+                <CheckBox Style="{StaticResource Card}" IsChecked="{Binding IsSelected, Mode=TwoWay}"
+                          AutomationProperties.Name="{Binding DisplayName}" AutomationProperties.HelpText="{Binding Tip}"/>
               </DataTemplate>
             </ItemsControl.ItemTemplate>
           </ItemsControl>
@@ -1037,7 +1173,7 @@ try {
 $reader = New-Object System.Xml.XmlNodeReader $xaml
 $window = [Windows.Markup.XamlReader]::Load($reader)
 foreach ($n in 'imgLogo', 'txtTitle', 'txtSubtitle', 'txtSearch', 'txtPlaceholder', 'btnLang', 'lstCats', 'btnSelectVisible',
-                'btnClear', 'txtCatTitle', 'txtCatCount', 'icApps', 'txtEmpty', 'txtSelected', 'pbar', 'txtProgress', 'btnCancel', 'btnInstall', 'btnUpgrade', 'btnUninstall', 'txtLog', 'btnLog', 'txtPercent', 'btnClearSearch', 'btnTheme', 'btnUpdate') {
+                'btnClear', 'txtCatTitle', 'txtCatCount', 'icApps', 'txtEmpty', 'txtSelected', 'pbar', 'txtProgress', 'btnCancel', 'btnInstall', 'btnUpgrade', 'btnUninstall', 'txtLog', 'btnLog', 'txtPercent', 'btnClearSearch', 'btnTheme', 'btnUpdate', 'btnRefresh') {
     Set-Variable -Name $n -Value $window.FindName($n) -Scope Script
 }
 
@@ -1078,28 +1214,28 @@ $Themes = @{
     dark = @{
         BgWindow = '#12141A'; BgPanel = '#161922'; Line = '#22262F'
         HeaderBg = @('#1B1F2B', '#161922'); CardBg = @('#232736', '#1B1E29')
-        TextPrimary = '#FFFFFF'; TextSec = '#8B93A3'; TextSec2 = '#9AA3B2'; TextMuted = '#6B7280'; TextSoft = '#C5CBD6'; LogFg = '#B8C0CC'
+        TextPrimary = '#FFFFFF'; TextSec = '#8B93A3'; TextSec2 = '#9AA3B2'; TextMuted = '#8A93A3'; TextSoft = '#C5CBD6'; LogFg = '#B8C0CC'
         BtnBg = '#272B38'; BtnBorder = '#33384A'; HoverBorder = '#4B6FB5'
         InputBg = '#1B1E28'; InputBgFocus = '#1F2330'; InputBorderHover = '#3A4056'; Edge = '#2A2E3B'
         CatHover = '#1E222D'; CatSelected = '#222B44'; CardChecked = '#1F2B47'; LogoBg = '#F4F6FA'
-        TickBorder = '#4B5263'; TickHover = '#8AA4D6'; BadgeBg = '#262A38'; BadgeBg2 = '#222633'
+        TickBorder = '#808AA0'; TickHover = '#8AA4D6'; BadgeBg = '#262A38'; BadgeBg2 = '#222633'
         ThumbBg = '#3A4052'; ThumbHover = '#566079'; LogBg = '#0E1014'
         StInfoBg = '#1E3560'; StOkBg = '#17382A'; StErrBg = '#43201F'; StWarnBg = '#3A3220'
         StInfoFg = '#8DB8FF'; StOkFg = '#4ADE80'; StErrFg = '#F87171'; StWarnFg = '#FBBF24'
-        ThemeIcon = '#FBBF24'
+        ThemeIcon = '#FBBF24'; FocusRing = '#8DB8FF'
     }
     light = @{
         BgWindow = '#F3F5F9'; BgPanel = '#FFFFFF'; Line = '#E1E5EC'
         HeaderBg = @('#FFFFFF', '#F6F8FC'); CardBg = @('#FFFFFF', '#F6F8FC')
-        TextPrimary = '#1A1F2B'; TextSec = '#5B6472'; TextSec2 = '#5B6472'; TextMuted = '#8A93A3'; TextSoft = '#4A5262'; LogFg = '#2B3342'
+        TextPrimary = '#1A1F2B'; TextSec = '#5B6472'; TextSec2 = '#5B6472'; TextMuted = '#6B7585'; TextSoft = '#4A5262'; LogFg = '#2B3342'
         BtnBg = '#FFFFFF'; BtnBorder = '#D3D9E3'; HoverBorder = '#5B86D6'
         InputBg = '#FFFFFF'; InputBgFocus = '#FFFFFF'; InputBorderHover = '#B5BDCC'; Edge = '#DCE1EA'
         CatHover = '#EEF1F6'; CatSelected = '#E3EBFB'; CardChecked = '#E3EDFF'; LogoBg = '#EEF1F6'
-        TickBorder = '#B5BDCC'; TickHover = '#5B86D6'; BadgeBg = '#E8ECF3'; BadgeBg2 = '#E8ECF3'
+        TickBorder = '#7B8496'; TickHover = '#5B86D6'; BadgeBg = '#E8ECF3'; BadgeBg2 = '#E8ECF3'
         ThumbBg = '#C3CAD6'; ThumbHover = '#A3ADBD'; LogBg = '#FFFFFF'
         StInfoBg = '#DCE8FF'; StOkBg = '#D9F5E4'; StErrBg = '#FDE0E0'; StWarnBg = '#FBEFCF'
-        StInfoFg = '#1D5FD6'; StOkFg = '#15803D'; StErrFg = '#C62828'; StWarnFg = '#A16207'
-        ThemeIcon = '#4F46E5'
+        StInfoFg = '#1D5FD6'; StOkFg = '#166534'; StErrFg = '#C62828'; StWarnFg = '#854D0E'
+        ThemeIcon = '#4F46E5'; FocusRing = '#1D4ED8'
     }
 }
 $GradientDir = @{ HeaderBg = @(0, 0, 1, 0); CardBg = @(0, 0, 0, 1) }
@@ -1158,6 +1294,7 @@ function Show-Msg {
 function Write-Log {
     param([string]$Text, [switch]$Plain)
     if ($Plain) { $line = $Text } else { $line = ('[{0:HH:mm:ss}] {1}' -f (Get-Date), $Text) }
+    Write-DebugLog $line
     $script:txtLog.AppendText($line + "`r`n")
     $script:txtLog.ScrollToEnd()
 }
@@ -1181,6 +1318,19 @@ function Add-GridBatch {
     while ($script:GridPos -lt $end) { $script:GridItems.Add($script:CurrentList[$script:GridPos]); $script:GridPos++ }
 }
 
+function Update-EmptyText {
+    $t = $script:T
+    $hasQ = -not [string]::IsNullOrWhiteSpace($script:txtSearch.Text)
+    if ($hasQ) { $g = [char]::ConvertFromUtf32(0x1F50D); $m = $t.noResults + "`
+" + $t.emptyHint }
+    elseif ($script:Cat -eq 'Selected')  { $g = [string][char]0x2705; $m = $t.emptySelected }
+    elseif ($script:Cat -eq 'Installed') { $g = [char]::ConvertFromUtf32(0x1F4E6); $m = $t.emptyInstalled }
+    else { $g = [char]::ConvertFromUtf32(0x1F50D); $m = $t.noResults + "`
+" + $t.emptyHint }
+    $script:txtEmpty.Text = $g + "`
+" + $m
+}
+
 function Refresh-Grid {
     $q = $script:txtSearch.Text.Trim()
     $cat = $script:Cat
@@ -1202,6 +1352,7 @@ function Refresh-Grid {
     if ($script:GridPos -lt $list.Count) { $script:GridTimer.Start() }   # the rest streams in without freezing the UI
     $script:txtCatTitle.Text = [string]$script:T["cat_$($script:Cat)"]
     $script:txtCatCount.Text = ($script:T.appsCount -f $list.Count)
+    Update-EmptyText
     if ($list.Count -eq 0) { $script:txtEmpty.Visibility = 'Visible' } else { $script:txtEmpty.Visibility = 'Collapsed' }
 }
 
@@ -1220,12 +1371,18 @@ function Update-Selection {
     $n = @($script:Apps | Where-Object { $_.IsSelected }).Count
     $ni = @($script:Apps | Where-Object { $_.IsSelected -and $script:InstalledIds.ContainsKey($_.Id) }).Count
     $script:btnUpgrade.IsEnabled = (-not $script:Busy)
+    $script:btnRefresh.IsEnabled = (-not $script:Busy) -and (-not $script:ScanBusy)
     $script:btnUninstall.IsEnabled = ($ni -gt 0) -and (-not $script:Busy)
     if ($ni -gt 0) { $script:btnUninstall.Content = ('{0} ({1})' -f $script:T.uninstallBtn, $ni) } else { $script:btnUninstall.Content = $script:T.uninstallBtn }
     $script:txtSelected.Text = ($script:T.selected -f $n)
     $script:CatMap['Selected'].Count = $n
     $script:btnInstall.IsEnabled = ($n -gt 0) -and (-not $script:Busy)
     if ($n -gt 0) { $script:btnInstall.Content = ('{0} ({1})' -f $script:T.install, $n) } else { $script:btnInstall.Content = $script:T.install }
+    # a disabled button should explain itself
+    [System.Windows.Controls.ToolTipService]::SetShowOnDisabled($script:btnInstall, $true)
+    [System.Windows.Controls.ToolTipService]::SetShowOnDisabled($script:btnUninstall, $true)
+    if ((-not $script:Busy) -and ($n -eq 0))  { $script:btnInstall.ToolTip = $script:T.tipInstallNone } else { $script:btnInstall.ToolTip = $null }
+    if ((-not $script:Busy) -and ($ni -eq 0)) { $script:btnUninstall.ToolTip = $script:T.tipUninstallNone } else { $script:btnUninstall.ToolTip = $null }
 }
 
 function Initialize-Categories {
@@ -1262,16 +1419,26 @@ function Apply-Language {
     $script:btnLang.Content   = $t.langBtn
     $script:btnUpdate.Content = ([string][char]0x2191 + ' ' + $t.updBtn)
     $script:btnUpdate.ToolTip = $t.updTip
+    $script:btnRefresh.ToolTip = $t.refreshTip
     Update-ThemeButton
     $script:btnSelectVisible.Content = $t.selectVisible
     $script:btnClear.Content  = $t.clearAll
     $script:btnInstall.Content = $t.install
     $script:btnCancel.Content = $t.cancel
     $script:btnUpgrade.Content = $t.upgradeAll
-    $script:txtEmpty.Text     = [char]::ConvertFromUtf32(0x1F50D) + "`n" + $t.noResults
+    Update-EmptyText
     $script:btnClearSearch.ToolTip = $t.clearAll
     Set-LogVisible ($script:txtLog.Visibility -eq 'Visible')
     if (-not $script:Busy) { $script:txtProgress.Text = $t.ready }
+    # Screen-reader names (icon-only buttons would otherwise be announced as just a glyph)
+    $ap = [System.Windows.Automation.AutomationProperties]
+    $ap::SetName($script:txtSearch, $t.search)
+    $ap::SetName($script:btnClearSearch, $t.clearAll)
+    $ap::SetName($script:btnRefresh, $t.refreshTip)
+    $ap::SetName($script:btnTheme, $t.themeToLight)
+    $ap::SetName($script:btnLang, $t.langBtn)
+    $ap::SetName($script:pbar, $t.title)
+    $ap::SetName($script:txtLog, $t.logTitle)
 
     foreach ($a in $script:Apps) {
         if ($script:Lang -eq 'ar') { $a.DisplayName = $a.NameAr; $a.Tip = $a.DescAr } else { $a.DisplayName = $a.NameEn; $a.Tip = $a.DescEn }
@@ -1282,6 +1449,103 @@ function Apply-Language {
 
     Update-Selection
     Save-Settings
+}
+
+# ----------------------------------------------------------------------------
+# Bundled logo pack: every app ships with a reviewed, high-resolution logo (logos\<app id>.png).
+# The pack is embedded in the EXE; loose files in a "logos" folder next to the program override it.
+# ----------------------------------------------------------------------------
+function Get-SafeLogoName { param([string]$Id) return [regex]::Replace($Id, '[^A-Za-z0-9._\-]', '_') }
+$script:LogoBytes = @{}
+function Import-LogoPack {
+    $map = @{}
+    if ($EmbeddedLogosB64.Length -gt 100) {
+        try {
+            Add-Type -AssemblyName System.IO.Compression
+            $zms = New-Object System.IO.MemoryStream (, [Convert]::FromBase64String($EmbeddedLogosB64))
+            $zip = New-Object System.IO.Compression.ZipArchive($zms, [System.IO.Compression.ZipArchiveMode]::Read)
+            foreach ($en in $zip.Entries) {
+                if ($en.Name -notlike '*.png') { continue }
+                $st = $en.Open(); $buf = New-Object System.IO.MemoryStream
+                try { $st.CopyTo($buf) } finally { $st.Dispose() }
+                $map[[System.IO.Path]::GetFileNameWithoutExtension($en.Name)] = $buf.ToArray()
+            }
+            $zip.Dispose()
+        }
+        catch { Write-DebugLog ('logo pack: ' + $_.Exception.Message) }
+    }
+    $dirs = @()
+    if ($PSScriptRoot) { $dirs += (Join-Path $PSScriptRoot 'logos') }
+    try { $dirs += (Join-Path ([System.IO.Path]::GetDirectoryName([System.Diagnostics.Process]::GetCurrentProcess().MainModule.FileName)) 'logos') } catch { }
+    foreach ($dir in ($dirs | Select-Object -Unique)) {
+        if (-not (Test-Path -LiteralPath $dir)) { continue }
+        foreach ($f in [System.IO.Directory]::GetFiles($dir, '*.png')) {
+            try { $map[[System.IO.Path]::GetFileNameWithoutExtension($f)] = [System.IO.File]::ReadAllBytes($f) } catch { }
+        }
+    }
+    $script:LogoBytes = $map
+}
+
+function Apply-BundledLogos {
+    $n = 0
+    foreach ($a in $script:Apps) {
+        if ($a.HasIcon) { continue }
+        $bytes = $script:LogoBytes[(Get-SafeLogoName $a.Id)]
+        if (-not $bytes) { continue }
+        try {
+            $ms = New-Object System.IO.MemoryStream (, $bytes)
+            $bi = New-Object System.Windows.Media.Imaging.BitmapImage
+            $bi.BeginInit(); $bi.CacheOption = 'OnLoad'; $bi.CreateOptions = 'IgnoreColorProfile'; $bi.StreamSource = $ms; $bi.EndInit(); $bi.Freeze()
+            $a.IconSize = 44
+            $a.Icon = $bi
+            # black/white/grey logo -> a coloured original is fetched in the background (see Start-IconDownloads)
+            try { if ([MeshalImg]::Colorfulness($bytes) -lt 0.10) { $a.IconMono = $true } } catch { }
+            $n++
+        }
+        catch { Write-DebugLog ('bundled logo failed for ' + $a.Id + ': ' + $_.Exception.Message) }
+    }
+    return $n
+}
+
+# Microsoft Store apps that ship with Windows: take the real logo from the installed package (cached afterwards).
+function Get-StoreLogoPng {
+    param([string]$PkgName, [string]$OutFile)
+    $pk = Get-AppxPackage -Name $PkgName -ErrorAction SilentlyContinue | Select-Object -First 1
+    if (-not $pk -or -not $pk.InstallLocation) { return $false }
+    [xml]$mx = Get-Content -LiteralPath (Join-Path $pk.InstallLocation 'AppxManifest.xml') -Raw -ErrorAction Stop
+    $ve = $mx.SelectNodes("//*[local-name()='VisualElements']") | Select-Object -First 1
+    $rel = $null
+    if ($ve) { foreach ($at in 'Square150x150Logo', 'Square44x44Logo') { if ($ve.GetAttribute($at)) { $rel = $ve.GetAttribute($at); break } } }
+    if (-not $rel) { return $false }
+    $full = Join-Path $pk.InstallLocation $rel
+    $dir = Split-Path $full -Parent
+    $stem = [System.IO.Path]::GetFileNameWithoutExtension($full)
+    $best = $null; $bestW = 0
+    foreach ($f in [System.IO.Directory]::GetFiles($dir, $stem + '*.png')) {
+        if ($f -match 'contrast-|altform-colorful|lightunplated') { continue }
+        try {
+            $bmp = Load-Icon $f
+            if ($bmp.PixelWidth -gt $bestW -and $bmp.PixelWidth -le 1024) { $best = $f; $bestW = $bmp.PixelWidth }
+        } catch { }
+    }
+    if (-not $best -or $bestW -lt 64) { return $false }
+    Copy-Item -LiteralPath $best -Destination $OutFile -Force
+    return $true
+}
+
+function Start-StoreLogos {
+    foreach ($a in @($script:Apps | Where-Object { $_.Pkg -and -not $_.HasIcon })) {
+        $file = Join-Path $IconCache ('store-' + (Get-SafeLogoName $a.Pkg) + '.png')
+        $miss = $file + '.miss'
+        if (-not (Test-Path $file)) {
+            if ((Test-Path $miss) -and ((Get-Item $miss).LastWriteTime -gt (Get-Date).AddDays(-7))) { continue }
+            try { if (-not (Get-StoreLogoPng $a.Pkg $file)) { Set-Content -Path $miss -Value '' } }
+            catch { Write-DebugLog ('store logo ' + $a.Pkg + ': ' + $_.Exception.Message) }
+        }
+        if (Test-Path $file) {
+            try { $a.IconSize = 44; $a.Icon = (Load-Icon $file) } catch { Remove-Item $file -Force -ErrorAction SilentlyContinue }
+        }
+    }
 }
 
 function Load-Icon {
@@ -1306,7 +1570,11 @@ function Load-CachedIcons {
         $script:IconTodo = New-Object 'System.Collections.Generic.List[MeshalApp]'
         foreach ($a in $script:Apps) { if ($a.IconKey -and -not $a.HasIcon) { $script:IconTodo.Add($a) } }
     }
-    if ($script:IconTodo.Count -eq 0) { return 0 }
+    if ($null -eq $script:MonoTodo) {
+        $script:MonoTodo = New-Object 'System.Collections.Generic.List[MeshalApp]'
+        foreach ($a in $script:Apps) { if ($a.IconKey -and $a.HasIcon -and $a.IconMono) { $script:MonoTodo.Add($a) } }
+    }
+    if ($script:IconTodo.Count -eq 0 -and $script:MonoTodo.Count -eq 0) { return 0 }
     $files = @{}
     try { foreach ($f in [System.IO.Directory]::GetFiles($IconCache, '*.png')) { $files[[System.IO.Path]::GetFileName($f)] = $f } } catch { }
     for ($i = $script:IconTodo.Count - 1; $i -ge 0; $i--) {
@@ -1322,6 +1590,21 @@ function Load-CachedIcons {
             catch { Remove-Item $p -Force -ErrorAction SilentlyContinue }
         }
     }
+    # apps that showed a black/white logo: use the coloured original as soon as it has been downloaded
+    for ($i = $script:MonoTodo.Count - 1; $i -ge 0; $i--) {
+        $a = $script:MonoTodo[$i]
+        $p = $files[(Get-IconName ('color-' + $a.IconKey))]
+        if ($p) {
+            try {
+                $bmp = Load-Icon $p
+                $a.IconSize = [math]::Min(44, [math]::Max(26, $bmp.PixelWidth * 1.5))
+                $a.Icon = $bmp
+                $a.IconMono = $false
+            }
+            catch { Remove-Item $p -Force -ErrorAction SilentlyContinue }
+            $script:MonoTodo.RemoveAt($i)
+        }
+    }
     return $script:IconTodo.Count
 }
 
@@ -1334,16 +1617,20 @@ function Start-IconDownloads {
     # One job per logo key (website domain or icon name). Keys that failed recently are skipped (negative cache, 7 days).
     $todo = @{}
     foreach ($a in $script:Apps) {
-        if ($a.HasIcon -or -not $a.IconKey) { continue }
-        if ($todo.ContainsKey($a.IconKey)) { continue }
-        $miss = (Get-IconPath $a.IconKey) + '.miss'
+        if (-not $a.IconKey) { continue }
+        # a black/white logo is replaced by a coloured one (stored as color-<key>.png); a missing logo is just downloaded
+        $needColor = [bool]($a.HasIcon -and $a.IconMono)
+        if ($a.HasIcon -and -not $needColor) { continue }
+        $jobKey = $a.IconKey; if ($needColor) { $jobKey = 'color-' + $a.IconKey }
+        if ($todo.ContainsKey($jobKey)) { continue }
+        $miss = (Get-IconPath $jobKey) + '.miss'
         if ((Test-Path $miss) -and ((Get-Item $miss).LastWriteTime -gt (Get-Date).AddDays(-7))) { continue }
-        $todo[$a.IconKey] = @{ Host = $a.IconHost; Slug = $a.IconSlug; Explicit = [bool]$a.IconExplicit }
+        $todo[$jobKey] = @{ Host = $a.IconHost; Slug = $a.IconSlug; Explicit = [bool]$a.IconExplicit; Color = $needColor }
     }
     if ($todo.Count -eq 0) { return }
 
     $dlScript = {
-        param($key, $hostName, $slug, $explicit, $dir)
+        param($key, $hostName, $slug, $explicit, $dir, $needColor)
         try { [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]'Tls12,Tls13' }
         catch { try { [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 } catch { } }
         try { [Net.ServicePointManager]::DefaultConnectionLimit = 64 } catch { }
@@ -1375,14 +1662,14 @@ function Start-IconDownloads {
         $file = Join-Path $dir $name
         if (Test-Path $file) { return }
 
-        $st = @{ best = 0; responded = $false; n = 0 }
+        $st = @{ best = 0; responded = $false; n = 0; color = $false }
 
         # Download one candidate; keep it if it is the sharpest image so far.
         # $direct = the file comes from the app's own website: even a 16px icon is genuine there.
-        # Favicon services return a generic 16px globe for unknown sites, so they must be >= 20px.
+        # Favicon services return a generic 16px globe for unknown sites, so they must be >= 48px; a 16-24px icon would look blurry anyway.
         function Try-Url([string]$u, [bool]$direct = $false) {
-            if ($st.best -ge 96) { return }
-            $minW = 20; if ($direct) { $minW = 16 }
+            if ($st.best -ge 96 -and $st.color) { return }   # sharp AND coloured = done
+            $minW = 48; if ($direct) { $minW = 32 }
             $st.n++
             $tmp = "$file.$($st.n).tmp"
             try {
@@ -1390,7 +1677,15 @@ function Start-IconDownloads {
                 $st.responded = $true
                 $w = 0
                 if ((Get-Item $tmp).Length -gt 150) { $w = Get-ImgWidth $tmp }
-                if ($w -ge $minW -and $w -gt $st.best) { Copy-Item $tmp "$file.best" -Force; $st.best = $w }
+                if ($w -ge $minW) {
+                    # a coloured logo always beats a black/white one; among equals the sharper one wins
+                    $isCol = $false
+                    try { $isCol = ([MeshalImg]::Colorfulness($tmp) -ge 0.15) } catch { }
+                    if ($needColor -and -not $isCol) { }
+                    elseif (($isCol -and -not $st.color) -or (($isCol -eq $st.color) -and $w -gt $st.best)) {
+                        Copy-Item $tmp "$file.best" -Force; $st.best = $w; $st.color = $isCol
+                    }
+                }
             }
             catch {
                 # a server answer (404...) means the network works; no answer at all means offline
@@ -1468,15 +1763,12 @@ function Start-IconDownloads {
             Try-Url "https://www.google.com/s2/favicons?domain=$h&sz=256"
             if ($st.best -lt 96) { foreach ($u in (Get-PageIcons $h)) { Try-Url $u $true } }
             Try-Url "https://$h/apple-touch-icon.png" $true
-            Try-Url "https://icon.horse/icon/$h"
-            Try-Url "https://favicone.com/$h?s=256"
-            Try-Url "https://favicon.im/$h?larger=true"
             Try-Url "https://icons.duckduckgo.com/ip3/$h.ico"
             Try-Url "https://$h/favicon.ico" $true
         }
 
-        # Tiny images from favicon services are generic globes (rejected above); keep the letter tile if nothing real was found.
-        if ($st.best -ge 16) { Move-Item "$file.best" $file -Force }
+        # Tiny images are generic globes / blurry favicons (rejected above); the letter tile is only the last resort.
+        if ($st.best -ge 32) { Move-Item "$file.best" $file -Force }
         elseif ($st.responded) { Set-Content -Path "$file.miss" -Value '' -ErrorAction SilentlyContinue }   # never cache a "miss" caused by being offline
         Remove-Item "$file.best" -Force -ErrorAction SilentlyContinue
     }
@@ -1489,7 +1781,7 @@ function Start-IconDownloads {
     foreach ($k in $todo.Keys) {
         $ps = [powershell]::Create()
         $ps.RunspacePool = $pool
-        [void]$ps.AddScript($dlScript).AddArgument($k).AddArgument($todo[$k].Host).AddArgument($todo[$k].Slug).AddArgument($todo[$k].Explicit).AddArgument($IconCache)
+        [void]$ps.AddScript($dlScript).AddArgument($k).AddArgument($todo[$k].Host).AddArgument($todo[$k].Slug).AddArgument($todo[$k].Explicit).AddArgument($IconCache).AddArgument($todo[$k].Color)
         $script:IconJobs.Add(@{ Ps = $ps; Handle = $ps.BeginInvoke() })
     }
 
@@ -1903,6 +2195,8 @@ $worker = {
                     $sync.Proc = $p
                 }
                 $dec = [System.Text.Encoding]::UTF8.GetDecoder()
+                $swRun = [System.Diagnostics.Stopwatch]::StartNew()
+                $timedOut = $false
                 $pos = 0L
                 $sb = New-Object System.Text.StringBuilder
                 while ($true) {
@@ -1916,6 +2210,13 @@ $worker = {
                     }
                     else {
                         if ($sync.Cancel -and -not $p.HasExited) { Stop-Tree $p.Id }
+                        # a hung installer must not block the whole queue forever (45 min per app, 3 h for "upgrade all")
+                        $maxMin = 45; if ($lineMode -eq 'upgrade') { $maxMin = 180 }
+                        if ((-not $timedOut) -and (-not $p.HasExited) -and ($swRun.Elapsed.TotalMinutes -gt $maxMin)) {
+                            $timedOut = $true
+                            $sync.Queue.Enqueue("log|$lineId|Timed out after $maxMin minutes - stopping this installer.")
+                            Stop-Tree $p.Id
+                        }
                         $exited = $p.HasExited
                     }
                     try {
@@ -2085,6 +2386,7 @@ $script:ScanBusy = $false
 $scanWorker = {
     param($apps, $result)
     $found = New-Object 'System.Collections.Generic.List[string]'
+    function Norm([string]$s) { return (($s.ToLowerInvariant() -replace '\+', 'plus') -replace '[^\p{L}\p{Nd}]', '') }
     try {
         try { [Console]::OutputEncoding = [System.Text.Encoding]::UTF8 } catch { }
         $text = ''
@@ -2092,13 +2394,28 @@ $scanWorker = {
 
         # names of everything registered in "Programs and Features" (machine + current user)
         $names = New-Object 'System.Collections.Generic.HashSet[string]'
-        foreach ($rk in @('HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*', 'HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*', 'HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*')) {
+        foreach ($rk in @('HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*', 'HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*', 'HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*', 'Registry::HKEY_USERS\S-1-5-21-*\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*')) {
             try {
                 foreach ($it in @(Get-ItemProperty -Path $rk -ErrorAction SilentlyContinue)) {
-                    if ($it.DisplayName) { [void]$names.Add((([string]$it.DisplayName).ToLowerInvariant() -replace '[^\p{L}\p{Nd}]', '')) }
+                    if ($it.DisplayName) { [void]$names.Add((Norm ([string]$it.DisplayName))) }
+                    $kn = [string]$it.PSChildName
+                    if ($kn -and (-not $kn.StartsWith('{'))) { $k1 = Norm $kn; if ($k1.Length -ge 4) { [void]$names.Add($k1) } }
                 }
             } catch { }
         }
+
+        # names reported by winget itself (also covers Store apps and entries without a registry name)
+        if ($text) {
+            foreach ($ln in ($text -split "`r?`n")) {
+                if ([string]::IsNullOrWhiteSpace($ln) -or $ln -match '^\s*(Name\s|-{3,})') { continue }
+                $c0 = ($ln -split '\s{2,}')[0]
+                if ($c0) {
+                    $k0 = Norm $c0
+                    if ($k0.Length -ge 3) { [void]$names.Add($k0) }
+                }
+            }
+        }
+        $result.Names = @($names | Sort-Object)
 
         foreach ($a in $apps) {
             $hit = $false
@@ -2107,16 +2424,30 @@ $scanWorker = {
                 if ($text -match $rx) { $hit = $true }
             }
             if (-not $hit) {
-                $nm = ([string]$a.Name).ToLowerInvariant() -replace '[^\p{L}\p{Nd}]', ''
-                if ($nm.Length -ge 3) {
-                    if ($names.Contains($nm)) { $hit = $true }
-                    elseif ($a.Source -eq 'nvapp') {
-                        # NVIDIA App is not in winget; its Programs-and-Features entry may carry a version/suffix
-                        foreach ($n in $names) { if ($n.StartsWith('nvidiaapp')) { $hit = $true; break } }
-                    }
-                    else {
-                        # "AppName 1.2.3" -> name followed only by a version number
-                        foreach ($n in $names) { if ($n.StartsWith($nm) -and ($n.Substring($nm.Length) -match '^\d+$')) { $hit = $true; break } }
+                # candidate names: the catalog name and the winget Id without its publisher (Discord.Discord.PTB -> discordptb)
+                $keys = New-Object 'System.Collections.Generic.List[string]'
+                $nm = Norm ([string]$a.Name)
+                if ($nm.Length -ge 3) { $keys.Add($nm) }
+                $parts = ([string]$a.Id) -split '\.'
+                if ($parts.Count -ge 2) {
+                    $tail = Norm (($parts | Select-Object -Skip 1) -join '')
+                    if ($tail.Length -ge 4 -and (-not $keys.Contains($tail))) { $keys.Add($tail) }
+                }
+                if ($a.Source -eq 'nvapp') {
+                    # NVIDIA App is not in winget; its Programs-and-Features entry may carry a version/suffix
+                    foreach ($n in $names) { if ($n.StartsWith('nvidiaapp')) { $hit = $true; break } }
+                }
+                else {
+                    foreach ($k in $keys) {
+                        if ($names.Contains($k)) { $hit = $true; break }
+                        foreach ($n in $names) {
+                            if ($n.StartsWith($k)) {
+                                # "AppName 1.2.3", "AppName Launcher", "AppName Desktop" ...
+                                $rest = $n.Substring($k.Length)
+                                if ($rest -match '^(\d+|(launcher|desktop|client|setup)\d*|(\d+bit)?(x64|x86|arm64)?)$') { $hit = $true; break }
+                            }
+                        }
+                        if ($hit) { break }
                     }
                 }
             }
@@ -2139,6 +2470,7 @@ function Mark-Installed {
 function Start-InstalledScan {
     if ($script:ScanBusy) { return }
     $script:ScanBusy = $true
+    $script:btnRefresh.IsEnabled = $false
     Write-Log $script:T.scanStart
     $script:ScanResult = [hashtable]::Synchronized(@{ Done = $false; Ids = @() })
     $list = @($script:Apps | ForEach-Object { [pscustomobject]@{ Id = $_.Id; Name = $_.NameEn; Source = $_.Source } })
@@ -2159,6 +2491,8 @@ function Finish-InstalledScan {
     $set = @{}
     foreach ($i in @($script:ScanResult.Ids)) { $set[[string]$i] = $true }
     $script:InstalledIds = $set
+    foreach ($a in $script:Apps) { if ($a.StatusKey -eq 'st_installed' -and (-not $set.ContainsKey($a.Id))) { Set-Status $a '' } }
+    try { if ($script:ScanResult.Names) { Set-Content -Path (Join-Path $script:SettingsDir 'installed_names.txt') -Value @($script:ScanResult.Names) -Encoding UTF8 } } catch { }
     Mark-Installed
     Update-InstalledCount
     Update-Selection
@@ -2167,6 +2501,7 @@ function Finish-InstalledScan {
     try { $script:ScanPs.EndInvoke($script:ScanHandle) } catch { }
     try { $script:ScanPs.Dispose(); $script:ScanRs.Dispose() } catch { }
     $script:ScanBusy = $false
+    $script:btnRefresh.IsEnabled = (-not $script:Busy)
 }
 
 function Finish-Install {
@@ -2358,6 +2693,14 @@ function Start-Work {
     $script:InstallTimer.Start()
 }
 
+function Get-NameList {
+    param($Items, [int]$Max = 8)
+    $names = @($Items | ForEach-Object { '  ' + [string][char]0x2022 + ' ' + $_.DisplayName })
+    $txt = ($names | Select-Object -First $Max) -join "`n"
+    if ($names.Count -gt $Max) { $txt += "`n  " + ($script:T.confirmMore -f ($names.Count - $Max)) }
+    return $txt
+}
+
 function Start-Install {
     $sel = @($script:Apps | Where-Object { $_.IsSelected })
     if ($sel.Count -eq 0) { [void](Show-Msg $script:T.noSel); return }
@@ -2365,7 +2708,7 @@ function Start-Install {
     if (-not (Get-Command winget -ErrorAction SilentlyContinue)) {
         [void](Show-Msg $script:T.noWinget $script:T.title 'OK' 'Error'); return
     }
-    $answer = Show-Msg ($script:T.confirmMsg -f $sel.Count) $script:T.confirmTitle 'YesNo' 'Question'
+    $answer = Show-Msg (($script:T.confirmMsg -f $sel.Count) + "`n`n" + (Get-NameList $sel)) $script:T.confirmTitle 'YesNo' 'Question'
     if ($answer -ne 'Yes') { return }
     Start-Work 'install' $sel
 }
@@ -2376,7 +2719,7 @@ function Start-Uninstall {
     if (-not (Get-Command winget -ErrorAction SilentlyContinue)) {
         [void](Show-Msg $script:T.noWinget $script:T.title 'OK' 'Error'); return
     }
-    $answer = Show-Msg ($script:T.confirmUninst -f $sel.Count) $script:T.confirmUninstTitle 'YesNo' 'Warning'
+    $answer = Show-Msg (($script:T.confirmUninst -f $sel.Count) + "`n`n" + (Get-NameList $sel)) $script:T.confirmUninstTitle 'YesNo' 'Warning'
     if ($answer -ne 'Yes') { return }
     Start-Work 'uninstall' $sel
 }
@@ -2481,6 +2824,7 @@ $btnClear.Add_Click({
         if ($script:Cat -eq 'Selected') { Refresh-Grid }
     })
 
+$btnRefresh.Add_Click({ if ((-not $script:Busy) -and (-not $script:ScanBusy)) { Start-InstalledScan } })
 $btnInstall.Add_Click({ Start-Install })
 $btnUninstall.Add_Click({ Start-Uninstall })
 $btnUpgrade.Add_Click({ Start-UpgradeAll })
@@ -2491,6 +2835,45 @@ $window.Add_KeyDown({
         if ($e.Key -eq 'F' -and ([System.Windows.Input.Keyboard]::Modifiers -band [System.Windows.Input.ModifierKeys]::Control)) {
             $script:txtSearch.Focus() | Out-Null; $script:txtSearch.SelectAll(); $e.Handled = $true
         }
+    })
+
+function Export-Selection {
+    $sel = @($script:Apps | Where-Object { $_.IsSelected })
+    if ($sel.Count -eq 0) { [void](Show-Msg $script:T.exportNone); return }
+    $dlg = New-Object Microsoft.Win32.SaveFileDialog
+    $dlg.Title = $script:T.exportTitle; $dlg.Filter = 'MeshalBox selection (*.json)|*.json'; $dlg.FileName = 'meshalbox-selection.json'
+    if ($dlg.ShowDialog($window) -ne $true) { return }
+    try {
+        $obj = [ordered]@{ app = 'MeshalBox'; version = $script:AppVersion; ids = @($sel | ForEach-Object { $_.Id }) }
+        [IO.File]::WriteAllText($dlg.FileName, ($obj | ConvertTo-Json), (New-Object Text.UTF8Encoding($false)))
+        Write-Log ($script:T.exportDone -f $sel.Count, $dlg.FileName)
+    } catch { [void](Show-Msg $_.Exception.Message $script:T.title 'OK' 'Error') }
+}
+
+function Import-Selection {
+    $dlg = New-Object Microsoft.Win32.OpenFileDialog
+    $dlg.Title = $script:T.importTitle; $dlg.Filter = 'MeshalBox selection (*.json)|*.json'
+    if ($dlg.ShowDialog($window) -ne $true) { return }
+    try {
+        $j = Get-Content -LiteralPath $dlg.FileName -Raw -Encoding UTF8 | ConvertFrom-Json
+        if (-not $j.ids) { throw 'no ids' }
+        $ok = 0; $miss = 0
+        foreach ($id in @($j.ids)) {
+            if ($script:ById.ContainsKey([string]$id)) { $script:ById[[string]$id].IsSelected = $true; $ok++ } else { $miss++ }
+        }
+        Update-Selection
+        if ($script:Cat -eq 'Selected') { Refresh-Grid }
+        Write-Log ($script:T.importDone -f $ok, $miss)
+    } catch { [void](Show-Msg $script:T.importFail $script:T.title 'OK' 'Warning') }
+}
+
+$window.Add_PreviewKeyDown({
+        param($s, $e)
+        $ctrl = [System.Windows.Input.Keyboard]::Modifiers -band [System.Windows.Input.ModifierKeys]::Control
+        if ($e.Key -eq 'Escape' -and $script:txtSearch.Text.Length -gt 0) { $script:txtSearch.Clear(); $e.Handled = $true }
+        elseif ($e.Key -eq 'F5' -and (-not $script:Busy) -and (-not $script:ScanBusy)) { Start-InstalledScan; $e.Handled = $true }
+        elseif ($ctrl -and $e.Key -eq 'S') { Export-Selection; $e.Handled = $true }
+        elseif ($ctrl -and $e.Key -eq 'O') { Import-Selection; $e.Handled = $true }
     })
 
 $btnCancel.Add_Click({
@@ -2699,7 +3082,7 @@ function Invoke-UpdateClick {
     if (-not $u) { return }
     if ($script:Busy) { [void](Show-Msg $script:T.updBusy $script:T.updTitle 'OK' 'Information'); return }
 
-    $canAuto = $script:IsCompiledExe -and $u.Url -and ($u.Url -like ('https://github.com/{0}/releases/download/*' -f $script:UpdateRepo))
+    $canAuto = $script:IsCompiledExe -and $u.Url -and ($u.Digest -match '^sha256:[0-9a-fA-F]{64}$') -and ($u.Url -like ('https://github.com/{0}/releases/download/*' -f $script:UpdateRepo))
     if ($canAuto) { $ask = $script:T.updAsk } else { $ask = $script:T.updAskSrc }
     $newVer = $u.Tag -replace '^[vV]', ''
     $msg = $script:T.updHead + "`n`n" + ($script:T.updVer -f $script:AppVersion, $newVer) + "`n`n" +
@@ -2732,6 +3115,8 @@ $window.Add_Closing({
 # 10. Start
 # ----------------------------------------------------------------------------
 try {
+    Import-LogoPack
+    [void](Apply-BundledLogos)
     Initialize-Categories
     Set-Theme $script:Theme
     Apply-Language
@@ -2741,12 +3126,14 @@ try {
     $window.Add_ContentRendered({
             if ($script:Started) { return }
             $script:Started = $true
+            try { Start-StoreLogos } catch { Write-DebugLog ('Start-StoreLogos: ' + $_.Exception.Message) }
             [void](Load-CachedIcons)
             Start-IconDownloads
             Start-InstalledScan
             $wg = Get-Command winget -ErrorAction SilentlyContinue
             if ($wg) { Write-Log ($script:T.wingetOk -f $wg.Source) } else { Write-Log $script:T.noWinget }
             if (-not $script:IsAdminNow) { Write-Log $script:T.adminWarn }
+            if ($script:CatalogSkipped -gt 0) { Write-Log ($script:T.catSkipped -f $script:CatalogSkipped) }
             try { Start-UpdateCheck } catch { }
         })
 
