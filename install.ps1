@@ -37,7 +37,12 @@ function Start-MeshalBoxLauncher {
             throw 'The download is missing MeshalBox.ps1 or applications.json.'
         }
         # make sure the catalog is valid before replacing the working copy
-        $null = Get-Content -LiteralPath $srcCatalog -Raw -Encoding UTF8 | ConvertFrom-Json
+        $catText = Get-Content -LiteralPath $srcCatalog -Raw -Encoding UTF8
+        try { $null = $catText | ConvertFrom-Json }
+        catch {
+            $head = $catText.Substring(0, [Math]::Min(60, $catText.Length)) -replace '\s+', ' '
+            throw ('applications.json on GitHub is not valid JSON. It starts with: "' + $head + '"')
+        }
 
         New-Item -ItemType Directory -Path $appDir -Force | Out-Null
         # Windows PowerShell 5.1 needs UTF-8 WITH BOM to read the Arabic text correctly
