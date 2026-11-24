@@ -1042,14 +1042,37 @@ try {
         <Setter.Value>
           <ControlTemplate TargetType="ListBoxItem">
             <Grid Margin="0,1">
-              <Border x:Name="bd" CornerRadius="9" Padding="12,8,12,8" Background="Transparent">
+              <Border x:Name="bd" CornerRadius="9" Padding="11,7,11,7" Margin="7,0,0,0" Background="Transparent" BorderBrush="Transparent" BorderThickness="1">
                 <ContentPresenter/>
+              </Border>
+              <!-- selected marker: a small bar on the edge that grows in -->
+              <Border x:Name="ind" Width="3" Height="20" CornerRadius="2" Background="{DynamicResource Accent}"
+                      HorizontalAlignment="Left" VerticalAlignment="Center" Margin="0" Opacity="0" IsHitTestVisible="False"
+                      RenderTransformOrigin="0.5,0.5">
+                <Border.RenderTransform><ScaleTransform x:Name="indScale" ScaleY="0.3"/></Border.RenderTransform>
               </Border>
             </Grid>
             <ControlTemplate.Triggers>
               <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="bd" Property="Background" Value="{DynamicResource CatHover}"/></Trigger>
               <Trigger Property="IsSelected" Value="True">
                 <Setter TargetName="bd" Property="Background" Value="{DynamicResource CatSelected}"/>
+                <Setter TargetName="bd" Property="BorderBrush" Value="{DynamicResource HoverBorder}"/>
+                <Trigger.EnterActions>
+                  <BeginStoryboard>
+                    <Storyboard>
+                      <DoubleAnimation Storyboard.TargetName="ind" Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.15"/>
+                      <DoubleAnimation Storyboard.TargetName="indScale" Storyboard.TargetProperty="ScaleY" To="1" Duration="0:0:0.18"/>
+                    </Storyboard>
+                  </BeginStoryboard>
+                </Trigger.EnterActions>
+                <Trigger.ExitActions>
+                  <BeginStoryboard>
+                    <Storyboard>
+                      <DoubleAnimation Storyboard.TargetName="ind" Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.10"/>
+                      <DoubleAnimation Storyboard.TargetName="indScale" Storyboard.TargetProperty="ScaleY" To="0.3" Duration="0:0:0.10"/>
+                    </Storyboard>
+                  </BeginStoryboard>
+                </Trigger.ExitActions>
               </Trigger>
             </ControlTemplate.Triggers>
           </ControlTemplate>
@@ -1609,7 +1632,7 @@ $Themes = @{
         TextPrimary = '#F4F4F5'; TextSec = '#8B8B94'; TextSec2 = '#9A9AA3'; TextMuted = '#8A8A94'; TextSoft = '#C4C4CC'; LogFg = '#B8B8C0'
         BtnBg = '#131317'; BtnBorder = '#2A2A31'; HoverBorder = '#4A4A55'
         InputBg = '#101013'; InputBgFocus = '#131317'; InputBorderHover = '#3A3A44'; Edge = '#222227'
-        CatHover = '#151519'; CatSelected = '#1E1E24'; CardChecked = '#18181D'; LogoBg = '#000000'
+        CatHover = '#151519'; CatSelected = '#25252C'; CardChecked = '#18181D'; LogoBg = '#000000'
         TickBorder = '#80808C'; TickHover = '#9A9AA6'; BadgeBg = '#1D1D22'; BadgeBg2 = '#1A1A1F'
         ThumbBg = '#2E2E36'; ThumbHover = '#4A4A55'; LogBg = '#060607'
         StInfoBg = '#1E3560'; StOkBg = '#17382A'; StErrBg = '#43201F'; StWarnBg = '#3A3220'
