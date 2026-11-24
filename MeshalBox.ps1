@@ -11,13 +11,16 @@
 
 .PARAMETER Language
     'en', 'ar' or 'auto' (default). 'auto' uses your last choice, then the system language.
-    (The dark / light theme is switched with the sun button in the header and is remembered.)
+    (The dark / light theme is switched with the theme button in the header and is remembered.)
 
 .PARAMETER AppsFile
     Path to the applications catalog (default: applications.json next to the script).
 
 .PARAMETER NoElevate
     Do not try to relaunch as Administrator.
+
+.PARAMETER NoUpdateCheck
+    Skip the "new version" check (used by the one-line launcher install.ps1, which always fetches the latest files).
 
 .EXAMPLE
     powershell -ExecutionPolicy Bypass -File .\MeshalBox.ps1
@@ -32,6 +35,7 @@
 param(
     [ValidateSet('auto', 'en', 'ar')][string]$Language = 'auto',
     [switch]$NoElevate,
+    [switch]$NoUpdateCheck,
     [string]$AppsFile = ''
 )
 
@@ -42,10 +46,15 @@ $ErrorActionPreference = 'Stop'
 $IsCompiledExe       = '__IS_EXE__' -eq 'yes'
 $EmbeddedCatalogB64  = '__EMBED_CATALOG__'
 $EmbeddedLogosB64    = '__EMBED_LOGOS__'     # zip of logos\*.png, embedded by build.bat
+# Apps whose logo tile is always black (or white) no matter what the automatic check says
+$TileOverride = @{ 'Valve.Steam' = 'black' }
 
 # Self-update (GitHub Releases). Bump $AppVersion on every release - build.bat reads it for the EXE version.
-$AppVersion = '1.2.0'
+$AppVersion = '1.3.0'
 $UpdateRepo = 'iMeshall/MeshalBox'
+
+# Set to $true to show a small "Preview" tag next to the app name in the header.
+$ShowPreviewBadge = $false
 
 # ----------------------------------------------------------------------------
 # 0. Make sure we run in STA (required by WPF) and with Administrator rights
@@ -59,6 +68,7 @@ if ($PSCommandPath -and (-not $IsCompiledExe) -and ((-not $isSta) -or ((-not $is
         $argList = "-NoProfile -ExecutionPolicy Bypass -STA -WindowStyle Hidden -File `"$PSCommandPath`" -Language $Language"
         if ($AppsFile) { $argList += " -AppsFile `"$AppsFile`"" }
         if ($NoElevate) { $argList += ' -NoElevate' }
+        if ($NoUpdateCheck) { $argList += ' -NoUpdateCheck' }
         if ($isAdmin)   { Start-Process -FilePath $exe -ArgumentList $argList }
         else            { Start-Process -FilePath $exe -ArgumentList $argList -Verb RunAs }
         exit
@@ -88,7 +98,11 @@ Add-Type -AssemblyName PresentationFramework, PresentationCore, WindowsBase
 # 1. Data classes (INotifyPropertyChanged so the grid updates live)
 # ----------------------------------------------------------------------------
 if (-not ('MeshalApp' -as [type])) {
-    Add-Type -Language CSharp -ReferencedAssemblies System.dll, System.Drawing.dll -TypeDefinition @'
+    # full paths: Add-Type cannot find the WPF assemblies by short name
+    $wpfRefs = @('System.dll', 'System.Drawing.dll',
+                 [System.Windows.Media.Imaging.BitmapSource].Assembly.Location,
+                 [System.Windows.DependencyObject].Assembly.Location)
+    Add-Type -Language CSharp -ReferencedAssemblies $wpfRefs -TypeDefinition @'
 using System;
 using System.ComponentModel;
 using System.Runtime.InteropServices;
@@ -110,6 +124,8 @@ public class MeshalApp : INotifyPropertyChanged
     private string _tip;
     public string Tip { get { return _tip; } set { _tip = value; Raise("Tip"); } }
     public string Category { get; set; }
+    private string _categoryName;
+    public string CategoryName { get { return _categoryName; } set { _categoryName = value; Raise("CategoryName"); } }
     public string Domain { get; set; }
     public string Source { get; set; }
     public string Initial { get; set; }
@@ -133,15 +149,56 @@ public class MeshalApp : INotifyPropertyChanged
     public bool IsSelected { get { return _isSelected; } set { _isSelected = value; Raise("IsSelected"); } }
 
     private object _icon;
-    public object Icon { get { return _icon; } set { _icon = value; Raise("Icon"); Raise("HasIcon"); } }
+    public object Icon { get { return _icon; } set { _icon = value; UpdateTile(); Raise("Icon"); Raise("HasIcon"); } }
+    private string _tileForce = "";          // "black" or "white" = fixed tile colour for this app, "" = decide from the logo
+    public string TileForce { get { return _tileForce; } set { _tileForce = value ?? ""; UpdateTile(); } }
+    private void UpdateTile()
+    {
+        if (_tileForce == "black") TileBg = "#000000";
+        else if (_tileForce == "white") TileBg = "#FFFFFF";
+        else TileBg = MeshalImg.IsDarkLogo(_icon) ? "#FFFFFF" : "#000000";
+    }
+    private string _tileBg = "#000000";   // black tile behind the logo; white when the logo itself is dark
+    public string TileBg { get { return _tileBg; } set { _tileBg = value; Raise("TileBg"); } }
     public bool HasIcon { get { return _icon != null; } }
 
-    private double _iconSize = 44;
+    private double _iconSize = 32;
     public double IconSize { get { return _iconSize; } set { _iconSize = value; Raise("IconSize"); } }
 }
 
 public static class MeshalImg
 {
+    // true when most of the visible pixels of the logo are dark (it would vanish on a black tile)
+    public static bool IsDarkLogo(object o)
+    {
+        try
+        {
+            System.Windows.Media.Imaging.BitmapSource src = o as System.Windows.Media.Imaging.BitmapSource;
+            if (src == null) return false;
+            System.Windows.Media.Imaging.FormatConvertedBitmap fc = new System.Windows.Media.Imaging.FormatConvertedBitmap(src, System.Windows.Media.PixelFormats.Bgra32, null, 0);
+            int w = fc.PixelWidth, h = fc.PixelHeight;
+            if (w < 1 || h < 1) return false;
+            int stride = w * 4;
+            byte[] buf = new byte[stride * h];
+            fc.CopyPixels(buf, stride, 0);
+            int step = Math.Max(1, (int)Math.Sqrt((double)w * h / 4096.0));
+            long n = 0, dark = 0;
+            for (int y = 0; y < h; y += step)
+                for (int x = 0; x < w; x += step)
+                {
+                    int i = y * stride + x * 4;
+                    if (buf[i + 3] < 128) continue;
+                    double l = (0.114 * buf[i] + 0.587 * buf[i + 1] + 0.299 * buf[i + 2]) / 255.0;
+                    int mx = Math.Max(buf[i], Math.Max(buf[i + 1], buf[i + 2])), mn = Math.Min(buf[i], Math.Min(buf[i + 1], buf[i + 2]));
+                    n++;
+                    // vanishes on a black tile: nearly black, or dark AND grey. Dark but coloured (purple, navy...) stays visible.
+                    if (l < 0.12 || (l < 0.30 && (mx - mn) < 35)) dark++;
+                }
+            return n >= 10 && dark * 100 > n * 60;
+        }
+        catch { return false; }
+    }
+
     // Share of the visible (non-white, non-black) pixels that carry real colour. ~0 = black/white/grey logo, > 0.15 = coloured logo.
     public static double Colorfulness(byte[] data)
     {
@@ -260,6 +317,12 @@ public class MeshalCat : INotifyPropertyChanged
     public int Count { get { return _count; } set { _count = value; Raise("Count"); } }
 }
 
+public class MeshalRow
+{
+    public string Key { get; set; }
+    public string Desc { get; set; }
+}
+
 public static class MeshalDwm
 {
     [DllImport("dwmapi.dll")]
@@ -273,9 +336,9 @@ public static class MeshalDwm
         // 20 = DWMWA_USE_IMMERSIVE_DARK_MODE (Win10 20H1+/Win11), 19 = older Win10 builds
         if (DwmSetWindowAttribute(hwnd, 20, ref useDark, 4) != 0) DwmSetWindowAttribute(hwnd, 19, ref useDark, 4);
 
-        int caption = dark ? ToColorRef(0x12, 0x14, 0x1A) : ToColorRef(0xF3, 0xF5, 0xF9);   // = window background
-        int text    = dark ? ToColorRef(0xE6, 0xE9, 0xF0) : ToColorRef(0x1A, 0x1F, 0x2B);   // title text
-        int border  = dark ? ToColorRef(0x22, 0x26, 0x2F) : ToColorRef(0xE1, 0xE5, 0xEC);   // = panel borders
+        int caption = dark ? ToColorRef(0x09, 0x09, 0x0B) : ToColorRef(0xF6, 0xF6, 0xF7);   // = window background
+        int text    = dark ? ToColorRef(0xE6, 0xE6, 0xE9) : ToColorRef(0x11, 0x11, 0x14);   // title text
+        int border  = dark ? ToColorRef(0x1C, 0x1C, 0x21) : ToColorRef(0xE4, 0xE4, 0xE7);   // = panel borders
         DwmSetWindowAttribute(hwnd, 35, ref caption, 4);  // DWMWA_CAPTION_COLOR (Win11)
         DwmSetWindowAttribute(hwnd, 36, ref text, 4);     // DWMWA_TEXT_COLOR    (Win11)
         DwmSetWindowAttribute(hwnd, 34, ref border, 4);   // DWMWA_BORDER_COLOR  (Win11)
@@ -295,7 +358,18 @@ $Strings = @{
         langBtn       = 'العربية'
         themeToLight  = 'Switch to light mode'
         themeToDark   = 'Switch to dark mode'
-        refreshTip    = 'Re-scan installed apps'
+        refreshTip    = 'Rescan this PC'
+        preview       = 'Preview'
+        menuExport    = 'Export selection'
+        menuImport    = 'Import selection'
+        menuRescan    = 'Rescan this PC'
+        menuShortcuts = 'Keyboard shortcuts'
+        menuAbout     = 'About'
+        moreTip       = 'More'
+        viewGrid      = 'Grid view'
+        viewList      = 'List view'
+        shortcutsText = "Ctrl+K  /  Ctrl+F    Search`nEsc    Clear the search`nF5    Rescan installed apps`nCtrl+S    Export selection`nCtrl+O    Import selection"
+        aboutText     = "MeshalBox  v{0}`nInstall many programs in one go, using winget.`n`nhttps://github.com/{1}"
         updBtn        = 'Update available'
         updTip        = 'A new version of MeshalBox is available'
         updTitle      = 'Update MeshalBox'
@@ -309,8 +383,12 @@ $Strings = @{
         updDownloading = 'Downloading the update...'
         updFail       = 'The update failed:{0}{1}'
         selectVisible = 'Select shown'
-        clearAll      = 'Clear selection'
-        install       = [string][char]0x2B07 + '  Install selected'
+        clearAll      = 'Clear'
+        clearSel      = 'Clear selection'
+        clearSearch   = 'Clear search'
+        install       = 'Install'
+        installNone   = 'Install apps'
+        selectedNone  = 'No apps selected. Click a card to select it.'
         cancel        = 'Stop'
         selected      = 'Selected: {0}'
         ready         = 'Ready'
@@ -323,8 +401,8 @@ $Strings = @{
         cat_ProTools = 'Pro Tools'; cat_Microsoft = 'Microsoft'; cat_Selfhosted = 'Self-hosted'; cat_Store = 'Store Apps'
         cat_Peripherals = 'Peripherals'; cat_Installed = 'Installed'
         upgradeAll    = [string][char]0x21BB + '  Upgrade all'
-        uninstallBtn  = [char]::ConvertFromUtf32(0x1F5D1) + '  Uninstall'
-        st_uninstalling = [string][char]0x23F3 + ' Removing...'
+        uninstallBtn  = 'Uninstall'
+        st_uninstalling = [string][char]0x2715 + ' Removing...'
         st_removed    = [string][char]0x2714 + ' Uninstalled'
         noInstalledSel = 'Select installed apps first (the ones with the green "Installed" badge).'
         confirmUninst = '{0} app(s) will be REMOVED from this PC. Continue?'
@@ -341,14 +419,14 @@ $Strings = @{
         upNone        = 'Everything is already up to date.'
         upFailed      = 'Upgrade finished with some errors. Check the log.'
         upCancelled   = 'Upgrade stopped.'
-        st_queued     = [string][char]0x23F3 + ' Queued'
+        st_queued     = [string][char]0x25CB + ' Queued'
         st_installing = [string][char]0x2B07 + ' Installing...'
         st_done       = [string][char]0x2714 + ' Installed'
         st_already    = [string][char]0x2714 + ' Already installed'
         st_installed  = [string][char]0x2714 + ' Installed'
         st_failed     = [string][char]0x2716 + ' Failed'
-        st_cancelled  = [string][char]0x23F9 + ' Cancelled'
-        st_manual     = [char]::ConvertFromUtf32(0x1F310) + ' Download page opened'
+        st_cancelled  = [string][char]0x25A0 + ' Cancelled'
+        st_manual     = [string][char]0x2197 + ' Download page opened'
         noSel         = 'Please select at least one app.'
         confirmTitle  = 'Confirm installation'
         confirmMsg    = '{0} app(s) will be installed. Continue?'
@@ -361,8 +439,9 @@ $Strings = @{
         catSkipped    = 'Skipped {0} invalid entries in applications.json.'
         exportTitle   = 'Save selection'
         importTitle   = 'Load selection'
-        exportDone    = 'Saved {0} app(s) to: {1}'
-        importDone    = 'Selected {0} app(s) from the file ({1} not found in the catalog).'
+        exportDone    = 'Saved {0} to: {1}'
+        importDone    = 'Selected {0} from the file.'
+        importMiss    = 'Selected {0} from the file. {1} not found in the catalog.'
         importFail    = 'Could not read that file. Use a selection file saved by MeshalBox.'
         exportNone    = 'Nothing is selected yet - tick some apps first.'
         noWinget      = 'winget was not found. Install "App Installer" from the Microsoft Store, then try again.'
@@ -372,7 +451,7 @@ $Strings = @{
         finished      = 'Finished: {0} installed, {1} already installed, {2} failed, {3} cancelled, {4} opened for manual install.'
         manualLog     = 'Not available in winget - official download page opened: {0}'
         cancelling    = 'Stopping the installation...'
-        scanStart     = 'Checking which apps are already installed on this PC...'
+        scanStart     = 'Checking which apps are installed...'
         scanDone      = 'Detected {0} installed app(s).'
         busyClose     = 'An installation is running. Stop it first, then close the window.'
         installingNow = 'Installing: {0}  ({1}/{2})'
@@ -381,6 +460,53 @@ $Strings = @{
         logTitle      = 'Log'
         shortcutLog   = 'Desktop shortcut created: {0}'
         logosLog      = 'Logos loaded: {0} of {1}. Without logo:'
+        undo          = 'Undo'
+        dismiss       = 'Dismiss'
+        showLog       = 'Show log'
+        clearedN      = 'Cleared the selection ({0})'
+        btnCancel2    = 'Cancel'
+        btnClose      = 'Close'
+        noWingetAct   = 'Get App Installer'
+        dlgInstallTitle = 'Install {0}?'
+        dlgInstallBody  = 'They install one after another. You can stop at any time.'
+        btnInstallN   = 'Install {0}'
+        dlgUninstTitle  = 'Uninstall {0}?'
+        dlgUninstBody   = 'This removes them from this PC. You can install them again later.'
+        btnUninstN    = 'Uninstall {0}'
+        dlgUpgTitle   = 'Upgrade all apps?'
+        dlgUpgBody    = 'Every app on this PC that has an update will be upgraded, including apps that are not in MeshalBox.'
+        btnUpgAll     = 'Upgrade all'
+        updNow        = 'Update and restart'
+        updLater      = 'Not now'
+        updOpen       = 'Open download page'
+        closeTitle    = 'Installation in progress'
+        closeBody     = 'Closing now stops it, and the app being installed right now may be left incomplete.'
+        btnKeep       = 'Keep going'
+        btnStopClose  = 'Stop and close'
+        closeUpdTitle = 'Update in progress'
+        closeUpd      = 'The update is downloading. Wait a moment, then close the window.'
+        aboutVersion  = 'Version {0}'
+        aboutDesc     = 'Install many programs in one go, using winget.'
+        aboutOpen     = 'Open GitHub page'
+        shortcutRows  = @('Ctrl+K / Ctrl+F|Search apps', 'Esc|Clear the search, or close a menu', 'F5|Rescan this PC', 'Ctrl+S|Export selection', 'Ctrl+O|Import selection', 'Tab|Jump between sidebar, apps and actions', 'Arrow keys|Move between apps', 'Space|Select or unselect the focused app')
+        emptyNoMatch  = 'No apps match "{0}"'
+        emptyInCat    = 'Searching only in {0}.'
+        emptyTip      = 'Check the spelling or try a shorter name.'
+        actSearchAll  = 'Search all apps'
+        emptySel2     = 'Nothing selected yet'
+        emptySelHint  = 'Click an app card to add it here.'
+        actBrowse     = 'Browse all apps'
+        emptyScan     = 'Checking this PC...'
+        emptyScanHint = 'Installed apps will appear here in a moment.'
+        emptyInst     = 'No MeshalBox apps found on this PC'
+        emptyInstHint = 'Install some, or rescan if you installed something recently.'
+        actRescan     = 'Rescan this PC'
+        resInstalled  = '{0} installed'
+        resAlready    = '{0} already installed'
+        resFailed     = '{0} failed'
+        resCancelled  = '{0} cancelled'
+        resManual     = '{0} opened for manual install'
+        resRemoved    = '{0} removed'
     }
     ar = @{
         title         = 'MeshalBox'
@@ -389,7 +515,18 @@ $Strings = @{
         langBtn       = 'English'
         themeToLight  = 'التبديل إلى الوضع الفاتح'
         themeToDark   = 'التبديل إلى الوضع الداكن'
-        refreshTip    = 'إعادة فحص البرامج المثبّتة'
+        refreshTip    = 'إعادة فحص الجهاز'
+        preview       = 'معاينة'
+        menuExport    = 'تصدير التحديد'
+        menuImport    = 'استيراد التحديد'
+        menuRescan    = 'إعادة فحص الجهاز'
+        menuShortcuts = 'اختصارات لوحة المفاتيح'
+        menuAbout     = 'حول البرنامج'
+        moreTip       = 'المزيد'
+        viewGrid      = 'عرض شبكي'
+        viewList      = 'عرض قائمة'
+        shortcutsText = "Ctrl+K  /  Ctrl+F    بحث`nEsc    مسح البحث`nF5    إعادة فحص البرامج المثبّتة`nCtrl+S    تصدير التحديد`nCtrl+O    استيراد التحديد"
+        aboutText     = "MeshalBox  v{0}`nثبّت عدة برامج دفعة واحدة باستخدام winget.`n`nhttps://github.com/{1}"
         updBtn        = 'يتوفر تحديث'
         updTip        = 'يتوفر إصدار جديد من MeshalBox'
         updTitle      = 'تحديث MeshalBox'
@@ -403,8 +540,12 @@ $Strings = @{
         updDownloading = 'جارٍ تحميل التحديث...'
         updFail       = 'فشل التحديث:{0}{1}'
         selectVisible = 'تحديد المعروض'
-        clearAll      = 'إلغاء التحديد'
-        install       = [string][char]0x2B07 + '  تثبيت المحدد'
+        clearAll      = 'مسح'
+        clearSel      = 'إلغاء التحديد'
+        clearSearch   = 'مسح البحث'
+        install       = 'تثبيت'
+        installNone   = 'تثبيت البرامج'
+        selectedNone  = 'لم تحدد أي برنامج. اضغط على بطاقة لتحديدها.'
         cancel        = 'إيقاف'
         selected      = 'المحدد: {0}'
         ready         = 'جاهز'
@@ -417,8 +558,8 @@ $Strings = @{
         cat_ProTools = 'أدوات احترافية'; cat_Microsoft = 'مايكروسوفت'; cat_Selfhosted = 'استضافة ذاتية'; cat_Store = 'تطبيقات المتجر'
         cat_Peripherals = 'الملحقات'; cat_Installed = 'المثبّتة'
         upgradeAll    = [string][char]0x21BB + '  تحديث الكل'
-        uninstallBtn  = [char]::ConvertFromUtf32(0x1F5D1) + '  إزالة'
-        st_uninstalling = [string][char]0x23F3 + ' جارٍ الإزالة...'
+        uninstallBtn  = 'إزالة'
+        st_uninstalling = [string][char]0x2715 + ' جارٍ الإزالة...'
         st_removed    = [string][char]0x2714 + ' تمت الإزالة'
         noInstalledSel = 'اختر أولًا برامج مثبّتة (التي عليها علامة "مثبّت" الخضراء).'
         confirmUninst = 'سيتم حذف {0} برنامج من هذا الجهاز. هل تريد المتابعة؟'
@@ -435,14 +576,14 @@ $Strings = @{
         upNone        = 'كل البرامج محدّثة بالفعل.'
         upFailed      = 'اكتمل التحديث مع بعض الأخطاء. راجع السجل.'
         upCancelled   = 'تم إيقاف التحديث.'
-        st_queued     = [string][char]0x23F3 + ' في الانتظار'
+        st_queued     = [string][char]0x25CB + ' في الانتظار'
         st_installing = [string][char]0x2B07 + ' جارٍ التثبيت...'
         st_done       = [string][char]0x2714 + ' تم التثبيت'
         st_already    = [string][char]0x2714 + ' مثبّت مسبقًا'
         st_installed  = [string][char]0x2714 + ' مثبّت'
         st_failed     = [string][char]0x2716 + ' فشل'
-        st_cancelled  = [string][char]0x23F9 + ' أُلغي'
-        st_manual     = [char]::ConvertFromUtf32(0x1F310) + ' فُتحت صفحة التحميل'
+        st_cancelled  = [string][char]0x25A0 + ' أُلغي'
+        st_manual     = [string][char]0x2197 + ' فُتحت صفحة التحميل'
         noSel         = 'اختر برنامجًا واحدًا على الأقل.'
         confirmTitle  = 'تأكيد التثبيت'
         confirmMsg    = 'سيتم تثبيت {0} برنامج. هل تريد المتابعة؟'
@@ -455,8 +596,9 @@ $Strings = @{
         catSkipped    = 'تم تجاهل {0} عنصر غير صالح في ملف applications.json.'
         exportTitle   = 'حفظ التحديد'
         importTitle   = 'تحميل تحديد'
-        exportDone    = 'تم حفظ {0} برنامج في: {1}'
-        importDone    = 'تم تحديد {0} برنامج من الملف (و{1} غير موجود في الكتالوج).'
+        exportDone    = 'تم حفظ {0} في: {1}'
+        importDone    = 'تم تحديد {0} من الملف.'
+        importMiss    = 'تم تحديد {0} من الملف. {1} غير موجود في الكتالوج.'
         importFail    = 'تعذّرت قراءة الملف. استخدم ملف تحديد محفوظًا من MeshalBox.'
         exportNone    = 'لم تحدد أي برنامج بعد - حدّد بعض البرامج أولًا.'
         noWinget      = 'لم يتم العثور على winget. ثبّت "App Installer" من متجر Microsoft ثم أعد المحاولة.'
@@ -466,7 +608,7 @@ $Strings = @{
         finished      = 'اكتمل: {0} تم تثبيته، {1} مثبّت مسبقًا، {2} فشل، {3} أُلغي، {4} فُتحت صفحة تحميله للتثبيت اليدوي.'
         manualLog     = 'غير متوفر في winget - تم فتح صفحة التحميل الرسمية: {0}'
         cancelling    = 'جارٍ إيقاف التثبيت...'
-        scanStart     = 'جارٍ فحص البرامج المثبّتة مسبقًا على جهازك...'
+        scanStart     = 'جارٍ فحص البرامج المثبّتة...'
         scanDone      = 'تم التعرّف على {0} برنامج مثبّت.'
         busyClose     = 'هناك عملية تثبيت جارية. أوقفها أولًا ثم أغلق النافذة.'
         installingNow = 'جارٍ تثبيت: {0}  ({1}/{2})'
@@ -475,6 +617,53 @@ $Strings = @{
         logTitle      = 'السجل'
         shortcutLog   = 'تم إنشاء اختصار على سطح المكتب: {0}'
         logosLog      = 'الشعارات المحمّلة: {0} من {1}. بدون شعار:'
+        undo          = 'تراجع'
+        dismiss       = 'إخفاء'
+        showLog       = 'عرض السجل'
+        clearedN      = 'تم إلغاء التحديد ({0})'
+        btnCancel2    = 'إلغاء'
+        btnClose      = 'إغلاق'
+        noWingetAct   = 'احصل على App Installer'
+        dlgInstallTitle = 'تثبيت {0}؟'
+        dlgInstallBody  = 'سيتم تثبيتها واحدًا تلو الآخر. يمكنك الإيقاف في أي وقت.'
+        btnInstallN   = 'تثبيت {0}'
+        dlgUninstTitle  = 'إزالة {0}؟'
+        dlgUninstBody   = 'ستُزال من هذا الجهاز. يمكنك تثبيتها مجددًا لاحقًا.'
+        btnUninstN    = 'إزالة {0}'
+        dlgUpgTitle   = 'تحديث كل البرامج؟'
+        dlgUpgBody    = 'سيتم تحديث كل برنامج على هذا الجهاز له تحديث، بما فيها البرامج غير الموجودة في MeshalBox.'
+        btnUpgAll     = 'تحديث الكل'
+        updNow        = 'تحديث وإعادة فتح'
+        updLater      = 'ليس الآن'
+        updOpen       = 'فتح صفحة التحميل'
+        closeTitle    = 'التثبيت جارٍ'
+        closeBody     = 'الإغلاق الآن سيوقفه، وقد يبقى البرنامج الجاري تثبيته غير مكتمل.'
+        btnKeep       = 'متابعة العملية'
+        btnStopClose  = 'إيقاف وإغلاق'
+        closeUpdTitle = 'التحديث جارٍ'
+        closeUpd      = 'جارٍ تحميل التحديث. انتظر قليلًا ثم أغلق النافذة.'
+        aboutVersion  = 'الإصدار {0}'
+        aboutDesc     = 'ثبّت عدة برامج دفعة واحدة باستخدام winget.'
+        aboutOpen     = 'فتح صفحة GitHub'
+        shortcutRows  = @('Ctrl+K / Ctrl+F|بحث عن برنامج', 'Esc|مسح البحث أو إغلاق قائمة', 'F5|إعادة فحص الجهاز', 'Ctrl+S|تصدير التحديد', 'Ctrl+O|استيراد التحديد', 'Tab|الانتقال بين القائمة الجانبية والبرامج والأزرار', 'مفاتيح الأسهم|التنقل بين البرامج', 'Space|تحديد البرنامج المُركَّز عليه أو إلغاء تحديده')
+        emptyNoMatch  = 'لا توجد برامج تطابق "{0}"'
+        emptyInCat    = 'البحث داخل «{0}» فقط.'
+        emptyTip      = 'تحقق من الإملاء أو جرّب اسمًا أقصر.'
+        actSearchAll  = 'ابحث في كل البرامج'
+        emptySel2     = 'لم تحدد شيئًا بعد'
+        emptySelHint  = 'اضغط على بطاقة برنامج لتظهر هنا.'
+        actBrowse     = 'تصفّح كل البرامج'
+        emptyScan     = 'جارٍ فحص هذا الجهاز...'
+        emptyScanHint = 'ستظهر البرامج المثبّتة هنا بعد لحظات.'
+        emptyInst     = 'لم يُعثر على برامج MeshalBox على هذا الجهاز'
+        emptyInstHint = 'ثبّت بعضها، أو أعد الفحص إن ثبّتّ شيئًا مؤخرًا.'
+        actRescan     = 'إعادة فحص الجهاز'
+        resInstalled  = 'تم تثبيت {0}'
+        resAlready    = '{0} مثبّت مسبقًا'
+        resFailed     = 'فشل {0}'
+        resCancelled  = 'أُلغي {0}'
+        resManual     = 'فُتحت صفحة تحميل {0}'
+        resRemoved    = 'تمت إزالة {0}'
     }
 }
 
@@ -488,16 +677,17 @@ $CategoryOrder = @('All', 'Selected', 'Installed', 'Browsers', 'Gaming', 'Periph
                    'Utilities', 'Security', 'Productivity', 'Design', 'Cloud', 'Runtimes',
                    'ProTools', 'Microsoft', 'Selfhosted', 'Store')
 $CategoryGlyph = @{
-    All = [char]::ConvertFromUtf32(0x1F5C2); Selected = [string][char]0x2705; Installed = [char]::ConvertFromUtf32(0x1F4E6)
-    Browsers = [char]::ConvertFromUtf32(0x1F310); Gaming = [char]::ConvertFromUtf32(0x1F3AE)
-    Peripherals = [char]::ConvertFromUtf32(0x1F5B1)
-    Communication = [char]::ConvertFromUtf32(0x1F4AC); Media = [char]::ConvertFromUtf32(0x1F3AC)
-    Development = [char]::ConvertFromUtf32(0x1F4BB); Utilities = [char]::ConvertFromUtf32(0x1F6E0)
-    Security = [char]::ConvertFromUtf32(0x1F6E1); Productivity = [char]::ConvertFromUtf32(0x1F4C4)
-    Design = [char]::ConvertFromUtf32(0x1F3A8); Cloud = [string][char]0x2601
-    Runtimes = [string][char]0x2699
-    ProTools = [char]::ConvertFromUtf32(0x1F9F0); Microsoft = [char]::ConvertFromUtf32(0x1F537)
-    Selfhosted = [char]::ConvertFromUtf32(0x1F5A5); Store = [char]::ConvertFromUtf32(0x1F6D2)
+    # Monochrome Segoe Fluent / MDL2 icon glyphs (same colour as the text, no coloured emoji)
+    All = [string][char]0xE8A9; Selected = [string][char]0xE73E; Installed = [string][char]0xE7B8
+    Browsers = [string][char]0xE774; Gaming = [string][char]0xE7FC
+    Peripherals = [string][char]0xE765
+    Communication = [string][char]0xE8F2; Media = [string][char]0xE714
+    Development = [string][char]0xE943; Utilities = [string][char]0xE90F
+    Security = [string][char]0xEA18; Productivity = [string][char]0xE8A5
+    Design = [string][char]0xE70F; Cloud = [string][char]0xE753
+    Runtimes = [string][char]0xE950
+    ProTools = [string][char]0xE90F; Microsoft = [string][char]0xE737
+    Selfhosted = [string][char]0xEDA2; Store = [string][char]0xE719
 }
 
 # Bright colours so the (monochrome) emoji glyphs are clearly visible on the dark background
@@ -569,6 +759,7 @@ foreach ($e in $catalog.apps) {
     $a.DescAr = if ($e.descAr) { [string]$e.descAr } else { $a.DescEn }
     $a.Source = if ($e.source) { [string]$e.source } else { '' }
     if ($e.pkg) { $a.Pkg = [string]$e.pkg }
+    if ($TileOverride.ContainsKey($a.Id)) { $a.TileForce = $TileOverride[$a.Id] }
     $a.Initial = $a.NameEn.Substring(0, 1).ToUpper()
     if ((-not $a.Domain) -and $StoreGlyph.ContainsKey($a.Id)) { $a.Initial = [char]::ConvertFromUtf32([int]$StoreGlyph[$a.Id]) }
     $sum = 0; foreach ($ch in $a.Id.ToCharArray()) { $sum += [int]$ch }
@@ -632,7 +823,7 @@ function Write-DebugLog {
 }
 
 function Save-Settings {
-    try { @{ lang = $script:Lang; theme = $script:Theme } | ConvertTo-Json | Set-Content -Path $SettingsFile -Encoding UTF8 } catch { }
+    try { $v = $script:ViewMode; if (-not $v) { $v = $script:SavedView }; @{ lang = $script:Lang; theme = $script:Theme; view = $v } | ConvertTo-Json | Set-Content -Path $SettingsFile -Encoding UTF8 } catch { }
 }
 
 $script:Lang = 'en'
@@ -656,6 +847,14 @@ try {
     }
 } catch { }
 
+$script:SavedView = 'grid'
+try {
+    if (Test-Path $SettingsFile) {
+        $sv = (Get-Content $SettingsFile -Raw | ConvertFrom-Json).view
+        if ($sv -in @('grid', 'list')) { $script:SavedView = $sv }
+    }
+} catch { }
+
 # ----------------------------------------------------------------------------
 # 5. XAML user interface
 # ----------------------------------------------------------------------------
@@ -664,7 +863,7 @@ try {
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Width="1240" Height="820" MinWidth="960" MinHeight="640"
         WindowStartupLocation="CenterScreen" Background="{DynamicResource BgWindow}"
-        FontFamily="Segoe UI" TextOptions.TextFormattingMode="Ideal" UseLayoutRounding="True">
+        FontFamily="Segoe UI Variable Text, Segoe UI" TextOptions.TextFormattingMode="Ideal" UseLayoutRounding="True">
   <Window.Resources>
 
     <LinearGradientBrush x:Key="AccentBrush" StartPoint="0,0" EndPoint="1,1">
@@ -672,18 +871,18 @@ try {
       <GradientStop Color="#6A48E0" Offset="1"/>
     </LinearGradientBrush>
 
-    <!-- Keyboard-only focus rings (FocusVisualStyle is not shown after a mouse click). #3B82F6 has >= 3:1 on both themes. -->
+    <!-- Keyboard-only focus rings (FocusVisualStyle is not shown after a mouse click). FocusRing is theme-aware. -->
     <Style x:Key="FocusRingBtn">
       <Setter Property="Control.Template">
         <Setter.Value>
-          <ControlTemplate><Rectangle Margin="-3" RadiusX="13" RadiusY="13" Stroke="#3B82F6" StrokeThickness="2" IsHitTestVisible="False"/></ControlTemplate>
+          <ControlTemplate><Rectangle Margin="-3" RadiusX="13" RadiusY="13" Stroke="{DynamicResource FocusRing}" StrokeThickness="2" IsHitTestVisible="False"/></ControlTemplate>
         </Setter.Value>
       </Setter>
     </Style>
     <Style x:Key="FocusRingCard">
       <Setter Property="Control.Template">
         <Setter.Value>
-          <ControlTemplate><Rectangle Margin="4" RadiusX="19" RadiusY="19" Stroke="#3B82F6" StrokeThickness="2" IsHitTestVisible="False"/></ControlTemplate>
+          <ControlTemplate><Rectangle Margin="4" RadiusX="19" RadiusY="19" Stroke="{DynamicResource FocusRing}" StrokeThickness="2" IsHitTestVisible="False"/></ControlTemplate>
         </Setter.Value>
       </Setter>
     </Style>
@@ -702,17 +901,17 @@ try {
       <Setter Property="Template">
         <Setter.Value>
           <ControlTemplate TargetType="Thumb">
-            <Border x:Name="t" CornerRadius="4" Background="{DynamicResource ThumbBg}" Margin="2,0"/>
+            <Border x:Name="t" CornerRadius="2" Background="{DynamicResource ThumbBg}" Margin="2,0"/>
             <ControlTemplate.Triggers>
               <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="t" Property="Background" Value="{DynamicResource ThumbHover}"/></Trigger>
-              <Trigger Property="IsDragging" Value="True"><Setter TargetName="t" Property="Background" Value="#3B82F6"/></Trigger>
+              <Trigger Property="IsDragging" Value="True"><Setter TargetName="t" Property="Background" Value="{DynamicResource Accent}"/></Trigger>
             </ControlTemplate.Triggers>
           </ControlTemplate>
         </Setter.Value>
       </Setter>
     </Style>
     <Style TargetType="ScrollBar">
-      <Setter Property="Width" Value="12"/>
+      <Setter Property="Width" Value="8"/>
       <Setter Property="Background" Value="Transparent"/>
       <Setter Property="Template">
         <Setter.Value>
@@ -771,23 +970,13 @@ try {
       <Setter Property="Template">
         <Setter.Value>
           <ControlTemplate TargetType="Button">
-            <Border x:Name="b" Background="{TemplateBinding Background}" CornerRadius="19" Padding="14,7,16,7"
+            <Border x:Name="b" Background="{TemplateBinding Background}" CornerRadius="19" Padding="18,7"
                     BorderBrush="{DynamicResource BtnBorder}" BorderThickness="1">
-              <StackPanel Orientation="Horizontal" FlowDirection="LeftToRight" VerticalAlignment="Center">
-                <Grid Width="22" Height="20" Margin="0,0,9,0" VerticalAlignment="Center">
-                  <TextBlock x:Name="ic1" Text="&#x6587;" FontSize="13" FontWeight="Normal" Foreground="{DynamicResource TextSoft}"
-                             HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,-1,0,0"/>
-                  <TextBlock x:Name="ic2" Text="A" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource TextSoft}"
-                             HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,0,-2"/>
-                </Grid>
-                <ContentPresenter VerticalAlignment="Center" RecognizesAccessKey="False"/>
-              </StackPanel>
+              <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" RecognizesAccessKey="False"/>
             </Border>
             <ControlTemplate.Triggers>
               <Trigger Property="IsMouseOver" Value="True">
                 <Setter TargetName="b" Property="BorderBrush" Value="{DynamicResource HoverBorder}"/>
-                <Setter TargetName="ic1" Property="Foreground" Value="{DynamicResource TextPrimary}"/>
-                <Setter TargetName="ic2" Property="Foreground" Value="{DynamicResource TextPrimary}"/>
               </Trigger>
               <Trigger Property="IsPressed" Value="True"><Setter TargetName="b" Property="Opacity" Value="0.75"/></Trigger>
               <Trigger Property="IsEnabled" Value="False"><Setter TargetName="b" Property="Opacity" Value="0.35"/></Trigger>
@@ -797,16 +986,10 @@ try {
       </Setter>
     </Style>
     <Style x:Key="BtnPrimary" TargetType="Button" BasedOn="{StaticResource Btn}">
-      <Setter Property="Background" Value="{StaticResource AccentBrush}"/>
-      <Setter Property="Foreground" Value="White"/>
+      <Setter Property="Background" Value="{DynamicResource Accent}"/>
+      <Setter Property="Foreground" Value="{DynamicResource OnAccent}"/>
       <Setter Property="FontWeight" Value="SemiBold"/>
       <Setter Property="Padding" Value="26,11"/>
-      <Setter Property="Effect">
-        <Setter.Value><DropShadowEffect Color="#5B6CFF" Opacity="0.45" BlurRadius="20" ShadowDepth="0"/></Setter.Value>
-      </Setter>
-      <Style.Triggers>
-        <Trigger Property="IsEnabled" Value="False"><Setter Property="Effect" Value="{x:Null}"/></Trigger>
-      </Style.Triggers>
     </Style>
     <Style x:Key="BtnDanger" TargetType="Button" BasedOn="{StaticResource Btn}">
       <Setter Property="Background" Value="#DC2626"/>
@@ -822,12 +1005,12 @@ try {
       <Setter Property="Template">
         <Setter.Value>
           <ControlTemplate TargetType="TextBox">
-            <Border x:Name="bd" Background="{DynamicResource InputBg}" BorderBrush="{DynamicResource Edge}" BorderThickness="1.5" CornerRadius="12" Padding="0,10,0,10">
+            <Border x:Name="bd" Background="{DynamicResource InputBg}" BorderBrush="{DynamicResource Edge}" BorderThickness="1" CornerRadius="10" Padding="0,10,0,10">
               <ScrollViewer x:Name="PART_ContentHost"/>
             </Border>
             <ControlTemplate.Triggers>
               <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="bd" Property="BorderBrush" Value="{DynamicResource InputBorderHover}"/></Trigger>
-              <Trigger Property="IsKeyboardFocused" Value="True"><Setter TargetName="bd" Property="BorderBrush" Value="#3B82F6"/><Setter TargetName="bd" Property="Background" Value="{DynamicResource InputBgFocus}"/></Trigger>
+              <Trigger Property="IsKeyboardFocused" Value="True"><Setter TargetName="bd" Property="BorderBrush" Value="{DynamicResource Accent}"/><Setter TargetName="bd" Property="Background" Value="{DynamicResource InputBgFocus}"/></Trigger>
             </ControlTemplate.Triggers>
           </ControlTemplate>
         </Setter.Value>
@@ -859,17 +1042,14 @@ try {
         <Setter.Value>
           <ControlTemplate TargetType="ListBoxItem">
             <Grid Margin="0,1">
-              <Border x:Name="bd" CornerRadius="10" Padding="14,8,12,8" Background="Transparent">
+              <Border x:Name="bd" CornerRadius="9" Padding="12,8,12,8" Background="Transparent">
                 <ContentPresenter/>
               </Border>
-              <Border x:Name="bar" Width="3" Height="20" CornerRadius="2" Background="{StaticResource AccentBrush}"
-                      HorizontalAlignment="Left" VerticalAlignment="Center" Visibility="Collapsed"/>
             </Grid>
             <ControlTemplate.Triggers>
               <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="bd" Property="Background" Value="{DynamicResource CatHover}"/></Trigger>
               <Trigger Property="IsSelected" Value="True">
                 <Setter TargetName="bd" Property="Background" Value="{DynamicResource CatSelected}"/>
-                <Setter TargetName="bar" Property="Visibility" Value="Visible"/>
               </Trigger>
             </ControlTemplate.Triggers>
           </ControlTemplate>
@@ -884,19 +1064,19 @@ try {
       <Setter Property="Template">
         <Setter.Value>
           <ControlTemplate TargetType="CheckBox">
-            <Border x:Name="card" Background="{DynamicResource CardBg}" Width="156" Height="170" Margin="7" CornerRadius="16"
-                    BorderBrush="{DynamicResource Edge}" BorderThickness="1.5" Padding="8"
-                    RenderTransformOrigin="0.5,0.5" ToolTipService.InitialShowDelay="350" ToolTipService.ShowDuration="30000">
-              <Border.ToolTip>
-                <ToolTip Background="{DynamicResource CardBg}" BorderBrush="{DynamicResource Edge}" BorderThickness="1.5" Padding="12,9" MaxWidth="340">
-                  <TextBlock Text="{Binding Tip}" TextWrapping="Wrap" FontSize="13" LineHeight="19" Foreground="{DynamicResource TextPrimary}"/>
-                </ToolTip>
-              </Border.ToolTip>
-              <Border.RenderTransform><ScaleTransform x:Name="zoom" ScaleX="1" ScaleY="1"/></Border.RenderTransform>
+            <Border x:Name="card" Background="{DynamicResource CardBg}" Width="{DynamicResource CardW}" Height="170" Margin="6" CornerRadius="14"
+                    BorderBrush="{DynamicResource Edge}" BorderThickness="1" Padding="16,14,14,12">
               <Grid>
-                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
-                  <Grid Width="60" Height="60" HorizontalAlignment="Center" Margin="0,6,0,9">
-                    <Border CornerRadius="16" Background="{Binding Color}">
+                <Grid.RowDefinitions>
+                  <RowDefinition Height="Auto"/>
+                  <RowDefinition Height="Auto"/>
+                  <RowDefinition Height="Auto"/>
+                  <RowDefinition Height="*"/>
+                  <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <Grid Grid.Row="0">
+                  <Grid Width="48" Height="48" HorizontalAlignment="Left" VerticalAlignment="Top">
+                    <Border CornerRadius="12" Background="{Binding Color}">
                       <Border.Style>
                         <Style TargetType="Border">
                           <Style.Triggers>
@@ -907,7 +1087,7 @@ try {
                       <TextBlock Text="{Binding Initial}" Foreground="White" FontSize="27" FontWeight="Bold"
                                  HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
-                    <Border CornerRadius="16" Background="{DynamicResource LogoBg}" Padding="7">
+                    <Border CornerRadius="12" Background="{Binding TileBg}" BorderBrush="{DynamicResource Edge}" BorderThickness="1" Padding="7">
                       <Border.Style>
                         <Style TargetType="Border">
                           <Style.Triggers>
@@ -920,27 +1100,44 @@ try {
                              RenderOptions.BitmapScalingMode="HighQuality"/>
                     </Border>
                   </Grid>
-                  <TextBlock Text="{Binding DisplayName}" Foreground="{DynamicResource TextPrimary}" FontSize="14" FontWeight="SemiBold"
-                             TextAlignment="Center" TextWrapping="Wrap" MaxHeight="40" TextTrimming="CharacterEllipsis"/>
-                  <Border CornerRadius="9" Padding="9,2" Margin="0,5,0,0" HorizontalAlignment="Center" MaxWidth="136">
+                  <Border x:Name="tick" Width="24" Height="24" CornerRadius="12" Background="#00000000"
+                          BorderBrush="{DynamicResource TickBorder}" BorderThickness="1.5" HorizontalAlignment="Right" VerticalAlignment="Top">
+                    <Ellipse x:Name="mark" Width="12" Height="12" Fill="{DynamicResource Accent}" HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Collapsed"/>
+                  </Border>
+                </Grid>
+                <TextBlock Grid.Row="1" Text="{Binding DisplayName}" Foreground="{DynamicResource TextPrimary}" FontSize="14.5" FontWeight="SemiBold"
+                           Margin="0,12,0,0" TextTrimming="CharacterEllipsis"/>
+                <!-- Description lives inside the card (no hover tooltip) -->
+                <TextBlock Grid.Row="2" Text="{Binding Tip}" Foreground="{DynamicResource TextSec2}" FontSize="12.5" LineHeight="17"
+                           LineStackingStrategy="BlockLineHeight" TextWrapping="Wrap" TextTrimming="CharacterEllipsis"
+                           MaxHeight="34" Margin="0,4,0,0"/>
+                <Grid Grid.Row="4" Margin="0,6,0,0">
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                  </Grid.ColumnDefinitions>
+                  <TextBlock Grid.Column="0" Text="{Binding CategoryName}" Foreground="{DynamicResource TextMuted}" FontSize="12.5"
+                             VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                  <StackPanel Grid.Column="1">
+                    <Border CornerRadius="9" Padding="0,2" Margin="8,0,0,0" HorizontalAlignment="Right" VerticalAlignment="Center" MaxWidth="110">
                     <Border.Style>
                       <Style TargetType="Border">
                         <Setter Property="Background" Value="Transparent"/>
                         <Style.Triggers>
-                          <DataTrigger Binding="{Binding StatusKey}" Value="st_queued"><Setter Property="Background" Value="{DynamicResource Edge}"/></DataTrigger>
-                          <DataTrigger Binding="{Binding StatusKey}" Value="st_installing"><Setter Property="Background" Value="{DynamicResource StInfoBg}"/></DataTrigger>
-                          <DataTrigger Binding="{Binding StatusKey}" Value="st_uninstalling"><Setter Property="Background" Value="{DynamicResource StInfoBg}"/></DataTrigger>
-                          <DataTrigger Binding="{Binding StatusKey}" Value="st_removed"><Setter Property="Background" Value="{DynamicResource StOkBg}"/></DataTrigger>
-                          <DataTrigger Binding="{Binding StatusKey}" Value="st_manual"><Setter Property="Background" Value="{DynamicResource StInfoBg}"/></DataTrigger>
-                          <DataTrigger Binding="{Binding StatusKey}" Value="st_done"><Setter Property="Background" Value="{DynamicResource StOkBg}"/></DataTrigger>
-                          <DataTrigger Binding="{Binding StatusKey}" Value="st_already"><Setter Property="Background" Value="{DynamicResource StOkBg}"/></DataTrigger>
-                          <DataTrigger Binding="{Binding StatusKey}" Value="st_installed"><Setter Property="Background" Value="{DynamicResource StOkBg}"/></DataTrigger>
-                          <DataTrigger Binding="{Binding StatusKey}" Value="st_failed"><Setter Property="Background" Value="{DynamicResource StErrBg}"/></DataTrigger>
-                          <DataTrigger Binding="{Binding StatusKey}" Value="st_cancelled"><Setter Property="Background" Value="{DynamicResource StWarnBg}"/></DataTrigger>
+                          <DataTrigger Binding="{Binding StatusKey}" Value="st_queued"><Setter Property="Background" Value="Transparent"/></DataTrigger>
+                          <DataTrigger Binding="{Binding StatusKey}" Value="st_installing"><Setter Property="Background" Value="Transparent"/></DataTrigger>
+                          <DataTrigger Binding="{Binding StatusKey}" Value="st_uninstalling"><Setter Property="Background" Value="Transparent"/></DataTrigger>
+                          <DataTrigger Binding="{Binding StatusKey}" Value="st_removed"><Setter Property="Background" Value="Transparent"/></DataTrigger>
+                          <DataTrigger Binding="{Binding StatusKey}" Value="st_manual"><Setter Property="Background" Value="Transparent"/></DataTrigger>
+                          <DataTrigger Binding="{Binding StatusKey}" Value="st_done"><Setter Property="Background" Value="Transparent"/></DataTrigger>
+                          <DataTrigger Binding="{Binding StatusKey}" Value="st_already"><Setter Property="Background" Value="Transparent"/></DataTrigger>
+                          <DataTrigger Binding="{Binding StatusKey}" Value="st_installed"><Setter Property="Background" Value="Transparent"/></DataTrigger>
+                          <DataTrigger Binding="{Binding StatusKey}" Value="st_failed"><Setter Property="Background" Value="Transparent"/></DataTrigger>
+                          <DataTrigger Binding="{Binding StatusKey}" Value="st_cancelled"><Setter Property="Background" Value="Transparent"/></DataTrigger>
                         </Style.Triggers>
                       </Style>
                     </Border.Style>
-                    <TextBlock Text="{Binding Status}" FontSize="12" TextAlignment="Center" TextTrimming="CharacterEllipsis">
+                    <TextBlock Text="{Binding Status}" FontSize="12.5" FontWeight="SemiBold" TextAlignment="Center" TextTrimming="CharacterEllipsis">
                       <TextBlock.Style>
                         <Style TargetType="TextBlock">
                           <Setter Property="Foreground" Value="{DynamicResource TextSec2}"/>
@@ -959,40 +1156,19 @@ try {
                       </TextBlock.Style>
                     </TextBlock>
                   </Border>
-                </StackPanel>
-                <Border x:Name="tick" Width="22" Height="22" CornerRadius="11" Background="#00000000"
-                        BorderBrush="{DynamicResource TickBorder}" BorderThickness="1.5" HorizontalAlignment="Left" VerticalAlignment="Top">
-                  <TextBlock x:Name="mark" Text="&#x2713;" Foreground="White" FontSize="13" FontWeight="Bold"
-                             HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Collapsed"/>
-                </Border>
+                  </StackPanel>
+                </Grid>
               </Grid>
             </Border>
             <ControlTemplate.Triggers>
               <Trigger Property="IsMouseOver" Value="True">
                 <Setter TargetName="card" Property="BorderBrush" Value="{DynamicResource HoverBorder}"/>
                 <Setter TargetName="tick" Property="BorderBrush" Value="{DynamicResource TickHover}"/>
-                <Trigger.EnterActions>
-                  <BeginStoryboard>
-                    <Storyboard>
-                      <DoubleAnimation Storyboard.TargetName="zoom" Storyboard.TargetProperty="ScaleX" To="1.04" Duration="0:0:0.12"/>
-                      <DoubleAnimation Storyboard.TargetName="zoom" Storyboard.TargetProperty="ScaleY" To="1.04" Duration="0:0:0.12"/>
-                    </Storyboard>
-                  </BeginStoryboard>
-                </Trigger.EnterActions>
-                <Trigger.ExitActions>
-                  <BeginStoryboard>
-                    <Storyboard>
-                      <DoubleAnimation Storyboard.TargetName="zoom" Storyboard.TargetProperty="ScaleX" To="1" Duration="0:0:0.15"/>
-                      <DoubleAnimation Storyboard.TargetName="zoom" Storyboard.TargetProperty="ScaleY" To="1" Duration="0:0:0.15"/>
-                    </Storyboard>
-                  </BeginStoryboard>
-                </Trigger.ExitActions>
               </Trigger>
               <Trigger Property="IsChecked" Value="True">
                 <Setter TargetName="card" Property="Background" Value="{DynamicResource CardChecked}"/>
-                <Setter TargetName="card" Property="BorderBrush" Value="#3B82F6"/>
-                <Setter TargetName="tick" Property="Background" Value="#3B82F6"/>
-                <Setter TargetName="tick" Property="BorderBrush" Value="#3B82F6"/>
+                <Setter TargetName="card" Property="BorderBrush" Value="{DynamicResource Accent}"/>
+                <Setter TargetName="tick" Property="BorderBrush" Value="{DynamicResource Accent}"/>
                 <Setter TargetName="mark" Property="Visibility" Value="Visible"/>
               </Trigger>
             </ControlTemplate.Triggers>
@@ -1007,13 +1183,148 @@ try {
         <Setter.Value>
           <ControlTemplate TargetType="ProgressBar">
             <Grid>
-              <Border x:Name="PART_Track" CornerRadius="4" Background="{DynamicResource Edge}"/>
-              <Border x:Name="PART_Indicator" CornerRadius="4" HorizontalAlignment="Left" Background="{StaticResource AccentBrush}"/>
+              <Border x:Name="PART_Track" Background="Transparent"/>
+              <Border x:Name="PART_Indicator" HorizontalAlignment="Left" Background="{DynamicResource Accent}"/>
             </Grid>
           </ControlTemplate>
         </Setter.Value>
       </Setter>
     </Style>
+
+    <!-- Item of the "more" menu -->
+    <Style x:Key="MenuBtn" TargetType="Button">
+      <Setter Property="FocusVisualStyle" Value="{StaticResource FocusRingBtn}"/>
+      <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
+      <Setter Property="FontSize" Value="14"/>
+      <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Button">
+            <Border x:Name="b" CornerRadius="8" Padding="14,9" Background="Transparent">
+              <ContentPresenter HorizontalAlignment="Left" VerticalAlignment="Center" RecognizesAccessKey="False"/>
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="b" Property="Background" Value="{DynamicResource CatHover}"/></Trigger>
+              <Trigger Property="IsEnabled" Value="False"><Setter TargetName="b" Property="Opacity" Value="0.4"/></Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
+    <!-- Small view-switch button (grid / list) -->
+    <Style x:Key="ViewBtn" TargetType="Button">
+      <Setter Property="FocusVisualStyle" Value="{StaticResource FocusRingBtn}"/>
+      <Setter Property="Foreground" Value="{DynamicResource TextSoft}"/>
+      <Setter Property="FontFamily" Value="Segoe Fluent Icons, Segoe MDL2 Assets"/>
+      <Setter Property="FontSize" Value="15"/>
+      <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Button">
+            <Border x:Name="b" Width="36" Height="34" CornerRadius="8" Background="{TemplateBinding Background}">
+              <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="b" Property="Opacity" Value="0.8"/></Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
+    <!-- Status text colours (shared by the list rows) -->
+    <Style x:Key="StatusText" TargetType="TextBlock">
+      <Setter Property="Foreground" Value="{DynamicResource TextSec2}"/>
+      <Setter Property="FontSize" Value="12.5"/>
+      <Setter Property="FontWeight" Value="SemiBold"/>
+      <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+      <Style.Triggers>
+        <DataTrigger Binding="{Binding StatusKey}" Value="st_installing"><Setter Property="Foreground" Value="{DynamicResource StInfoFg}"/></DataTrigger>
+        <DataTrigger Binding="{Binding StatusKey}" Value="st_uninstalling"><Setter Property="Foreground" Value="{DynamicResource StInfoFg}"/></DataTrigger>
+        <DataTrigger Binding="{Binding StatusKey}" Value="st_removed"><Setter Property="Foreground" Value="{DynamicResource StOkFg}"/></DataTrigger>
+        <DataTrigger Binding="{Binding StatusKey}" Value="st_manual"><Setter Property="Foreground" Value="{DynamicResource StInfoFg}"/></DataTrigger>
+        <DataTrigger Binding="{Binding StatusKey}" Value="st_done"><Setter Property="Foreground" Value="{DynamicResource StOkFg}"/></DataTrigger>
+        <DataTrigger Binding="{Binding StatusKey}" Value="st_already"><Setter Property="Foreground" Value="{DynamicResource StOkFg}"/></DataTrigger>
+        <DataTrigger Binding="{Binding StatusKey}" Value="st_installed"><Setter Property="Foreground" Value="{DynamicResource StOkFg}"/></DataTrigger>
+        <DataTrigger Binding="{Binding StatusKey}" Value="st_failed"><Setter Property="Foreground" Value="{DynamicResource StErrFg}"/></DataTrigger>
+        <DataTrigger Binding="{Binding StatusKey}" Value="st_cancelled"><Setter Property="Foreground" Value="{DynamicResource StWarnFg}"/></DataTrigger>
+      </Style.Triggers>
+    </Style>
+
+    <!-- App row (list view): same CheckBox-as-card idea, one app per line -->
+    <Style x:Key="CardRow" TargetType="CheckBox">
+      <Setter Property="FocusVisualStyle" Value="{StaticResource FocusRingBtn}"/>
+      <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="CheckBox">
+            <Border x:Name="card" Background="{DynamicResource CardBg}" Width="{DynamicResource CardW}" Height="68" Margin="6,3" CornerRadius="12"
+                    BorderBrush="{DynamicResource Edge}" BorderThickness="1" Padding="14,0,16,0">
+              <Grid>
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="Auto"/>
+                  <ColumnDefinition Width="*"/>
+                  <ColumnDefinition Width="150"/>
+                  <ColumnDefinition Width="110"/>
+                  <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <Grid Grid.Column="0" Width="42" Height="42" VerticalAlignment="Center" Margin="0,0,14,0">
+                  <Border CornerRadius="10" Background="{Binding Color}">
+                    <Border.Style>
+                      <Style TargetType="Border">
+                        <Style.Triggers><DataTrigger Binding="{Binding HasIcon}" Value="True"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers>
+                      </Style>
+                    </Border.Style>
+                    <TextBlock Text="{Binding Initial}" Foreground="White" FontSize="21" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                  </Border>
+                  <Border CornerRadius="10" Background="{Binding TileBg}" BorderBrush="{DynamicResource Edge}" BorderThickness="1" Padding="4">
+                    <Border.Style>
+                      <Style TargetType="Border">
+                        <Style.Triggers><DataTrigger Binding="{Binding HasIcon}" Value="False"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers>
+                      </Style>
+                    </Border.Style>
+                    <Image Source="{Binding Icon}" Width="{Binding IconSize}" Height="{Binding IconSize}" Stretch="Uniform"
+                           HorizontalAlignment="Center" VerticalAlignment="Center" RenderOptions.BitmapScalingMode="HighQuality"/>
+                  </Border>
+                </Grid>
+                <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="0,0,16,0">
+                  <TextBlock Text="{Binding DisplayName}" Foreground="{DynamicResource TextPrimary}" FontSize="14.5" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+                  <TextBlock Text="{Binding Tip}" Foreground="{DynamicResource TextSec2}" FontSize="12.5" TextTrimming="CharacterEllipsis" Margin="0,2,0,0"/>
+                </StackPanel>
+                <TextBlock Grid.Column="2" Text="{Binding CategoryName}" Foreground="{DynamicResource TextMuted}" FontSize="12.5" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                <TextBlock Grid.Column="3" Text="{Binding Status}" Style="{StaticResource StatusText}" VerticalAlignment="Center"/>
+                <Border x:Name="tick" Grid.Column="4" Width="24" Height="24" CornerRadius="12" Background="#00000000"
+                        BorderBrush="{DynamicResource TickBorder}" BorderThickness="1.5" VerticalAlignment="Center">
+                  <Ellipse x:Name="mark" Width="12" Height="12" Fill="{DynamicResource Accent}" HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Collapsed"/>
+                </Border>
+              </Grid>
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="card" Property="BorderBrush" Value="{DynamicResource HoverBorder}"/>
+                <Setter TargetName="tick" Property="BorderBrush" Value="{DynamicResource TickHover}"/>
+              </Trigger>
+              <Trigger Property="IsChecked" Value="True">
+                <Setter TargetName="card" Property="Background" Value="{DynamicResource CardChecked}"/>
+                <Setter TargetName="card" Property="BorderBrush" Value="{DynamicResource Accent}"/>
+                <Setter TargetName="tick" Property="BorderBrush" Value="{DynamicResource Accent}"/>
+                <Setter TargetName="mark" Property="Visibility" Value="Visible"/>
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
+    <DataTemplate x:Key="tplGrid">
+      <CheckBox Style="{StaticResource Card}" IsChecked="{Binding IsSelected, Mode=TwoWay}"
+                AutomationProperties.Name="{Binding DisplayName}" AutomationProperties.HelpText="{Binding Tip}"/>
+    </DataTemplate>
+    <DataTemplate x:Key="tplList">
+      <CheckBox Style="{StaticResource CardRow}" IsChecked="{Binding IsSelected, Mode=TwoWay}"
+                AutomationProperties.Name="{Binding DisplayName}" AutomationProperties.HelpText="{Binding Tip}"/>
+    </DataTemplate>
   </Window.Resources>
 
   <Grid>
@@ -1035,7 +1346,12 @@ try {
           <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
             <Image x:Name="imgLogo" Width="48" Height="48" Margin="0,0,14,0" RenderOptions.BitmapScalingMode="HighQuality"/>
             <StackPanel VerticalAlignment="Center">
-              <TextBlock x:Name="txtTitle" FontSize="23" FontWeight="Bold" Foreground="{DynamicResource TextPrimary}"/>
+              <StackPanel Orientation="Horizontal">
+                <TextBlock x:Name="txtTitle" FontSize="19" FontWeight="Bold" Foreground="{DynamicResource TextPrimary}" VerticalAlignment="Center"/>
+                <Border x:Name="bdPreview" CornerRadius="11" BorderBrush="{DynamicResource Edge}" BorderThickness="1" Padding="9,1,9,2" Margin="10,1,0,0" VerticalAlignment="Center">
+                  <TextBlock x:Name="txtPreview" FontSize="11.5" Foreground="{DynamicResource TextSoft}"/>
+                </Border>
+              </StackPanel>
               <TextBlock x:Name="txtSubtitle" FontSize="12" Foreground="{DynamicResource TextSec}"/>
             </StackPanel>
           </StackPanel>
@@ -1045,24 +1361,40 @@ try {
                        IsHitTestVisible="False" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="15,0,0,0"/>
             <TextBlock x:Name="txtPlaceholder" IsHitTestVisible="False" Foreground="{DynamicResource TextMuted}" FontSize="14"
                        VerticalAlignment="Center" Margin="44,0,16,0"/>
+            <Border x:Name="bdKbd" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,12,0" CornerRadius="6" Padding="7,2"
+                    Background="{DynamicResource BadgeBg}" IsHitTestVisible="False">
+              <TextBlock Text="Ctrl K" FontSize="11.5" Foreground="{DynamicResource TextSoft}" FlowDirection="LeftToRight"/>
+            </Border>
             <Button x:Name="btnClearSearch" Style="{StaticResource IconBtn}" HorizontalAlignment="Right"
                     VerticalAlignment="Center" Margin="0,0,9,0" Visibility="Collapsed"/>
           </Grid>
           <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
             <Button x:Name="btnUpdate" Style="{StaticResource BtnPrimary}" Padding="14,9" FontSize="13" Visibility="Collapsed"/>
-            <Button x:Name="btnTheme" Style="{StaticResource Btn}" FontFamily="Segoe MDL2 Assets" FontSize="17"
-                    Padding="0,9" MinWidth="46" Foreground="{DynamicResource ThemeIcon}"/>
+            <Button x:Name="btnTheme" Style="{StaticResource Btn}" Background="Transparent" Padding="0" Width="44" Height="42"
+                    Foreground="{DynamicResource TextPrimary}">
+              <Viewbox Width="18" Height="18" Stretch="Uniform">
+                <Canvas Width="24" Height="24">
+                  <Canvas x:Name="icoSun">
+                    <Ellipse Canvas.Left="3" Canvas.Top="3" Width="18" Height="18" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" StrokeThickness="1.8"/>
+                    <Path Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" Data="M12,3 A9,9 0 0 1 12,21 Z"/>
+                  </Canvas>
+                  <Path x:Name="icoMoon" Visibility="Collapsed" Data="M0,0"/>
+                </Canvas>
+              </Viewbox>
+            </Button>
             <Button x:Name="btnLang" Style="{StaticResource LangBtn}"/>
+            <Button x:Name="btnMore" Style="{StaticResource Btn}" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="16"
+                    Padding="0,9" MinWidth="46" Content="&#xE712;"/>
           </StackPanel>
         </Grid>
       </Border>
-      <Rectangle Height="2" VerticalAlignment="Bottom" Fill="{StaticResource AccentBrush}" Opacity="0.85"/>
+      
     </Grid>
 
     <!-- Body -->
     <Grid Grid.Row="1">
       <Grid.ColumnDefinitions>
-        <ColumnDefinition Width="262"/>
+        <ColumnDefinition Width="248"/>
         <ColumnDefinition Width="*"/>
       </Grid.ColumnDefinitions>
 
@@ -1077,11 +1409,9 @@ try {
                   <ColumnDefinition Width="*"/>
                   <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
-                <TextBlock Grid.Column="0" Text="{Binding Glyph}" Foreground="{Binding Color}" FontSize="18" FontFamily="Segoe UI Emoji, Segoe UI Symbol" VerticalAlignment="Center"/>
+                <TextBlock Grid.Column="0" Text="{Binding Glyph}" Foreground="{DynamicResource TextSoft}" FontSize="16" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" VerticalAlignment="Center" HorizontalAlignment="Left"/>
                 <TextBlock Grid.Column="1" Text="{Binding Name}" Foreground="{DynamicResource TextPrimary}" FontSize="14" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
-                <Border Grid.Column="2" CornerRadius="9" Background="{DynamicResource BadgeBg}" Padding="8,1" VerticalAlignment="Center" MinWidth="26">
-                  <TextBlock Text="{Binding Count}" Foreground="{DynamicResource TextSoft}" FontSize="11" TextAlignment="Center"/>
-                </Border>
+                <TextBlock Grid.Column="2" Text="{Binding Count}" Foreground="{DynamicResource TextMuted}" FontSize="12" VerticalAlignment="Center" Margin="8,0,2,0"/>
               </Grid>
             </DataTemplate>
           </ListBox.ItemTemplate>
@@ -1105,32 +1435,54 @@ try {
             </Border>
           </StackPanel>
           <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-            <Button x:Name="btnRefresh" Style="{StaticResource Btn}" FontFamily="Segoe MDL2 Assets" FontSize="15" Padding="0,9" MinWidth="42" Margin="0,0,6,0" Content="&#xE72C;"/>
+            <Border CornerRadius="10" BorderBrush="{DynamicResource BtnBorder}" BorderThickness="1" Background="{DynamicResource BtnBg}" Padding="2" Margin="0,0,8,0">
+              <StackPanel Orientation="Horizontal">
+                <Button x:Name="btnViewGrid" Style="{StaticResource ViewBtn}" Content="&#xE80A;"/>
+                <Button x:Name="btnViewList" Style="{StaticResource ViewBtn}" Content="&#xE8FD;"/>
+              </StackPanel>
+            </Border>
             <Button x:Name="btnSelectVisible" Style="{StaticResource Btn}" Margin="0,0,6,0"/>
             <Button x:Name="btnClear" Style="{StaticResource Btn}" Margin="0"/>
           </StackPanel>
         </Grid>
-        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-          <ItemsControl x:Name="icApps">
+        <ScrollViewer x:Name="svApps" Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+          <ItemsControl x:Name="icApps" KeyboardNavigation.TabNavigation="Once" KeyboardNavigation.DirectionalNavigation="Contained">
             <ItemsControl.ItemsPanel>
               <ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate>
             </ItemsControl.ItemsPanel>
-            <ItemsControl.ItemTemplate>
-              <DataTemplate>
-                <CheckBox Style="{StaticResource Card}" IsChecked="{Binding IsSelected, Mode=TwoWay}"
-                          AutomationProperties.Name="{Binding DisplayName}" AutomationProperties.HelpText="{Binding Tip}"/>
-              </DataTemplate>
-            </ItemsControl.ItemTemplate>
           </ItemsControl>
         </ScrollViewer>
-        <TextBlock x:Name="txtEmpty" Grid.Row="1" Foreground="{DynamicResource TextMuted}" FontSize="16" TextAlignment="Center"
-                   HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Collapsed"/>
+        <StackPanel x:Name="emptyPanel" Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="420" Visibility="Collapsed">
+          <TextBlock x:Name="txtEmptyIcon" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="34" Foreground="{DynamicResource TextMuted}" HorizontalAlignment="Center"/>
+          <TextBlock x:Name="txtEmpty" Margin="0,14,0,0" Foreground="{DynamicResource TextPrimary}" FontSize="16" FontWeight="SemiBold" TextAlignment="Center" TextWrapping="Wrap"/>
+          <TextBlock x:Name="txtEmptyHint" Margin="0,6,0,0" Foreground="{DynamicResource TextSec2}" FontSize="13" TextAlignment="Center" TextWrapping="Wrap"/>
+          <Button x:Name="btnEmpty" Style="{StaticResource Btn}" Margin="0,16,0,0" HorizontalAlignment="Center" Visibility="Collapsed"/>
+        </StackPanel>
       </Grid>
     </Grid>
 
     <!-- Footer -->
-    <Border Grid.Row="2" Background="{DynamicResource BgPanel}" Padding="22,14" BorderBrush="{DynamicResource Line}" BorderThickness="0,1,0,0">
-      <Grid>
+    <Border Grid.Row="2" Background="{DynamicResource BgPanel}" Padding="0" BorderBrush="{DynamicResource Line}" BorderThickness="0,1,0,0">
+     <Grid>
+      <Grid.RowDefinitions>
+        <RowDefinition Height="Auto"/>
+        <RowDefinition Height="Auto"/>
+        <RowDefinition Height="Auto"/>
+      </Grid.RowDefinitions>
+      <ProgressBar x:Name="pbar" Grid.Row="0" Style="{StaticResource Prog}" Height="3" Margin="0,-1,0,0" Minimum="0" Maximum="100" Value="0" VerticalAlignment="Top"/>
+      <Border x:Name="bdNotice" Grid.Row="1" Visibility="Collapsed" Margin="22,12,22,0" CornerRadius="10" Padding="14,8,8,8"
+              Background="{DynamicResource BadgeBg}" BorderBrush="{DynamicResource Edge}" BorderThickness="1">
+        <Grid>
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/>
+          </Grid.ColumnDefinitions>
+          <TextBlock x:Name="icoNotice" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="16" VerticalAlignment="Center" Margin="0,0,12,0" Foreground="{DynamicResource TextSoft}"/>
+          <TextBlock x:Name="txtNotice" Grid.Column="1" Foreground="{DynamicResource TextPrimary}" FontSize="13" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" MaxHeight="56" VerticalAlignment="Center"/>
+          <Button x:Name="btnNoticeAction" Grid.Column="2" Style="{StaticResource Btn}" Padding="12,5" Margin="12,0,4,0" Visibility="Collapsed"/>
+          <Button x:Name="btnNoticeClose" Grid.Column="3" Style="{StaticResource IconBtn}" VerticalAlignment="Center"/>
+        </Grid>
+      </Border>
+      <Grid Grid.Row="2" Margin="22,13,22,14">
         <Grid.RowDefinitions>
           <RowDefinition Height="Auto"/>
           <RowDefinition Height="Auto"/>
@@ -1141,23 +1493,41 @@ try {
             <ColumnDefinition Width="Auto"/>
           </Grid.ColumnDefinitions>
           <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,24,0">
-            <TextBlock x:Name="txtSelected" Foreground="{DynamicResource TextPrimary}" FontSize="14" FontWeight="SemiBold"/>
-            <Grid Margin="0,7,0,5">
-              <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="Auto"/>
-              </Grid.ColumnDefinitions>
-              <ProgressBar x:Name="pbar" Style="{StaticResource Prog}" Height="8" Minimum="0" Maximum="100" Value="0" VerticalAlignment="Center"/>
-              <TextBlock x:Name="txtPercent" Grid.Column="1" Margin="10,0,0,0" Foreground="{DynamicResource TextSoft}" FontSize="12" FontWeight="SemiBold"
-                         FlowDirection="LeftToRight" VerticalAlignment="Center" MinWidth="36" TextAlignment="Right"/>
-            </Grid>
-            <TextBlock x:Name="txtProgress" Foreground="{DynamicResource TextSec2}" FontSize="12" TextTrimming="CharacterEllipsis"/>
+            <StackPanel Orientation="Horizontal">
+              <TextBlock x:Name="txtSelected" Foreground="{DynamicResource TextPrimary}" FontSize="14" FontWeight="SemiBold" VerticalAlignment="Center"/>
+              <ItemsControl x:Name="icSel" Margin="17,0,0,0" VerticalAlignment="Center" Focusable="False">
+                <ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate>
+                    <Grid Width="30" Height="30" Margin="-9,0,0,0">
+                      <Border CornerRadius="9" Background="{Binding Color}" BorderBrush="{DynamicResource BgPanel}" BorderThickness="2">
+                        <TextBlock Text="{Binding Initial}" Foreground="White" FontSize="13" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                      </Border>
+                      <Border CornerRadius="9" Background="{Binding TileBg}" BorderBrush="{DynamicResource BgPanel}" BorderThickness="2" Padding="4">
+                        <Border.Style>
+                          <Style TargetType="Border">
+                            <Style.Triggers><DataTrigger Binding="{Binding HasIcon}" Value="False"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers>
+                          </Style>
+                        </Border.Style>
+                        <Image Source="{Binding Icon}" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality"/>
+                      </Border>
+                    </Grid>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+              <TextBlock x:Name="txtSelMore" Foreground="{DynamicResource TextSec2}" FontSize="12.5" FontWeight="SemiBold" VerticalAlignment="Center" Margin="8,0,0,0" FlowDirection="LeftToRight"/>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" Margin="0,3,0,0">
+              <TextBlock x:Name="txtProgress" Foreground="{DynamicResource TextSec2}" FontSize="12" TextTrimming="CharacterEllipsis"/>
+              <TextBlock x:Name="txtPercent" Margin="8,0,0,0" Foreground="{DynamicResource TextSoft}" FontSize="12" FontWeight="SemiBold" FlowDirection="LeftToRight"/>
+            </StackPanel>
           </StackPanel>
           <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
             <Button x:Name="btnLog" Style="{StaticResource Btn}"/>
             <Button x:Name="btnCancel" Style="{StaticResource BtnDanger}" Visibility="Collapsed"/>
             <Button x:Name="btnUpgrade" Style="{StaticResource Btn}"/>
-            <Button x:Name="btnUninstall" Style="{StaticResource Btn}"/>
+            <Border Width="1" Height="24" Margin="10,0,10,0" Background="{DynamicResource Line}" VerticalAlignment="Center"/>
+            <Button x:Name="btnUninstall" Style="{StaticResource Btn}" Visibility="Collapsed"/>
             <Button x:Name="btnInstall" Style="{StaticResource BtnPrimary}" FontSize="15"/>
           </StackPanel>
         </Grid>
@@ -1165,7 +1535,23 @@ try {
                  VerticalScrollBarVisibility="Auto" FontFamily="Consolas" FontSize="12" FlowDirection="LeftToRight"
                  Background="{DynamicResource LogBg}" Foreground="{DynamicResource LogFg}" BorderBrush="{DynamicResource Line}" Padding="10"/>
       </Grid>
+     </Grid>
     </Border>
+
+    <!-- "More" menu (overlay: click outside closes it) -->
+    <Grid x:Name="menuLayer" Grid.RowSpan="3" Background="#01000000" Visibility="Collapsed">
+      <Border HorizontalAlignment="Right" VerticalAlignment="Top" Margin="24,74,24,0" Width="214" CornerRadius="12" Padding="6"
+              Background="{DynamicResource BgPanel}" BorderBrush="{DynamicResource Edge}" BorderThickness="1">
+        <Border.Effect><DropShadowEffect Color="#000000" Opacity="0.45" BlurRadius="24" ShadowDepth="6" Direction="270"/></Border.Effect>
+        <StackPanel KeyboardNavigation.TabNavigation="Cycle">
+          <Button x:Name="btnExport" Style="{StaticResource MenuBtn}"/>
+          <Button x:Name="btnImport" Style="{StaticResource MenuBtn}"/>
+          <Button x:Name="btnRefresh" Style="{StaticResource MenuBtn}"/>
+          <Button x:Name="btnShortcuts" Style="{StaticResource MenuBtn}"/>
+          <Button x:Name="btnAbout" Style="{StaticResource MenuBtn}"/>
+        </StackPanel>
+      </Border>
+    </Grid>
   </Grid>
 </Window>
 '@
@@ -1173,7 +1559,11 @@ try {
 $reader = New-Object System.Xml.XmlNodeReader $xaml
 $window = [Windows.Markup.XamlReader]::Load($reader)
 foreach ($n in 'imgLogo', 'txtTitle', 'txtSubtitle', 'txtSearch', 'txtPlaceholder', 'btnLang', 'lstCats', 'btnSelectVisible',
-                'btnClear', 'txtCatTitle', 'txtCatCount', 'icApps', 'txtEmpty', 'txtSelected', 'pbar', 'txtProgress', 'btnCancel', 'btnInstall', 'btnUpgrade', 'btnUninstall', 'txtLog', 'btnLog', 'txtPercent', 'btnClearSearch', 'btnTheme', 'btnUpdate', 'btnRefresh') {
+                'btnClear', 'txtCatTitle', 'txtCatCount', 'icApps', 'svApps', 'txtEmpty', 'txtSelected', 'pbar', 'txtProgress', 'btnCancel', 'btnInstall', 'btnUpgrade', 'btnUninstall', 'txtLog', 'btnLog', 'txtPercent', 'btnClearSearch', 'btnTheme', 'btnUpdate', 'btnRefresh',
+                'icSel', 'txtSelMore', 'txtPreview', 'bdKbd', 'btnMore', 'icoSun', 'icoMoon', 'menuLayer', 'btnExport', 'btnImport', 'btnShortcuts', 'btnAbout', 'btnViewGrid', 'btnViewList') {
+    Set-Variable -Name $n -Value $window.FindName($n) -Scope Script
+}
+foreach ($n in 'bdPreview', 'emptyPanel', 'txtEmptyIcon', 'txtEmptyHint', 'btnEmpty', 'bdNotice', 'icoNotice', 'txtNotice', 'btnNoticeAction', 'btnNoticeClose') {
     Set-Variable -Name $n -Value $window.FindName($n) -Scope Script
 }
 
@@ -1181,7 +1571,7 @@ foreach ($n in 'imgLogo', 'txtTitle', 'txtSubtitle', 'txtSearch', 'txtPlaceholde
 # 6. Helper functions
 # ----------------------------------------------------------------------------
 # App logo (embedded PNG) used in the header and as the window icon.
-$LogoBase64 = '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'
+$LogoBase64 = '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'
 try {
     $logoBytes = [Convert]::FromBase64String($LogoBase64)
     $logoStream = New-Object System.IO.MemoryStream(, $logoBytes)
@@ -1200,6 +1590,8 @@ try {
 }
 catch { }
 
+$script:SelItems = New-Object 'System.Collections.ObjectModel.ObservableCollection[MeshalApp]'
+$script:icSel.ItemsSource = $script:SelItems
 $script:Cat     = 'All'
 $script:Busy    = $false
 $script:Sync    = $null
@@ -1212,30 +1604,30 @@ $script:CatMap  = @{}
 # ----------------------------------------------------------------------------
 $Themes = @{
     dark = @{
-        BgWindow = '#12141A'; BgPanel = '#161922'; Line = '#22262F'
-        HeaderBg = @('#1B1F2B', '#161922'); CardBg = @('#232736', '#1B1E29')
-        TextPrimary = '#FFFFFF'; TextSec = '#8B93A3'; TextSec2 = '#9AA3B2'; TextMuted = '#8A93A3'; TextSoft = '#C5CBD6'; LogFg = '#B8C0CC'
-        BtnBg = '#272B38'; BtnBorder = '#33384A'; HoverBorder = '#4B6FB5'
-        InputBg = '#1B1E28'; InputBgFocus = '#1F2330'; InputBorderHover = '#3A4056'; Edge = '#2A2E3B'
-        CatHover = '#1E222D'; CatSelected = '#222B44'; CardChecked = '#1F2B47'; LogoBg = '#F4F6FA'
-        TickBorder = '#808AA0'; TickHover = '#8AA4D6'; BadgeBg = '#262A38'; BadgeBg2 = '#222633'
-        ThumbBg = '#3A4052'; ThumbHover = '#566079'; LogBg = '#0E1014'
+        BgWindow = '#09090B'; BgPanel = '#0E0E11'; Line = '#1C1C21'
+        HeaderBg = @('#0E0E11', '#0E0E11'); CardBg = @('#131317', '#131317')
+        TextPrimary = '#F4F4F5'; TextSec = '#8B8B94'; TextSec2 = '#9A9AA3'; TextMuted = '#8A8A94'; TextSoft = '#C4C4CC'; LogFg = '#B8B8C0'
+        BtnBg = '#131317'; BtnBorder = '#2A2A31'; HoverBorder = '#4A4A55'
+        InputBg = '#101013'; InputBgFocus = '#131317'; InputBorderHover = '#3A3A44'; Edge = '#222227'
+        CatHover = '#151519'; CatSelected = '#1E1E24'; CardChecked = '#18181D'; LogoBg = '#000000'
+        TickBorder = '#80808C'; TickHover = '#9A9AA6'; BadgeBg = '#1D1D22'; BadgeBg2 = '#1A1A1F'
+        ThumbBg = '#2E2E36'; ThumbHover = '#4A4A55'; LogBg = '#060607'
         StInfoBg = '#1E3560'; StOkBg = '#17382A'; StErrBg = '#43201F'; StWarnBg = '#3A3220'
         StInfoFg = '#8DB8FF'; StOkFg = '#4ADE80'; StErrFg = '#F87171'; StWarnFg = '#FBBF24'
-        ThemeIcon = '#FBBF24'; FocusRing = '#8DB8FF'
+        ThemeIcon = '#F4F4F5'; FocusRing = '#F4F4F5'; Accent = '#F4F4F5'; OnAccent = '#09090B'
     }
     light = @{
-        BgWindow = '#F3F5F9'; BgPanel = '#FFFFFF'; Line = '#E1E5EC'
-        HeaderBg = @('#FFFFFF', '#F6F8FC'); CardBg = @('#FFFFFF', '#F6F8FC')
-        TextPrimary = '#1A1F2B'; TextSec = '#5B6472'; TextSec2 = '#5B6472'; TextMuted = '#6B7585'; TextSoft = '#4A5262'; LogFg = '#2B3342'
-        BtnBg = '#FFFFFF'; BtnBorder = '#D3D9E3'; HoverBorder = '#5B86D6'
-        InputBg = '#FFFFFF'; InputBgFocus = '#FFFFFF'; InputBorderHover = '#B5BDCC'; Edge = '#DCE1EA'
-        CatHover = '#EEF1F6'; CatSelected = '#E3EBFB'; CardChecked = '#E3EDFF'; LogoBg = '#EEF1F6'
-        TickBorder = '#7B8496'; TickHover = '#5B86D6'; BadgeBg = '#E8ECF3'; BadgeBg2 = '#E8ECF3'
-        ThumbBg = '#C3CAD6'; ThumbHover = '#A3ADBD'; LogBg = '#FFFFFF'
+        BgWindow = '#F6F6F7'; BgPanel = '#FFFFFF'; Line = '#E4E4E7'
+        HeaderBg = @('#FFFFFF', '#FFFFFF'); CardBg = @('#FFFFFF', '#FFFFFF')
+        TextPrimary = '#111114'; TextSec = '#5F5F69'; TextSec2 = '#5F5F69'; TextMuted = '#63636D'; TextSoft = '#46464F'; LogFg = '#2B2B33'
+        BtnBg = '#FFFFFF'; BtnBorder = '#D8D8DE'; HoverBorder = '#8A8A94'
+        InputBg = '#FFFFFF'; InputBgFocus = '#FFFFFF'; InputBorderHover = '#B8B8C2'; Edge = '#E1E1E6'
+        CatHover = '#F0F0F3'; CatSelected = '#E8E8EC'; CardChecked = '#F2F2F5'; LogoBg = '#000000'
+        TickBorder = '#7B7B86'; TickHover = '#46464F'; BadgeBg = '#ECECF0'; BadgeBg2 = '#ECECF0'
+        ThumbBg = '#C8C8D0'; ThumbHover = '#A4A4AE'; LogBg = '#FFFFFF'
         StInfoBg = '#DCE8FF'; StOkBg = '#D9F5E4'; StErrBg = '#FDE0E0'; StWarnBg = '#FBEFCF'
         StInfoFg = '#1D5FD6'; StOkFg = '#166534'; StErrFg = '#C62828'; StWarnFg = '#854D0E'
-        ThemeIcon = '#4F46E5'; FocusRing = '#1D4ED8'
+        ThemeIcon = '#111114'; FocusRing = '#111114'; Accent = '#111114'; OnAccent = '#FFFFFF'
     }
 }
 $GradientDir = @{ HeaderBg = @(0, 0, 1, 0); CardBg = @(0, 0, 0, 1) }
@@ -1261,9 +1653,10 @@ function New-ThemeBrush {
 }
 
 function Update-ThemeButton {
-    # dark mode shows a sun (click = go light), light mode shows a moon (click = go dark)
-    if ($script:Theme -eq 'dark') { $script:btnTheme.Content = [string][char]0xE706; $script:btnTheme.ToolTip = $script:T.themeToLight }
-    else                          { $script:btnTheme.Content = [string][char]0xE708; $script:btnTheme.ToolTip = $script:T.themeToDark }
+    # one half-filled circle icon in both modes; only the tooltip changes
+    if ($script:Theme -eq 'dark') { $script:btnTheme.ToolTip = $script:T.themeToLight }
+    else                          { $script:btnTheme.ToolTip = $script:T.themeToDark }
+    [System.Windows.Automation.AutomationProperties]::SetName($script:btnTheme, [string]$script:btnTheme.ToolTip)
 }
 
 function Set-Theme {
@@ -1284,11 +1677,200 @@ function Set-Theme {
     Update-ThemeButton
 }
 
+# ---- Plurals ("1 app", "3 apps", Arabic dual / few / many) -----------------------------
+function Format-Apps {
+    param([int]$N)
+    if ($script:Lang -eq 'ar') {
+        if ($N -eq 1) { return 'برنامج واحد' }
+        if ($N -eq 2) { return 'برنامجان' }
+        if ($N -ge 11) { return ('{0} برنامجًا' -f $N) }
+        return ('{0} برامج' -f $N)
+    }
+    if ($N -eq 1) { return '1 app' }
+    return ('{0} apps' -f $N)
+}
+
+function Get-ResultSummary {
+    param($Parts)
+    $out = New-Object System.Collections.Generic.List[string]
+    foreach ($p in $Parts) {
+        $c = [int]$p[1]
+        if ($c -gt 0) {
+            if ($script:Lang -eq 'ar') { $num = Format-Apps $c } else { $num = [string]$c }
+            $out.Add(([string]$script:T[[string]$p[0]]) -f $num)
+        }
+    }
+    if ($out.Count -eq 0) { return [string]$script:T.upFinished }
+    if ($script:Lang -eq 'ar') { $sep = [string][char]0x060C + ' ' } else { $sep = ', ' }
+    $s = $out -join $sep
+    if ($script:Lang -ne 'ar') { $s = $s.Substring(0, 1).ToUpper() + $s.Substring(1) }
+    return $s
+}
+
+# ---- Themed dialog (replaces the grey Windows MessageBox) -------------------------------
+# Buttons: @{ Id; Text; Kind = normal|primary|danger; Cancel = <Esc picks this one>; Focus = <starts focused> }
+# Rule: a dangerous action never has the initial focus - the safe button does.
+$script:DlgXaml = @'
+<Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        WindowStyle="None" AllowsTransparency="True" Background="Transparent" ResizeMode="NoResize" ShowInTaskbar="False"
+        SizeToContent="Height" Width="500" WindowStartupLocation="CenterOwner" UseLayoutRounding="True"
+        TextOptions.TextFormattingMode="Ideal" FontFamily="Segoe UI Variable Text, Segoe UI">
+  <Border Margin="20" Background="{DynamicResource BgPanel}" BorderBrush="{DynamicResource Edge}" BorderThickness="1" CornerRadius="14" Padding="24,22,24,18">
+    <Border.Effect><DropShadowEffect Color="#000000" Opacity="0.45" BlurRadius="24" ShadowDepth="6" Direction="270"/></Border.Effect>
+    <StackPanel>
+      <TextBlock x:Name="dTitle" FontSize="17" FontWeight="Bold" Foreground="{DynamicResource TextPrimary}" TextWrapping="Wrap"/>
+      <TextBlock x:Name="dMsg" Margin="0,8,0,0" FontSize="13.5" LineHeight="20" LineStackingStrategy="BlockLineHeight"
+                 Foreground="{DynamicResource TextSec2}" TextWrapping="Wrap" Visibility="Collapsed"/>
+      <ScrollViewer x:Name="dScroll" Margin="0,14,0,0" MaxHeight="240" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Visibility="Collapsed">
+        <StackPanel>
+          <ItemsControl x:Name="dItems" Focusable="False" Visibility="Collapsed">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <Grid Margin="0,3">
+                  <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                  <Grid Width="28" Height="28">
+                    <Border CornerRadius="8" Background="{Binding Color}">
+                      <TextBlock Text="{Binding Initial}" Foreground="White" FontSize="13" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <Border CornerRadius="8" Background="{Binding TileBg}" Padding="4">
+                      <Border.Style>
+                        <Style TargetType="Border">
+                          <Style.Triggers><DataTrigger Binding="{Binding HasIcon}" Value="False"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers>
+                        </Style>
+                      </Border.Style>
+                      <Image Source="{Binding Icon}" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality"/>
+                    </Border>
+                  </Grid>
+                  <TextBlock Grid.Column="1" Text="{Binding DisplayName}" Margin="12,0,0,0" VerticalAlignment="Center"
+                             Foreground="{DynamicResource TextPrimary}" FontSize="13.5" TextTrimming="CharacterEllipsis"/>
+                </Grid>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+          <ItemsControl x:Name="dRows" Focusable="False" Grid.IsSharedSizeScope="True" Visibility="Collapsed">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <Grid Margin="0,4">
+                  <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" SharedSizeGroup="k"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                  <Border CornerRadius="6" Background="{DynamicResource BadgeBg}" Padding="8,3" Margin="0,0,16,0" HorizontalAlignment="Left" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding Key}" FontSize="12.5" Foreground="{DynamicResource TextSoft}" FlowDirection="LeftToRight"/>
+                  </Border>
+                  <TextBlock Grid.Column="1" Text="{Binding Desc}" VerticalAlignment="Center" TextWrapping="Wrap" Foreground="{DynamicResource TextPrimary}" FontSize="13.5"/>
+                </Grid>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+          <TextBlock x:Name="dNotes" FontSize="13" LineHeight="19" LineStackingStrategy="BlockLineHeight" TextWrapping="Wrap"
+                     Foreground="{DynamicResource TextSec2}" Visibility="Collapsed"/>
+        </StackPanel>
+      </ScrollViewer>
+      <StackPanel x:Name="dButtons" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,-4,0"/>
+    </StackPanel>
+  </Border>
+</Window>
+'@
+
+function Show-Dialog {
+    param(
+        [string]$Title,
+        [string]$Message = '',
+        $Items = $null,
+        $Rows = $null,
+        [string]$Notes = '',
+        $Buttons
+    )
+    $d = [Windows.Markup.XamlReader]::Load((New-Object System.Xml.XmlNodeReader ([xml]$script:DlgXaml)))
+    foreach ($k in @($window.Resources.Keys)) { $d.Resources[$k] = $window.Resources[$k] }   # same colours / button styles as the main window
+    $d.Owner = $window
+    $d.FlowDirection = $window.FlowDirection
+    $d.Title = $Title
+    [System.Windows.Automation.AutomationProperties]::SetName($d, $Title)
+    $d.FindName('dTitle').Text = $Title
+    if ($Message) { $m = $d.FindName('dMsg'); $m.Text = $Message; $m.Visibility = 'Visible' }
+    $showScroll = $false
+    if ($Items -and @($Items).Count -gt 0) { $c = $d.FindName('dItems'); $c.ItemsSource = @($Items); $c.Visibility = 'Visible'; $showScroll = $true }
+    if ($Rows -and @($Rows).Count -gt 0)   { $c = $d.FindName('dRows');  $c.ItemsSource = @($Rows);  $c.Visibility = 'Visible'; $showScroll = $true }
+    if ($Notes) { $n = $d.FindName('dNotes'); $n.Text = $Notes; $n.Visibility = 'Visible'; $showScroll = $true }
+    if ($showScroll) { $d.FindName('dScroll').Visibility = 'Visible' }
+
+    $panel = $d.FindName('dButtons')
+    $script:DlgCancelId = ''
+    $focusBtn = $null
+    foreach ($b in @($Buttons)) {
+        $btn = New-Object System.Windows.Controls.Button
+        $key = 'Btn'; if ($b.Kind -eq 'primary') { $key = 'BtnPrimary' } elseif ($b.Kind -eq 'danger') { $key = 'BtnDanger' }
+        $btn.Style = [System.Windows.Style]$d.Resources[$key]
+        $btn.Content = [string]$b.Text
+        $btn.Tag = [string]$b.Id
+        $btn.Add_Click({ param($s, $e) $script:DlgResult = [string]$s.Tag; [System.Windows.Window]::GetWindow($s).Close() })
+        [void]$panel.Children.Add($btn)
+        if ($b.Cancel) { $script:DlgCancelId = [string]$b.Id }
+        if ($b.Focus -or (-not $focusBtn)) { $focusBtn = $btn }
+    }
+    $script:DlgResult = $script:DlgCancelId        # Alt+F4 / Esc = the safe way out
+    $fb = $focusBtn
+    $d.Add_Loaded({ [void]$fb.Focus() }.GetNewClosure())
+    $d.Add_PreviewKeyDown({ param($s, $e) if ($e.Key -eq 'Escape') { $script:DlgResult = $script:DlgCancelId; $e.Handled = $true; $s.Close() } })
+    [void]$d.ShowDialog()
+    return $script:DlgResult
+}
+
+# Simple "message + Close" dialog (used for rare cases; everything routine uses Show-Notice instead)
 function Show-Msg {
     param([string]$Text, [string]$Caption = $script:T.title, [string]$Buttons = 'OK', [string]$Icon = 'Information')
-    $opt = [System.Windows.MessageBoxOptions]::None
-    if ($script:Lang -eq 'ar') { $opt = [System.Windows.MessageBoxOptions]'RtlReading,RightAlign' }
-    [System.Windows.MessageBox]::Show($window, $Text, $Caption, $Buttons, $Icon, 'None', $opt)
+    [void](Show-Dialog -Title $Caption -Message $Text -Buttons @(@{ Id = 'close'; Text = $script:T.btnClose; Kind = 'primary'; Cancel = $true; Focus = $true }))
+    return 'OK'
+}
+
+# ---- Inline notice (replaces "OK" pop-ups): at the bottom, never steals focus ----------------
+$script:NoticeAction = $null
+$script:NoticeAuto   = $false
+$script:NoticeTimer  = New-Object System.Windows.Threading.DispatcherTimer
+$script:NoticeTimer.Interval = [TimeSpan]::FromSeconds(12)
+$script:NoticeTimer.Add_Tick({ $script:NoticeTimer.Stop(); Hide-Notice })
+
+function Hide-Notice {
+    $script:NoticeTimer.Stop()
+    $script:NoticeAction = $null
+    $script:bdNotice.Visibility = 'Collapsed'
+}
+
+function Show-Notice {
+    param(
+        [ValidateSet('ok', 'info', 'warn', 'err')][string]$Kind = 'info',
+        [string]$Text,
+        [string]$ActionText = '',
+        [scriptblock]$Action = $null
+    )
+    $style = @{
+        ok   = @('StOkBg', 'StOkFg', [string][char]0xE73E)
+        info = @('StInfoBg', 'StInfoFg', [string][char]0xE946)
+        warn = @('StWarnBg', 'StWarnFg', [string][char]0xE7BA)
+        err  = @('StErrBg', 'StErrFg', [string][char]0xEA39)
+    }[$Kind]
+    $script:bdNotice.SetResourceReference([System.Windows.Controls.Border]::BackgroundProperty, $style[0])
+    $script:icoNotice.SetResourceReference([System.Windows.Controls.TextBlock]::ForegroundProperty, $style[1])
+    $script:icoNotice.Text = $style[2]
+    $script:txtNotice.Text = $Text
+    $script:NoticeAction = $Action
+    if ($ActionText) { $script:btnNoticeAction.Content = $ActionText; $script:btnNoticeAction.Visibility = 'Visible' }
+    else { $script:btnNoticeAction.Visibility = 'Collapsed' }
+    $script:bdNotice.Visibility = 'Visible'
+    # success and info fade away after 12 s (paused while the mouse is over them); warnings and errors stay until dismissed
+    $script:NoticeTimer.Stop()
+    $script:NoticeAuto = ($Kind -eq 'ok' -or $Kind -eq 'info')
+    if ($script:NoticeAuto) { $script:NoticeTimer.Start() }
+    try {
+        if ($Kind -eq 'err') { $live = [System.Windows.Automation.AutomationLiveSetting]::Assertive } else { $live = [System.Windows.Automation.AutomationLiveSetting]::Polite }
+        [System.Windows.Automation.AutomationProperties]::SetLiveSetting($script:txtNotice, $live)
+        $peer = [System.Windows.Automation.Peers.UIElementAutomationPeer]::FromElement($script:txtNotice)
+        if ($peer) { $peer.RaiseAutomationEvent([System.Windows.Automation.Peers.AutomationEvents]::LiveRegionChanged) }
+    } catch { }
+}
+
+function Show-WingetMissing {
+    Show-Notice -Kind err -Text $script:T.noWinget -ActionText $script:T.noWingetAct -Action { try { Start-Process 'ms-windows-store://pdp/?productid=9NBLGGH4NNS1' } catch { } }
 }
 
 function Write-Log {
@@ -1320,15 +1902,27 @@ function Add-GridBatch {
 
 function Update-EmptyText {
     $t = $script:T
-    $hasQ = -not [string]::IsNullOrWhiteSpace($script:txtSearch.Text)
-    if ($hasQ) { $g = [char]::ConvertFromUtf32(0x1F50D); $m = $t.noResults + "`
-" + $t.emptyHint }
-    elseif ($script:Cat -eq 'Selected')  { $g = [string][char]0x2705; $m = $t.emptySelected }
-    elseif ($script:Cat -eq 'Installed') { $g = [char]::ConvertFromUtf32(0x1F4E6); $m = $t.emptyInstalled }
-    else { $g = [char]::ConvertFromUtf32(0x1F50D); $m = $t.noResults + "`
-" + $t.emptyHint }
-    $script:txtEmpty.Text = $g + "`
-" + $m
+    $q = $script:txtSearch.Text.Trim()
+    $icon = [string][char]0xE721; $msg = $t.noResults; $hint = ''; $act = ''; $tag = ''
+    if ($q.Length -gt 0) {
+        $msg = $t.emptyNoMatch -f $q
+        if ($script:Cat -ne 'All') { $hint = $t.emptyInCat -f [string]$t["cat_$($script:Cat)"]; $act = $t.actSearchAll; $tag = 'allapps' }
+        else { $hint = $t.emptyTip; $act = $t.clearSearch; $tag = 'clearsearch' }
+    }
+    elseif ($script:Cat -eq 'Selected') {
+        $icon = [string][char]0xE73E; $msg = $t.emptySel2; $hint = $t.emptySelHint; $act = $t.actBrowse; $tag = 'allapps'
+    }
+    elseif ($script:Cat -eq 'Installed') {
+        if ($script:ScanBusy) { $icon = [string][char]0xE895; $msg = $t.emptyScan; $hint = $t.emptyScanHint }
+        else { $icon = [string][char]0xE7B8; $msg = $t.emptyInst; $hint = $t.emptyInstHint; $act = $t.actRescan; $tag = 'rescan' }
+    }
+    $script:txtEmptyIcon.Text = $icon
+    $script:txtEmpty.Text = $msg
+    $script:txtEmptyHint.Text = $hint
+    $script:txtEmptyHint.Visibility = $(if ($hint) { 'Visible' } else { 'Collapsed' })
+    $script:btnEmpty.Content = $act
+    $script:btnEmpty.Tag = $tag
+    $script:btnEmpty.Visibility = $(if ($act) { 'Visible' } else { 'Collapsed' })
 }
 
 function Refresh-Grid {
@@ -1351,9 +1945,9 @@ function Refresh-Grid {
     Add-GridBatch 36                                   # first screen appears immediately
     if ($script:GridPos -lt $list.Count) { $script:GridTimer.Start() }   # the rest streams in without freezing the UI
     $script:txtCatTitle.Text = [string]$script:T["cat_$($script:Cat)"]
-    $script:txtCatCount.Text = ($script:T.appsCount -f $list.Count)
+    $script:txtCatCount.Text = (Format-Apps $list.Count)
     Update-EmptyText
-    if ($list.Count -eq 0) { $script:txtEmpty.Visibility = 'Visible' } else { $script:txtEmpty.Visibility = 'Collapsed' }
+    if ($list.Count -eq 0) { $script:emptyPanel.Visibility = 'Visible' } else { $script:emptyPanel.Visibility = 'Collapsed' }
 }
 
 function Update-InstalledCount {
@@ -1368,21 +1962,26 @@ function Set-InstalledFlag {
 }
 
 function Update-Selection {
+    $t = $script:T
     $n = @($script:Apps | Where-Object { $_.IsSelected }).Count
     $ni = @($script:Apps | Where-Object { $_.IsSelected -and $script:InstalledIds.ContainsKey($_.Id) }).Count
     $script:btnUpgrade.IsEnabled = (-not $script:Busy)
     $script:btnRefresh.IsEnabled = (-not $script:Busy) -and (-not $script:ScanBusy)
+    # Uninstall only appears once the selection contains something that can be uninstalled
+    if ($ni -gt 0) { $script:btnUninstall.Visibility = 'Visible' } else { $script:btnUninstall.Visibility = 'Collapsed' }
     $script:btnUninstall.IsEnabled = ($ni -gt 0) -and (-not $script:Busy)
-    if ($ni -gt 0) { $script:btnUninstall.Content = ('{0} ({1})' -f $script:T.uninstallBtn, $ni) } else { $script:btnUninstall.Content = $script:T.uninstallBtn }
-    $script:txtSelected.Text = ($script:T.selected -f $n)
+    if ($ni -gt 0) { $script:btnUninstall.Content = ($t.uninstallBtn + ' ' + (Format-Apps $ni)) } else { $script:btnUninstall.Content = $t.uninstallBtn }
+    # the reason a button is off is written on screen (not only in a tooltip)
+    if ($n -gt 0) { $script:txtSelected.Text = ($t.selected -f $n) } else { $script:txtSelected.Text = $t.selectedNone }
+    $script:SelItems.Clear(); $shown = 0
+    foreach ($sa in $script:Apps) { if ($sa.IsSelected) { if ($shown -lt 8) { $script:SelItems.Add($sa) }; $shown++ } }
+    if ($n -gt 8) { $script:txtSelMore.Text = ('+{0}' -f ($n - 8)) } else { $script:txtSelMore.Text = '' }
     $script:CatMap['Selected'].Count = $n
     $script:btnInstall.IsEnabled = ($n -gt 0) -and (-not $script:Busy)
-    if ($n -gt 0) { $script:btnInstall.Content = ('{0} ({1})' -f $script:T.install, $n) } else { $script:btnInstall.Content = $script:T.install }
-    # a disabled button should explain itself
-    [System.Windows.Controls.ToolTipService]::SetShowOnDisabled($script:btnInstall, $true)
-    [System.Windows.Controls.ToolTipService]::SetShowOnDisabled($script:btnUninstall, $true)
-    if ((-not $script:Busy) -and ($n -eq 0))  { $script:btnInstall.ToolTip = $script:T.tipInstallNone } else { $script:btnInstall.ToolTip = $null }
-    if ((-not $script:Busy) -and ($ni -eq 0)) { $script:btnUninstall.ToolTip = $script:T.tipUninstallNone } else { $script:btnUninstall.ToolTip = $null }
+    if ($n -gt 0) { $script:btnInstall.Content = ($t.install + ' ' + (Format-Apps $n)) } else { $script:btnInstall.Content = $t.installNone }
+    $script:btnClear.IsEnabled = ($n -gt 0) -and (-not $script:Busy)
+    $script:btnInstall.ToolTip = $null
+    $script:btnUninstall.ToolTip = $null
 }
 
 function Initialize-Categories {
@@ -1420,28 +2019,41 @@ function Apply-Language {
     $script:btnUpdate.Content = ([string][char]0x2191 + ' ' + $t.updBtn)
     $script:btnUpdate.ToolTip = $t.updTip
     $script:btnRefresh.ToolTip = $t.refreshTip
+    $script:txtPreview.Text = $t.preview
+    if ($ShowPreviewBadge) { $script:bdPreview.Visibility = 'Visible' } else { $script:bdPreview.Visibility = 'Collapsed' }
+    $script:btnMore.ToolTip = $t.moreTip
+    $script:btnExport.Content = $t.menuExport
+    $script:btnImport.Content = $t.menuImport
+    $script:btnRefresh.Content = $t.menuRescan
+    $script:btnShortcuts.Content = $t.menuShortcuts
+    $script:btnAbout.Content = $t.menuAbout
+    $script:btnViewGrid.ToolTip = $t.viewGrid
+    $script:btnViewList.ToolTip = $t.viewList
     Update-ThemeButton
     $script:btnSelectVisible.Content = $t.selectVisible
-    $script:btnClear.Content  = $t.clearAll
+    $script:btnClear.Content  = $t.clearSel
     $script:btnInstall.Content = $t.install
     $script:btnCancel.Content = $t.cancel
     $script:btnUpgrade.Content = $t.upgradeAll
     Update-EmptyText
-    $script:btnClearSearch.ToolTip = $t.clearAll
+    $script:btnClearSearch.ToolTip = $t.clearSearch
+    $script:btnNoticeClose.ToolTip = $t.dismiss
     Set-LogVisible ($script:txtLog.Visibility -eq 'Visible')
     if (-not $script:Busy) { $script:txtProgress.Text = $t.ready }
     # Screen-reader names (icon-only buttons would otherwise be announced as just a glyph)
     $ap = [System.Windows.Automation.AutomationProperties]
     $ap::SetName($script:txtSearch, $t.search)
-    $ap::SetName($script:btnClearSearch, $t.clearAll)
+    $ap::SetName($script:btnClearSearch, $t.clearSearch)
+    $ap::SetName($script:btnNoticeClose, $t.dismiss)
     $ap::SetName($script:btnRefresh, $t.refreshTip)
-    $ap::SetName($script:btnTheme, $t.themeToLight)
+    $ap::SetName($script:btnMore, $t.moreTip)
     $ap::SetName($script:btnLang, $t.langBtn)
     $ap::SetName($script:pbar, $t.title)
     $ap::SetName($script:txtLog, $t.logTitle)
 
     foreach ($a in $script:Apps) {
         if ($script:Lang -eq 'ar') { $a.DisplayName = $a.NameAr; $a.Tip = $a.DescAr } else { $a.DisplayName = $a.NameEn; $a.Tip = $a.DescEn }
+        $a.CategoryName = [string]$t["cat_$($a.Category)"]
         if (-not $a.Tip) { $a.Tip = $a.DisplayName + '  (' + $a.Id + ')' }
         if ($a.StatusKey) { $a.Status = $t[$a.StatusKey] }
     }
@@ -1496,7 +2108,7 @@ function Apply-BundledLogos {
             $ms = New-Object System.IO.MemoryStream (, $bytes)
             $bi = New-Object System.Windows.Media.Imaging.BitmapImage
             $bi.BeginInit(); $bi.CacheOption = 'OnLoad'; $bi.CreateOptions = 'IgnoreColorProfile'; $bi.StreamSource = $ms; $bi.EndInit(); $bi.Freeze()
-            $a.IconSize = 44
+            $a.IconSize = 32
             $a.Icon = $bi
             # black/white/grey logo -> a coloured original is fetched in the background (see Start-IconDownloads)
             try { if ([MeshalImg]::Colorfulness($bytes) -lt 0.10) { $a.IconMono = $true } } catch { }
@@ -1543,7 +2155,7 @@ function Start-StoreLogos {
             catch { Write-DebugLog ('store logo ' + $a.Pkg + ': ' + $_.Exception.Message) }
         }
         if (Test-Path $file) {
-            try { $a.IconSize = 44; $a.Icon = (Load-Icon $file) } catch { Remove-Item $file -Force -ErrorAction SilentlyContinue }
+            try { $a.IconSize = 32; $a.Icon = (Load-Icon $file) } catch { Remove-Item $file -Force -ErrorAction SilentlyContinue }
         }
     }
 }
@@ -1583,7 +2195,7 @@ function Load-CachedIcons {
         if ($p) {
             try {
                 $bmp = Load-Icon $p
-                $a.IconSize = [math]::Min(44, [math]::Max(26, $bmp.PixelWidth * 1.5))
+                $a.IconSize = [math]::Min(32, [math]::Max(20, $bmp.PixelWidth * 1.5))
                 $a.Icon = $bmp
                 $script:IconTodo.RemoveAt($i)
             }
@@ -1597,7 +2209,7 @@ function Load-CachedIcons {
         if ($p) {
             try {
                 $bmp = Load-Icon $p
-                $a.IconSize = [math]::Min(44, [math]::Max(26, $bmp.PixelWidth * 1.5))
+                $a.IconSize = [math]::Min(32, [math]::Max(20, $bmp.PixelWidth * 1.5))
                 $a.Icon = $bmp
                 $a.IconMono = $false
             }
@@ -2337,6 +2949,17 @@ $worker = {
             if ($app.Source) { $wcmd += ' --source ' + $app.Source }
             $code = Run-Winget $wcmd $app.Id 'install'
 
+            # Some packages (e.g. Battle.net) refuse to install unless an install location is given
+            # (winget error 0x8A15005F = -1978335137): retry once with --location.
+            if ($code -eq -1978335137 -and -not $sync.Cancel) {
+                $pf = ${env:ProgramFiles(x86)}; if (-not $pf) { $pf = $env:ProgramFiles }
+                $folder = switch ($app.Id) { 'Blizzard.BattleNet' { 'Battle.net' } default { ([string]$app.Name -replace '[\\/:*?"<>|]', '').Trim() } }
+                if (-not $folder) { $folder = ($app.Id -replace '[^A-Za-z0-9._-]', '_') }
+                $loc = Join-Path $pf $folder
+                $sync.Queue.Enqueue("log|$($app.Id)|Retrying with install location: $loc")
+                $code = Run-Winget ($wcmd + ' --location "' + $loc + '"') $app.Id 'install'
+            }
+
             # Stop was pressed while this app was running -> report it as cancelled (unless it had already succeeded)
             if ($sync.Cancel -and (@(0, 3010, -1978334967, -1978335135, -1978335189) -notcontains $code)) {
                 $sync.Queue.Enqueue("skip|$($app.Id)|"); continue
@@ -2472,6 +3095,8 @@ function Start-InstalledScan {
     $script:ScanBusy = $true
     $script:btnRefresh.IsEnabled = $false
     Write-Log $script:T.scanStart
+    if (-not $script:Busy) { $script:txtProgress.Text = $script:T.scanStart }
+    if ($script:Cat -eq 'Installed') { Refresh-Grid }
     $script:ScanResult = [hashtable]::Synchronized(@{ Done = $false; Ids = @() })
     $list = @($script:Apps | ForEach-Object { [pscustomobject]@{ Id = $_.Id; Name = $_.NameEn; Source = $_.Source } })
     $rs = [runspacefactory]::CreateRunspace()
@@ -2502,6 +3127,8 @@ function Finish-InstalledScan {
     try { $script:ScanPs.Dispose(); $script:ScanRs.Dispose() } catch { }
     $script:ScanBusy = $false
     $script:btnRefresh.IsEnabled = (-not $script:Busy)
+    if ((-not $script:Busy) -and ($script:txtProgress.Text -eq $script:T.scanStart)) { $script:txtProgress.Text = $script:T.ready }
+    if ($script:Cat -eq 'Installed') { Refresh-Grid }
 }
 
 function Finish-Install {
@@ -2517,8 +3144,8 @@ function Finish-Install {
         elseif ($r.already -gt 0) { $summary = $script:T.upNone }
         else { $summary = $script:T.upFinished }
     }
-    elseif ($script:Mode -eq 'uninstall') { $summary = $script:T.finishedUninst -f $r.ok, $r.fail, $r.cancel }
-    else { $summary = $script:T.finished -f $r.ok, $r.already, $r.fail, $r.cancel, $r.manual }
+    elseif ($script:Mode -eq 'uninstall') { $summary = Get-ResultSummary @(@('resRemoved', $r.ok), @('resFailed', $r.fail), @('resCancelled', $r.cancel)) }
+    else { $summary = Get-ResultSummary @(@('resInstalled', $r.ok), @('resAlready', $r.already), @('resFailed', $r.fail), @('resCancelled', $r.cancel), @('resManual', $r.manual)) }
     $script:AppActive = $false
     $script:AppFrac = 0.0
     $script:txtProgress.Text = $summary
@@ -2527,12 +3154,14 @@ function Finish-Install {
     try { $script:WorkerPs.EndInvoke($script:WorkerHandle) } catch { }
     try { $script:WorkerPs.Dispose(); $script:WorkerRs.Dispose() } catch { }
     Update-Selection
-    $icon = 'Information'; if ($r.fail -gt 0) { $icon = 'Warning' }
-    $script:FinishMsg = @{ Text = $summary; Icon = $icon }
+    if ($script:CloseAfter) { $script:CloseAfter = $false; $window.Close(); return }
+    if ($r.fail -gt 0) { $kind = 'err' } else { $kind = 'ok' }
+    $script:FinishMsg = @{ Text = $summary; Kind = $kind }
     if ($script:Sync -and $script:Sync.Cancel) {
         # stopped by the user: clear the bar right away
         $script:pbar.Value = 0
-        [void](Show-Msg $summary $script:T.title 'OK' $icon)
+        $script:FinishMsg = $null
+        Show-Notice -Kind info -Text $summary
     }
     else {
         # show a full bar for a moment, then reset it to 0% and show the summary
@@ -2693,43 +3322,43 @@ function Start-Work {
     $script:InstallTimer.Start()
 }
 
-function Get-NameList {
-    param($Items, [int]$Max = 8)
-    $names = @($Items | ForEach-Object { '  ' + [string][char]0x2022 + ' ' + $_.DisplayName })
-    $txt = ($names | Select-Object -First $Max) -join "`n"
-    if ($names.Count -gt $Max) { $txt += "`n  " + ($script:T.confirmMore -f ($names.Count - $Max)) }
-    return $txt
-}
-
 function Start-Install {
     $sel = @($script:Apps | Where-Object { $_.IsSelected })
-    if ($sel.Count -eq 0) { [void](Show-Msg $script:T.noSel); return }
-
-    if (-not (Get-Command winget -ErrorAction SilentlyContinue)) {
-        [void](Show-Msg $script:T.noWinget $script:T.title 'OK' 'Error'); return
-    }
-    $answer = Show-Msg (($script:T.confirmMsg -f $sel.Count) + "`n`n" + (Get-NameList $sel)) $script:T.confirmTitle 'YesNo' 'Question'
-    if ($answer -ne 'Yes') { return }
+    $t = $script:T
+    if ($sel.Count -eq 0) { Show-Notice -Kind warn -Text $t.selectedNone; return }
+    if (-not (Get-Command winget -ErrorAction SilentlyContinue)) { Show-WingetMissing; return }
+    $n = Format-Apps $sel.Count
+    $r = Show-Dialog -Title ($t.dlgInstallTitle -f $n) -Message $t.dlgInstallBody -Items $sel -Buttons @(
+        @{ Id = 'cancel'; Text = $t.btnCancel2; Cancel = $true },
+        @{ Id = 'go'; Text = ($t.btnInstallN -f $n); Kind = 'primary'; Focus = $true })
+    if ($r -ne 'go') { return }
+    Hide-Notice
     Start-Work 'install' $sel
 }
 
 function Start-Uninstall {
     $sel = @($script:Apps | Where-Object { $_.IsSelected -and $script:InstalledIds.ContainsKey($_.Id) })
-    if ($sel.Count -eq 0) { [void](Show-Msg $script:T.noInstalledSel); return }
-    if (-not (Get-Command winget -ErrorAction SilentlyContinue)) {
-        [void](Show-Msg $script:T.noWinget $script:T.title 'OK' 'Error'); return
-    }
-    $answer = Show-Msg (($script:T.confirmUninst -f $sel.Count) + "`n`n" + (Get-NameList $sel)) $script:T.confirmUninstTitle 'YesNo' 'Warning'
-    if ($answer -ne 'Yes') { return }
+    $t = $script:T
+    if ($sel.Count -eq 0) { Show-Notice -Kind warn -Text $t.noInstalledSel; return }
+    if (-not (Get-Command winget -ErrorAction SilentlyContinue)) { Show-WingetMissing; return }
+    $n = Format-Apps $sel.Count
+    # dangerous action: the safe button (Cancel) has the initial focus
+    $r = Show-Dialog -Title ($t.dlgUninstTitle -f $n) -Message $t.dlgUninstBody -Items $sel -Buttons @(
+        @{ Id = 'cancel'; Text = $t.btnCancel2; Cancel = $true; Focus = $true },
+        @{ Id = 'go'; Text = ($t.btnUninstN -f $n); Kind = 'danger' })
+    if ($r -ne 'go') { return }
+    Hide-Notice
     Start-Work 'uninstall' $sel
 }
 
 function Start-UpgradeAll {
-    if (-not (Get-Command winget -ErrorAction SilentlyContinue)) {
-        [void](Show-Msg $script:T.noWinget $script:T.title 'OK' 'Error'); return
-    }
-    $answer = Show-Msg $script:T.confirmUpgrade $script:T.confirmUpgradeTitle 'YesNo' 'Question'
-    if ($answer -ne 'Yes') { return }
+    $t = $script:T
+    if (-not (Get-Command winget -ErrorAction SilentlyContinue)) { Show-WingetMissing; return }
+    $r = Show-Dialog -Title $t.dlgUpgTitle -Message $t.dlgUpgBody -Buttons @(
+        @{ Id = 'cancel'; Text = $t.btnCancel2; Cancel = $true },
+        @{ Id = 'go'; Text = $t.btnUpgAll; Kind = 'primary'; Focus = $true })
+    if ($r -ne 'go') { return }
+    Hide-Notice
     Start-Work 'upgradeall' @()
 }
 
@@ -2748,7 +3377,8 @@ $script:ResetTimer.Add_Tick({
         $script:pbar.Value = 0                # bar goes back to 0%
         if ($script:FinishMsg) {
             $m = $script:FinishMsg; $script:FinishMsg = $null
-            [void](Show-Msg $m.Text $script:T.title 'OK' $m.Icon)
+            if ($m.Kind -eq 'err') { Show-Notice -Kind err -Text $m.Text -ActionText $script:T.showLog -Action { Set-LogVisible $true } }
+            else { Show-Notice -Kind ok -Text $m.Text }
         }
     })
 
@@ -2761,6 +3391,41 @@ $script:GridItems   = New-Object 'System.Collections.ObjectModel.ObservableColle
 $script:CurrentList = New-Object 'System.Collections.Generic.List[MeshalApp]'
 $script:GridPos     = 0
 $icApps.ItemsSource = $script:GridItems
+
+# Cards stretch so the row always fills the whole width (no empty strip on the right).
+$window.Resources['CardW'] = [double]290
+$script:LastCardW = 0.0
+$script:ViewMode = 'grid'
+function Set-ViewMode {
+    param([ValidateSet('grid', 'list')][string]$Mode)
+    $script:ViewMode = $Mode
+    $on  = $window.Resources['CatSelected']
+    if ($Mode -eq 'grid') {
+        $script:icApps.ItemTemplate = [System.Windows.DataTemplate]$window.Resources['tplGrid']
+        $script:btnViewGrid.Background = $on; $script:btnViewList.Background = [System.Windows.Media.Brushes]::Transparent
+    }
+    else {
+        $script:icApps.ItemTemplate = [System.Windows.DataTemplate]$window.Resources['tplList']
+        $script:btnViewList.Background = $on; $script:btnViewGrid.Background = [System.Windows.Media.Brushes]::Transparent
+    }
+    $script:LastCardW = 0.0
+    Update-CardWidth
+    try { $script:svApps.ScrollToTop() } catch { }
+}
+function Update-CardWidth {
+    $avail = $svApps.ViewportWidth
+    if ($avail -lt 100) { return }
+    $minW = 290.0; $gap = 14.0
+    if ($script:ViewMode -eq 'list') { $minW = 100000.0 }
+    $cols = [Math]::Max(1, [int][Math]::Floor($avail / ($minW + $gap)))
+    $w = [Math]::Floor($avail / $cols - $gap - 0.5)
+    if ([Math]::Abs($w - $script:LastCardW) -ge 1) {
+        $script:LastCardW = $w
+        $window.Resources['CardW'] = [double]$w
+    }
+}
+$svApps.Add_SizeChanged({ Update-CardWidth })
+$svApps.Add_ScrollChanged({ param($sender, $e) if ($e.ViewportWidthChange -ne 0) { Update-CardWidth } })
 $script:GridTimer = New-Object System.Windows.Threading.DispatcherTimer
 $script:GridTimer.Interval = [TimeSpan]::FromMilliseconds(16)
 $script:GridTimer.Add_Tick({
@@ -2775,12 +3440,13 @@ $btnLang.Add_Click({
         if ($script:Lang -eq 'en') { $script:Lang = 'ar' } else { $script:Lang = 'en' }
         Apply-Language
         $script:txtCatTitle.Text = [string]$script:T["cat_$($script:Cat)"]
-        $script:txtCatCount.Text = ($script:T.appsCount -f $script:CurrentList.Count)
+        $script:txtCatCount.Text = (Format-Apps $script:CurrentList.Count)
     })
 
 $btnTheme.Add_Click({
         if ($script:Theme -eq 'dark') { Set-Theme 'light' } else { Set-Theme 'dark' }
         Save-Settings
+        Set-ViewMode $script:ViewMode
     })
 
 $lstCats.Add_SelectionChanged({
@@ -2790,7 +3456,7 @@ $lstCats.Add_SelectionChanged({
 
 $txtSearch.Add_TextChanged({
         if ($script:txtSearch.Text.Length -gt 0) { $script:txtPlaceholder.Visibility = 'Collapsed' } else { $script:txtPlaceholder.Visibility = 'Visible' }
-        if ($script:txtSearch.Text.Length -gt 0) { $script:btnClearSearch.Visibility = 'Visible' } else { $script:btnClearSearch.Visibility = 'Collapsed' }
+        if ($script:txtSearch.Text.Length -gt 0) { $script:btnClearSearch.Visibility = 'Visible'; $script:bdKbd.Visibility = 'Collapsed' } else { $script:btnClearSearch.Visibility = 'Collapsed'; $script:bdKbd.Visibility = 'Visible' }
         $script:SearchTimer.Stop(); $script:SearchTimer.Start()
     })
 
@@ -2819,15 +3485,61 @@ $btnSelectVisible.Add_Click({
     })
 
 $btnClear.Add_Click({
+        $ids = @($script:Apps | Where-Object { $_.IsSelected } | ForEach-Object { $_.Id })
+        if ($ids.Count -eq 0) { return }
         foreach ($a in $script:Apps) { $a.IsSelected = $false }
         Update-Selection
         if ($script:Cat -eq 'Selected') { Refresh-Grid }
+        # reversible, so no "are you sure": do it, then offer Undo
+        $script:UndoIds = $ids
+        $undo = {
+            foreach ($id in $script:UndoIds) { if ($script:ById.ContainsKey($id)) { $script:ById[$id].IsSelected = $true } }
+            Update-Selection
+            if ($script:Cat -eq 'Selected') { Refresh-Grid }
+        }
+        Show-Notice -Kind info -Text ($script:T.clearedN -f (Format-Apps $ids.Count)) -ActionText $script:T.undo -Action $undo
     })
 
-$btnRefresh.Add_Click({ if ((-not $script:Busy) -and (-not $script:ScanBusy)) { Start-InstalledScan } })
+$btnRefresh.Add_Click({ Close-Menu; if ((-not $script:Busy) -and (-not $script:ScanBusy)) { Start-InstalledScan } })
+$btnViewGrid.Add_Click({ Set-ViewMode 'grid'; Save-Settings })
+$btnViewList.Add_Click({ Set-ViewMode 'list'; Save-Settings })
+function Close-Menu { $script:menuLayer.Visibility = 'Collapsed'; [void]$script:btnMore.Focus() }
+$btnMore.Add_Click({
+        if ($script:menuLayer.Visibility -eq 'Visible') { Close-Menu } else { $script:menuLayer.Visibility = 'Visible'; [void]$script:btnExport.Focus() }
+    })
+$menuLayer.Add_MouseDown({
+        param($s, $e)
+        if ($e.OriginalSource -eq $script:menuLayer) { Close-Menu }
+    })
+$btnExport.Add_Click({ Close-Menu; Export-Selection })
+$btnImport.Add_Click({ Close-Menu; Import-Selection })
+$btnShortcuts.Add_Click({
+        Close-Menu
+        $rows = @(foreach ($line in $script:T.shortcutRows) { $p = ([string]$line).Split('|', 2); $o = New-Object MeshalRow; $o.Key = $p[0]; $o.Desc = $p[1]; $o })
+        [void](Show-Dialog -Title $script:T.menuShortcuts -Rows $rows -Buttons @(@{ Id = 'close'; Text = $script:T.btnClose; Kind = 'primary'; Cancel = $true; Focus = $true }))
+    })
+$btnAbout.Add_Click({
+        Close-Menu
+        $r = Show-Dialog -Title $script:T.title -Message ($script:T.aboutVersion -f $script:AppVersion) -Notes $script:T.aboutDesc -Buttons @(
+            @{ Id = 'close'; Text = $script:T.btnClose; Cancel = $true; Focus = $true },
+            @{ Id = 'web'; Text = $script:T.aboutOpen; Kind = 'primary' })
+        if ($r -eq 'web') { try { Start-Process ('https://github.com/{0}' -f $script:UpdateRepo) } catch { } }
+    })
 $btnInstall.Add_Click({ Start-Install })
 $btnUninstall.Add_Click({ Start-Uninstall })
 $btnUpgrade.Add_Click({ Start-UpgradeAll })
+$btnNoticeClose.Add_Click({ Hide-Notice })
+$btnNoticeAction.Add_Click({ $a = $script:NoticeAction; Hide-Notice; if ($a) { & $a } })
+$bdNotice.Add_MouseEnter({ $script:NoticeTimer.Stop() })
+$bdNotice.Add_MouseLeave({ if (($script:bdNotice.Visibility -eq 'Visible') -and $script:NoticeAuto) { $script:NoticeTimer.Stop(); $script:NoticeTimer.Start() } })
+$btnEmpty.Add_Click({
+        switch ([string]$script:btnEmpty.Tag) {
+            'clearsearch' { $script:txtSearch.Clear(); [void]$script:txtSearch.Focus() }
+            'allapps'     { $script:lstCats.SelectedIndex = 0 }
+            'rescan'      { if ((-not $script:Busy) -and (-not $script:ScanBusy)) { Start-InstalledScan } }
+        }
+    })
+try { [System.Windows.Automation.AutomationProperties]::SetLiveSetting($script:txtCatCount, [System.Windows.Automation.AutomationLiveSetting]::Polite) } catch { }
 
 # Ctrl+F jumps to the search box
 $window.Add_KeyDown({
@@ -2839,15 +3551,17 @@ $window.Add_KeyDown({
 
 function Export-Selection {
     $sel = @($script:Apps | Where-Object { $_.IsSelected })
-    if ($sel.Count -eq 0) { [void](Show-Msg $script:T.exportNone); return }
+    if ($sel.Count -eq 0) { Show-Notice -Kind info -Text $script:T.exportNone; return }
     $dlg = New-Object Microsoft.Win32.SaveFileDialog
     $dlg.Title = $script:T.exportTitle; $dlg.Filter = 'MeshalBox selection (*.json)|*.json'; $dlg.FileName = 'meshalbox-selection.json'
     if ($dlg.ShowDialog($window) -ne $true) { return }
     try {
         $obj = [ordered]@{ app = 'MeshalBox'; version = $script:AppVersion; ids = @($sel | ForEach-Object { $_.Id }) }
         [IO.File]::WriteAllText($dlg.FileName, ($obj | ConvertTo-Json), (New-Object Text.UTF8Encoding($false)))
-        Write-Log ($script:T.exportDone -f $sel.Count, $dlg.FileName)
-    } catch { [void](Show-Msg $_.Exception.Message $script:T.title 'OK' 'Error') }
+        $m = $script:T.exportDone -f (Format-Apps $sel.Count), $dlg.FileName
+        Write-Log $m
+        Show-Notice -Kind ok -Text $m
+    } catch { Show-Notice -Kind err -Text $_.Exception.Message }
 }
 
 function Import-Selection {
@@ -2863,20 +3577,24 @@ function Import-Selection {
         }
         Update-Selection
         if ($script:Cat -eq 'Selected') { Refresh-Grid }
-        Write-Log ($script:T.importDone -f $ok, $miss)
-    } catch { [void](Show-Msg $script:T.importFail $script:T.title 'OK' 'Warning') }
+        if ($miss -gt 0) { $m = $script:T.importMiss -f (Format-Apps $ok), $miss } else { $m = $script:T.importDone -f (Format-Apps $ok) }
+        Write-Log $m
+        Show-Notice -Kind ok -Text $m
+    } catch { Show-Notice -Kind warn -Text $script:T.importFail }
 }
 
 $window.Add_PreviewKeyDown({
         param($s, $e)
         $ctrl = [System.Windows.Input.Keyboard]::Modifiers -band [System.Windows.Input.ModifierKeys]::Control
-        if ($e.Key -eq 'Escape' -and $script:txtSearch.Text.Length -gt 0) { $script:txtSearch.Clear(); $e.Handled = $true }
+        if ($e.Key -eq 'Escape' -and $script:menuLayer.Visibility -eq 'Visible') { Close-Menu; $e.Handled = $true }
+        elseif ($ctrl -and $e.Key -eq 'K') { $script:txtSearch.Focus() | Out-Null; $script:txtSearch.SelectAll(); $e.Handled = $true }
+        elseif ($e.Key -eq 'Escape' -and $script:txtSearch.Text.Length -gt 0) { $script:txtSearch.Clear(); $e.Handled = $true }
         elseif ($e.Key -eq 'F5' -and (-not $script:Busy) -and (-not $script:ScanBusy)) { Start-InstalledScan; $e.Handled = $true }
         elseif ($ctrl -and $e.Key -eq 'S') { Export-Selection; $e.Handled = $true }
         elseif ($ctrl -and $e.Key -eq 'O') { Import-Selection; $e.Handled = $true }
     })
 
-$btnCancel.Add_Click({
+function Stop-Work {
         if ($script:Sync) {
             $script:Sync.Cancel = $true
             # kill the running winget / installer right now (and everything it started)
@@ -2884,7 +3602,8 @@ $btnCancel.Add_Click({
         }
         $script:btnCancel.IsEnabled = $false
         Write-Log $script:T.cancelling
-    })
+}
+$btnCancel.Add_Click({ Stop-Work })
 
 # ----------------------------------------------------------------------------
 # 9b. Self-update from GitHub Releases
@@ -3033,7 +3752,7 @@ function Start-UpdateDownload {
                 Update-Selection
                 $script:btnUpdate.IsEnabled = $true
                 $script:txtProgress.Text = $script:T.ready
-                [void](Show-Msg ($script:T.updFail -f "`n", $err) $script:T.updTitle 'OK' 'Error')
+                Show-Notice -Kind err -Text ($script:T.updFail -f ' ', $err)
                 return
             }
             Apply-Update $d.Dest $d.Dir
@@ -3073,22 +3792,23 @@ function Apply-Update {
         Update-Selection
         $script:btnUpdate.IsEnabled = $true
         $script:txtProgress.Text = $script:T.ready
-        [void](Show-Msg ($script:T.updFail -f "`n", $_.Exception.Message) $script:T.updTitle 'OK' 'Error')
+        Show-Notice -Kind err -Text ($script:T.updFail -f ' ', $_.Exception.Message)
     }
 }
 
 function Invoke-UpdateClick {
     $u = $script:UpdateInfo
     if (-not $u) { return }
-    if ($script:Busy) { [void](Show-Msg $script:T.updBusy $script:T.updTitle 'OK' 'Information'); return }
+    if ($script:Busy) { Show-Notice -Kind warn -Text $script:T.updBusy; return }
 
     $canAuto = $script:IsCompiledExe -and $u.Url -and ($u.Digest -match '^sha256:[0-9a-fA-F]{64}$') -and ($u.Url -like ('https://github.com/{0}/releases/download/*' -f $script:UpdateRepo))
-    if ($canAuto) { $ask = $script:T.updAsk } else { $ask = $script:T.updAskSrc }
     $newVer = $u.Tag -replace '^[vV]', ''
-    $msg = $script:T.updHead + "`n`n" + ($script:T.updVer -f $script:AppVersion, $newVer) + "`n`n" +
-    $script:T.updNotes + "`n" + (Format-ReleaseNotes $u.Notes) + "`n`n" + $ask
-    $ans = Show-Msg $msg $script:T.updTitle 'YesNo' 'Question'
-    if ($ans -ne 'Yes') { return }
+    if ($canAuto) { $goText = $script:T.updNow } else { $goText = $script:T.updOpen }
+    $ans = Show-Dialog -Title $script:T.updHead -Message ($script:T.updVer -f $script:AppVersion, $newVer) `
+        -Notes ($script:T.updNotes + "`n" + (Format-ReleaseNotes $u.Notes)) -Buttons @(
+        @{ Id = 'later'; Text = $script:T.updLater; Cancel = $true },
+        @{ Id = 'go'; Text = $goText; Kind = 'primary'; Focus = $true })
+    if ($ans -ne 'go') { return }
 
     if ($canAuto) { Start-UpdateDownload $u }
     else {
@@ -3106,8 +3826,16 @@ $script:btnUpdate.Add_Click({ Invoke-UpdateClick })
 $window.Add_Closing({
         param($s, $e)
         if ($script:Busy) {
-            [void](Show-Msg $script:T.busyClose $script:T.title 'OK' 'Warning')
             $e.Cancel = $true
+            if ($script:InstallTimer.IsEnabled) {
+                $r = Show-Dialog -Title $script:T.closeTitle -Message $script:T.closeBody -Buttons @(
+                    @{ Id = 'keep'; Text = $script:T.btnKeep; Cancel = $true; Focus = $true },
+                    @{ Id = 'stop'; Text = $script:T.btnStopClose; Kind = 'danger' })
+                if ($r -eq 'stop') { $script:CloseAfter = $true; Stop-Work }
+            }
+            else {
+                [void](Show-Dialog -Title $script:T.closeUpdTitle -Message $script:T.closeUpd -Buttons @(@{ Id = 'ok'; Text = $script:T.btnClose; Kind = 'primary'; Cancel = $true; Focus = $true }))
+            }
         }
     })
 
@@ -3120,10 +3848,27 @@ try {
     Initialize-Categories
     Set-Theme $script:Theme
     Apply-Language
+    Set-ViewMode $script:SavedView
     $lstCats.SelectedIndex = 0
     $script:IsAdminNow = $isAdmin
 
+    # Slim scrollbars: force the width directly on every ScrollViewer's vertical bar (does not depend on style lookup)
+    function Set-ThinScrollBars($node) {
+        $n = [System.Windows.Media.VisualTreeHelper]::GetChildrenCount($node)
+        for ($i = 0; $i -lt $n; $i++) {
+            $c = [System.Windows.Media.VisualTreeHelper]::GetChild($node, $i)
+            if ($c -is [System.Windows.Controls.ScrollViewer]) {
+                try {
+                    [void]$c.ApplyTemplate()
+                    $sb = $c.Template.FindName('PART_VerticalScrollBar', $c)
+                    if ($sb) { $sb.Width = 8; $sb.MinWidth = 0 }
+                } catch { }
+            }
+            Set-ThinScrollBars $c
+        }
+    }
     $window.Add_ContentRendered({
+            try { Set-ThinScrollBars $window } catch { }
             if ($script:Started) { return }
             $script:Started = $true
             try { Start-StoreLogos } catch { Write-DebugLog ('Start-StoreLogos: ' + $_.Exception.Message) }
@@ -3133,8 +3878,9 @@ try {
             $wg = Get-Command winget -ErrorAction SilentlyContinue
             if ($wg) { Write-Log ($script:T.wingetOk -f $wg.Source) } else { Write-Log $script:T.noWinget }
             if (-not $script:IsAdminNow) { Write-Log $script:T.adminWarn }
+            if (-not $wg) { Show-WingetMissing } elseif (-not $script:IsAdminNow) { Show-Notice -Kind warn -Text $script:T.adminWarn }
             if ($script:CatalogSkipped -gt 0) { Write-Log ($script:T.catSkipped -f $script:CatalogSkipped) }
-            try { Start-UpdateCheck } catch { }
+            if (-not $NoUpdateCheck) { try { Start-UpdateCheck } catch { } }
         })
 
     [void]$window.ShowDialog()
