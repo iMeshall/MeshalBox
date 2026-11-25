@@ -128,6 +128,7 @@ public class MeshalApp : INotifyPropertyChanged
     public string CategoryName { get { return _categoryName; } set { _categoryName = value; Raise("CategoryName"); } }
     public string Domain { get; set; }
     public string Source { get; set; }
+    public bool Lingers { get; set; }        // installer/uninstaller keeps running after it is done (e.g. Riot Client) -> finish by checking the real state
     public string Initial { get; set; }
     public string Color { get; set; }
     public string Pkg { get; set; }          // Microsoft Store package name (the logo is read from the installed package)
@@ -788,6 +789,7 @@ foreach ($e in $catalog.apps) {
     $a.DescAr = if ($e.descAr) { [string]$e.descAr } else { $a.DescEn }
     $a.Source = if ($e.source) { [string]$e.source } else { '' }
     if ($e.pkg) { $a.Pkg = [string]$e.pkg }
+    if ($e.lingers -eq $true) { $a.Lingers = $true }
     if ($TileOverride.ContainsKey($a.Id)) { $a.TileForce = $TileOverride[$a.Id] }
     $a.Initial = $a.NameEn.Substring(0, 1).ToUpper()
     if ((-not $a.Domain) -and $StoreGlyph.ContainsKey($a.Id)) { $a.Initial = [char]::ConvertFromUtf32([int]$StoreGlyph[$a.Id]) }
@@ -2957,9 +2959,20 @@ $worker = {
             if ($lineMode -eq 'upgrade') { Send-UpgradeLine $raw } else { Send-WingetLine $lineId $raw }
         }
 
+        # is this winget id installed right now?  (used for installers that never exit by themselves)
+        function Test-WingetPresent([string]$id) {
+            try {
+                $null = & winget list --id $id --exact --accept-source-agreements --disable-interactivity 2>&1
+                return ($LASTEXITCODE -eq 0)
+            } catch { return $false }
+        }
+
         # runs one winget command (output captured through a temp file so Stop can kill it at any moment)
-        function Run-Winget([string]$wcmd, [string]$lineId, [string]$lineMode, [bool]$limited = $false) {
+        # $watchId/$watchWant ('present' after an install, 'absent' after an uninstall): for apps whose installer keeps
+        # running after the work is done (Riot Client...) the real state is checked and the job is finished once it matches.
+        function Run-Winget([string]$wcmd, [string]$lineId, [string]$lineMode, [bool]$limited = $false, [string]$watchId = '', [string]$watchWant = '') {
             $code = -1
+            $lastOutAt = Get-Date; $lastProbeAt = Get-Date; $hits = 0; $assumed = $false
             $logFile = Join-Path $env:TEMP ('meshalbox_' + [guid]::NewGuid().ToString('N') + '.log')
             $codeFile = $logFile + '.code'
             $batFile = $logFile + '.cmd'
@@ -3017,6 +3030,7 @@ $worker = {
                             $fs = New-Object System.IO.FileStream($logFile, [System.IO.FileMode]::Open, [System.IO.FileAccess]::Read, [System.IO.FileShare]'ReadWrite,Delete')
                             try {
                                 if ($fs.Length -gt $pos) {
+                                    $lastOutAt = Get-Date
                                     [void]$fs.Seek($pos, [System.IO.SeekOrigin]::Begin)
                                     $bytes = New-Object byte[] ([int]($fs.Length - $pos))
                                     $n = $fs.Read($bytes, 0, $bytes.Length)
@@ -3034,6 +3048,20 @@ $worker = {
                             } finally { $fs.Close() }
                         }
                     } catch { }
+                    # winget has been silent for a while: if the app is already in its final state, the installer is only lingering
+                    if ((-not $exited) -and $watchId -and (-not $limited) -and (-not $sync.Cancel)) {
+                        $now = Get-Date
+                        if ((($now - $lastOutAt).TotalSeconds -ge 20) -and (($now - $lastProbeAt).TotalSeconds -ge 6)) {
+                            if ((Test-WingetPresent $watchId) -eq ($watchWant -eq 'present')) { $hits++ } else { $hits = 0 }
+                            $lastProbeAt = Get-Date
+                            if ($hits -ge 2) {
+                                $sync.Queue.Enqueue("log|$lineId|Finished - the installer is still open in the background, closing it.")
+                                $assumed = $true
+                                Stop-Tree $p.Id
+                                $exited = $true
+                            }
+                        }
+                    }
                     if ($exited) { break }
                     Start-Sleep -Milliseconds 150
                 }
@@ -3045,6 +3073,7 @@ $worker = {
                 else {
                     $p.WaitForExit()
                     $code = $p.ExitCode
+                    if ($assumed) { $code = 0 }
                 }
             }
             catch {
@@ -3083,7 +3112,8 @@ $worker = {
                     $ucmd = 'winget uninstall --id ' + $app.Id + ' --exact --silent --accept-source-agreements --disable-interactivity'
                     if ($app.Source -eq 'msstore') { $ucmd += ' --source msstore' }
                 }
-                $code = Run-Winget $ucmd $app.Id 'install'
+                $wId = ''; if ($app.Lingers) { $wId = $app.Id }
+                $code = Run-Winget $ucmd $app.Id 'install' $false $wId 'absent'
                 # user-scope package + elevated session -> winget refuses (0x8A15007D-style error); retry without admin rights
                 if (($code -eq -1978335107) -and -not $sync.Cancel) {
                     $sync.Queue.Enqueue("log|$($app.Id)|User-scope app - retrying the removal without administrator rights...")
@@ -3128,7 +3158,8 @@ $worker = {
             $beforeSA = Get-StoreAppIds
             $wcmd = 'winget install --id ' + $app.Id + ' --exact --silent --accept-package-agreements --accept-source-agreements --disable-interactivity'
             if ($app.Source) { $wcmd += ' --source ' + $app.Source }
-            $code = Run-Winget $wcmd $app.Id 'install'
+            $wId = ''; if ($app.Lingers) { $wId = $app.Id }
+            $code = Run-Winget $wcmd $app.Id 'install' $false $wId 'present'
 
             # Some packages (e.g. Battle.net) refuse to install unless an install location is given
             # (winget error 0x8A15005F = -1978335137): retry once with --location.
@@ -3489,7 +3520,7 @@ function Start-Work {
     $script:Sync.Queue = New-Object 'System.Collections.Concurrent.ConcurrentQueue[object]'
 
     $list = @()
-    if ($Mode -ne 'upgradeall') { $list = @($Sel | ForEach-Object { [pscustomobject]@{ Id = $_.Id; Name = $_.NameEn; Source = $_.Source } }) }
+    if ($Mode -ne 'upgradeall') { $list = @($Sel | ForEach-Object { [pscustomobject]@{ Id = $_.Id; Name = $_.NameEn; Source = $_.Source; Lingers = $_.Lingers } }) }
 
     $rs = [runspacefactory]::CreateRunspace()
     $rs.ApartmentState = 'MTA'
