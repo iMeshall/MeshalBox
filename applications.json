@@ -119,6 +119,26 @@
       "descAr": "مشغّل روكستار لألعاب GTA V وRed Dead Redemption 2 وغيرها من ألعابها."
     },
     {
+      "id": "https://fivem.net/",
+      "en": "FiveM",
+      "ar": "فايف إم",
+      "category": "Gaming",
+      "domain": "fivem.net",
+      "source": "web",
+      "desc": "Multiplayer modification for GTA V with custom servers. (Opens the download page.)",
+      "descAr": "تعديل لعب جماعي للعبة GTA V مع سيرفرات مخصصة. (يفتح صفحة التحميل.)"
+    },
+    {
+      "id": "https://redm.net/",
+      "en": "RedM",
+      "ar": "ريد إم",
+      "category": "Gaming",
+      "domain": "redm.net",
+      "source": "web",
+      "desc": "Multiplayer modification for Red Dead Redemption 2. (Opens the download page.)",
+      "descAr": "تعديل لعب جماعي للعبة Red Dead Redemption 2. (يفتح صفحة التحميل.)"
+    },
+    {
       "id": "Blizzard.BattleNet",
       "en": "Battle.net",
       "ar": "باتل نت",
