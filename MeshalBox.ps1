@@ -50,7 +50,7 @@ $EmbeddedLogosB64    = '__EMBED_LOGOS__'     # zip of logos\*.png, embedded by b
 $TileOverride = @{ 'Valve.Steam' = 'black' }
 
 # Self-update (GitHub Releases). Bump $AppVersion on every release - build.bat reads it for the EXE version.
-$AppVersion = '1.3.0'
+$AppVersion = '1.0.0'
 $UpdateRepo = 'iMeshall/MeshalBox'
 
 # Set to $true to show a small "Preview" tag next to the app name in the header.
@@ -411,6 +411,7 @@ $Strings = @{
         clearSearch   = 'Clear search'
         install       = 'Install'
         installNone   = 'Install apps'
+        allInstalled  = 'all already installed'
         selectedNone  = 'No apps selected. Click a card to select it.'
         cancel        = 'Stop'
         selected      = 'Selected: {0}'
@@ -572,6 +573,7 @@ $Strings = @{
         clearSearch   = 'مسح البحث'
         install       = 'تثبيت'
         installNone   = 'تثبيت البرامج'
+        allInstalled  = 'كلها مثبّتة بالفعل'
         selectedNone  = 'لم تحدد أي برنامج. اضغط على بطاقة لتحديدها.'
         cancel        = 'إيقاف'
         selected      = 'المحدد: {0}'
@@ -2142,13 +2144,17 @@ function Update-Selection {
     $script:btnUninstall.IsEnabled = ($ni -gt 0) -and (-not $script:Busy)
     if ($ni -gt 0) { $script:btnUninstall.Content = ($t.uninstallBtn + ' ' + (Format-Apps $ni)) } else { $script:btnUninstall.Content = $t.uninstallBtn }
     # the reason a button is off is written on screen (not only in a tooltip)
-    if ($n -gt 0) { $script:txtSelected.Text = ($t.selected -f $n) } else { $script:txtSelected.Text = $t.selectedNone }
+    $nNew = $n - $ni          # selected apps that are not on this PC yet (the only ones Install can add)
+    if ($n -gt 0) {
+        $script:txtSelected.Text = ($t.selected -f $n)
+        if ($nNew -eq 0) { $script:txtSelected.Text += ' - ' + $t.allInstalled }
+    } else { $script:txtSelected.Text = $t.selectedNone }
     $script:SelItems.Clear(); $shown = 0
     foreach ($sa in $script:Apps) { if ($sa.IsSelected) { if ($shown -lt 8) { $script:SelItems.Add($sa) }; $shown++ } }
     if ($n -gt 8) { $script:txtSelMore.Text = ('+{0}' -f ($n - 8)) } else { $script:txtSelMore.Text = '' }
     $script:CatMap['Selected'].Count = $n
-    $script:btnInstall.IsEnabled = ($n -gt 0) -and (-not $script:Busy)
-    if ($n -gt 0) { $script:btnInstall.Content = ($t.install + ' ' + (Format-Apps $n)) } else { $script:btnInstall.Content = $t.installNone }
+    $script:btnInstall.IsEnabled = ($nNew -gt 0) -and (-not $script:Busy)
+    if ($nNew -gt 0) { $script:btnInstall.Content = ($t.install + ' ' + (Format-Apps $nNew)) } else { $script:btnInstall.Content = $t.installNone }
     $script:btnClear.IsEnabled = ($n -gt 0) -and (-not $script:Busy)
     $script:btnInstall.ToolTip = $null
     $script:btnUninstall.ToolTip = $null
@@ -3498,7 +3504,8 @@ function Start-Work {
 }
 
 function Start-Install {
-    $sel = @($script:Apps | Where-Object { $_.IsSelected })
+    # only apps that are not installed yet (installed ones are skipped)
+    $sel = @($script:Apps | Where-Object { $_.IsSelected -and (-not $script:InstalledIds.ContainsKey($_.Id)) })
     $t = $script:T
     if ($sel.Count -eq 0) { Show-Notice -Kind warn -Text $t.selectedNone; return }
     if (-not (Get-Command winget -ErrorAction SilentlyContinue)) { Show-WingetMissing; return }
