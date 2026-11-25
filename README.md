@@ -1,65 +1,58 @@
-# 📦 MeshalBox
+📦 MeshalBox
 
-**Install your favorite Windows apps in one place.**
+Install your favorite Windows apps in one place.
 
-MeshalBox is a Windows application that lets you browse an organized application catalog and install multiple programs at once using WinGet.
+MeshalBox is a Windows application that lets you browse an organized catalog of 300+ programs and install many of them at once using WinGet. The interface is available in English and Arabic.
 
-## ✨ Features
+⚡ Quick Start
 
-- 📚 **Organized Catalog** — Browse applications by category.
-- ⚡ **Batch Installation** — Install multiple applications in one go.
-- 🪟 **Windows Support** — Designed for Windows 10 and Windows 11.
-- 🛠️ **PowerShell-Based** — Built with PowerShell.
-- 📦 **WinGet Integration** — Uses the Windows Package Manager to install applications.
-- 🚀 **Portable Executable** — Run the ready-to-use `.exe` without a traditional installation.
+Open PowerShell and run:
 
-## 📋 Requirements
+powershell
+irm https://raw.githubusercontent.com/iMeshall/MeshalBox/main/install.ps1 | iex
 
-- 🪟 Windows 10 or Windows 11.
-- 📦 WinGet (Windows Package Manager).
+This downloads the latest MeshalBox, then opens it with Administrator rights. Nothing else is installed on your PC, and you always get the newest version.
 
-## 🚀 Downloads
+🔍 Safe to check first: the launcher is a short script — read install.ps1 before you run it. Everything MeshalBox installs comes from WinGet's official sources.
 
-- 📦 **[Download Latest Release](https://github.com/iMeshall/MeshalBox/releases/latest)** — Get the ready-to-run Windows executable.
-- 💻 **[Source Code](https://github.com/iMeshall/MeshalBox)** — Browse or download the source files.
+✨ Features
+📚 Organized Catalog — 300+ apps in clear categories, with logos and short descriptions.
+⚡ Batch Installation — Tick as many apps as you like and install them all in one go.
+🔄 Upgrade & Uninstall — Upgrade all your apps, or remove the ones you no longer need.
+✅ Installed Detection — See which apps are already on your PC; rescan any time (F5).
+🔎 Fast Search — Press Ctrl + K to find any app instantly.
+💾 Save & Load Selections — Export your app list to a file and import it on another PC.
+🎨 Appearance — Dark and light modes with 8 color palettes (Classic Black, Mono, Dark Frost, Midnight Navy, Cyber Violet, Black & Red, Emerald, Amber). Your choice is remembered.
+🌍 Bilingual — Switch between English and Arabic (with full right-to-left layout) at any time.
+🧩 Grid or List View — Pick the layout you prefer.
+📦 WinGet Integration — Uses the Windows Package Manager for every installation.
+📋 Requirements
+🪟 Windows 10 or Windows 11.
+📦 WinGet (Windows Package Manager) — included with modern Windows; otherwise install App Installer from the Microsoft Store.
+🌐 Internet connection.
+🖥️ Getting Started
+⚡ Option 1: One-line command (recommended)
 
-## 🖥️ Getting Started
+Run the command from Quick Start in PowerShell. Accept the Windows (UAC) prompt, then browse the catalog and select the programs you want.
 
-### 📦 Option 1: Executable
-
-1. Download `MeshalBox.exe` from the [latest release](https://github.com/iMeshall/MeshalBox/releases/latest).
-2. Run the executable.
-3. Browse the application catalog and select the programs you want to install.
-
-### 💻 Option 2: Run from Source
-
-Make sure both files are in the same directory:
-
-- `MeshalBox.ps1`
-- `applications.json`
-
-Then:
-
-1. Open PowerShell in that directory.
-2. Run the script:
-
-   ```powershell
-   .\MeshalBox.ps1
-   ```
-
-3. Browse the catalog and select the applications you need.
-
-## 📁 Project Structure
-
-```text
+💻 Option 2: Run from Source
+Download the repository (Code → Download ZIP) and extract it.
+Keep MeshalBox.ps1 and applications.json in the same folder.
+Right-click MeshalBox.ps1 → Run with PowerShell, or run:
+powershell
+powershell -ExecutionPolicy Bypass -File .\MeshalBox.ps1
+📁 Project Structure
 MeshalBox/
-├── MeshalBox.ps1
-├── applications.json
+├── install.ps1          # one-line launcher
+├── MeshalBox.ps1        # the application
+├── applications.json    # the app catalog
 ├── README.md
 ├── README-ar.md
 └── LICENSE
-```
+➕ Adding or Fixing an App
 
-## 📄 License
+Edit applications.json — each app has its WinGet id, English and Arabic names, a category, a domain (used to fetch its logo) and a short description.
 
-Released under the [MIT License](LICENSE).
+📄 License
+
+Released under the MIT License.
