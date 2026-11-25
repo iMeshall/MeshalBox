@@ -19,9 +19,13 @@ function Start-MeshalBoxLauncher {
     }
     try { [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 } catch { }
 
-    $appDir = Join-Path $env:LOCALAPPDATA 'MeshalBox\app'
+    # Use the full (long) path of the profile folder: %TEMP% can be an 8.3 short path like C:\Users\5207~1
+    # when the user name has Arabic / special characters, and that breaks Remove-Item and Expand-Archive.
+    $local = [Environment]::GetFolderPath('LocalApplicationData')
+    if (-not $local) { $local = $env:LOCALAPPDATA }
+    $appDir = Join-Path $local 'MeshalBox\app'
     $script = Join-Path $appDir 'MeshalBox.ps1'
-    $work   = Join-Path $env:TEMP ('MeshalBox_' + [guid]::NewGuid().ToString('N'))
+    $work   = Join-Path $local ('MeshalBox\tmp_' + [guid]::NewGuid().ToString('N'))
 
     Write-Host 'MeshalBox: getting the latest version...' -ForegroundColor Cyan
     try {
@@ -67,7 +71,7 @@ function Start-MeshalBoxLauncher {
         }
     }
     finally {
-        Remove-Item -LiteralPath $work -Recurse -Force -ErrorAction SilentlyContinue
+        try { if (Test-Path -LiteralPath $work) { Remove-Item -LiteralPath $work -Recurse -Force -ErrorAction SilentlyContinue } } catch { }
     }
 
     # start it with Windows PowerShell 5.1 (STA, no console window), as Administrator
