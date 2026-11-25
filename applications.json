@@ -1251,7 +1251,8 @@
       "category": "Gaming",
       "domain": "playvalorant.com",
       "desc": "The Riot Client to install and play VALORANT.",
-      "descAr": "عميل Riot لتثبيت ولعب VALORANT."
+      "descAr": "عميل Riot لتثبيت ولعب VALORANT.",
+      "lingers": true
     },
     {
       "id": "VirtualDesktop.Streamer",
