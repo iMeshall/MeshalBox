@@ -343,6 +343,25 @@ public static class MeshalDwm
         DwmSetWindowAttribute(hwnd, 36, ref text, 4);     // DWMWA_TEXT_COLOR    (Win11)
         DwmSetWindowAttribute(hwnd, 34, ref border, 4);   // DWMWA_BORDER_COLOR  (Win11)
     }
+
+    private static int HexRef(string h)
+    {
+        h = h.TrimStart('#');
+        return ToColorRef(Convert.ToInt32(h.Substring(0, 2), 16), Convert.ToInt32(h.Substring(2, 2), 16), Convert.ToInt32(h.Substring(4, 2), 16));
+    }
+
+    // same as above, but the title bar + window border follow the colour palette
+    public static void Apply(IntPtr hwnd, bool dark, string captionHex, string borderHex)
+    {
+        Apply(hwnd, dark);
+        try
+        {
+            int caption = HexRef(captionHex), border = HexRef(borderHex);
+            DwmSetWindowAttribute(hwnd, 35, ref caption, 4);
+            DwmSetWindowAttribute(hwnd, 34, ref border, 4);
+        }
+        catch { }
+    }
 }
 '@
 }
@@ -358,6 +377,10 @@ $Strings = @{
         langBtn       = 'العربية'
         themeToLight  = 'Switch to light mode'
         themeToDark   = 'Switch to dark mode'
+        appearance    = 'APPEARANCE'
+        modeDark      = 'Dark'
+        modeLight     = 'Light'
+        atmosphere    = 'COLORS'
         refreshTip    = 'Rescan this PC'
         preview       = 'Preview'
         menuExport    = 'Export selection'
@@ -515,6 +538,10 @@ $Strings = @{
         langBtn       = 'English'
         themeToLight  = 'التبديل إلى الوضع الفاتح'
         themeToDark   = 'التبديل إلى الوضع الداكن'
+        appearance    = 'المظهر'
+        modeDark      = 'داكن'
+        modeLight     = 'فاتح'
+        atmosphere    = 'الألوان'
         refreshTip    = 'إعادة فحص الجهاز'
         preview       = 'معاينة'
         menuExport    = 'تصدير التحديد'
@@ -823,7 +850,7 @@ function Write-DebugLog {
 }
 
 function Save-Settings {
-    try { $v = $script:ViewMode; if (-not $v) { $v = $script:SavedView }; @{ lang = $script:Lang; theme = $script:Theme; view = $v } | ConvertTo-Json | Set-Content -Path $SettingsFile -Encoding UTF8 } catch { }
+    try { $v = $script:ViewMode; if (-not $v) { $v = $script:SavedView }; @{ lang = $script:Lang; theme = $script:Theme; palette = $script:Palette; view = $v } | ConvertTo-Json | Set-Content -Path $SettingsFile -Encoding UTF8 } catch { }
 }
 
 $script:Lang = 'en'
@@ -844,6 +871,14 @@ try {
     if (Test-Path $SettingsFile) {
         $savedTheme = (Get-Content $SettingsFile -Raw | ConvertFrom-Json).theme
         if ($savedTheme -in @('dark', 'light')) { $script:Theme = $savedTheme }
+    }
+} catch { }
+
+$script:Palette = 'classic'     # default colour palette
+try {
+    if (Test-Path $SettingsFile) {
+        $savedPal = (Get-Content $SettingsFile -Raw | ConvertFrom-Json).palette
+        if ($savedPal) { $script:Palette = [string]$savedPal }   # validated in Get-ThemeTable
     }
 } catch { }
 
@@ -1235,6 +1270,32 @@ try {
       </Setter>
     </Style>
 
+    <!-- Appearance panel button (mode + colour choices); Tag="sel" marks the active one -->
+    <Style x:Key="PalBtn" TargetType="Button">
+      <Setter Property="FocusVisualStyle" Value="{StaticResource FocusRingBtn}"/>
+      <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
+      <Setter Property="FontSize" Value="13"/>
+      <Setter Property="FontWeight" Value="SemiBold"/>
+      <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Button">
+            <Border x:Name="b" CornerRadius="9" Padding="12,9" Background="{DynamicResource BtnBg}"
+                    BorderBrush="{DynamicResource BtnBorder}" BorderThickness="1">
+              <ContentPresenter HorizontalAlignment="Left" VerticalAlignment="Center" RecognizesAccessKey="False"/>
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="b" Property="BorderBrush" Value="{DynamicResource HoverBorder}"/></Trigger>
+              <Trigger Property="Tag" Value="sel">
+                <Setter TargetName="b" Property="BorderBrush" Value="{DynamicResource Accent}"/>
+                <Setter TargetName="b" Property="Background" Value="{DynamicResource CardChecked}"/>
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
     <!-- Small view-switch button (grid / list) -->
     <Style x:Key="ViewBtn" TargetType="Button">
       <Setter Property="FocusVisualStyle" Value="{StaticResource FocusRingBtn}"/>
@@ -1561,6 +1622,33 @@ try {
      </Grid>
     </Border>
 
+    <!-- Appearance panel (overlay: click outside closes it) -->
+    <Grid x:Name="themeLayer" Grid.RowSpan="3" Background="#01000000" Visibility="Collapsed">
+      <Border HorizontalAlignment="Right" VerticalAlignment="Top" Margin="24,74,24,0" Width="320" CornerRadius="14" Padding="14"
+              Background="{DynamicResource BgPanel}" BorderBrush="{DynamicResource Edge}" BorderThickness="1">
+        <Border.Effect><DropShadowEffect Color="#000000" Opacity="0.45" BlurRadius="24" ShadowDepth="6" Direction="270"/></Border.Effect>
+        <StackPanel KeyboardNavigation.TabNavigation="Cycle">
+          <TextBlock x:Name="txtAppearance" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource TextSec}" Margin="2,0,0,10"/>
+          <UniformGrid Columns="2">
+            <Button x:Name="btnModeDark" Style="{StaticResource PalBtn}" Margin="0,0,4,0">
+              <StackPanel Orientation="Horizontal">
+                <TextBlock Text="&#xE708;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="14" Margin="0,0,9,0" VerticalAlignment="Center"/>
+                <TextBlock x:Name="txtModeDark" VerticalAlignment="Center"/>
+              </StackPanel>
+            </Button>
+            <Button x:Name="btnModeLight" Style="{StaticResource PalBtn}" Margin="4,0,0,0">
+              <StackPanel Orientation="Horizontal">
+                <TextBlock Text="&#xE706;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="14" Margin="0,0,9,0" VerticalAlignment="Center"/>
+                <TextBlock x:Name="txtModeLight" VerticalAlignment="Center"/>
+              </StackPanel>
+            </Button>
+          </UniformGrid>
+          <TextBlock x:Name="txtAtmosphere" FontSize="11.5" FontWeight="Bold" Foreground="{DynamicResource TextMuted}" Margin="2,18,0,8"/>
+          <UniformGrid x:Name="palGrid" Columns="2"/>
+        </StackPanel>
+      </Border>
+    </Grid>
+
     <!-- "More" menu (overlay: click outside closes it) -->
     <Grid x:Name="menuLayer" Grid.RowSpan="3" Background="#01000000" Visibility="Collapsed">
       <Border HorizontalAlignment="Right" VerticalAlignment="Top" Margin="24,74,24,0" Width="214" CornerRadius="12" Padding="6"
@@ -1583,7 +1671,7 @@ $reader = New-Object System.Xml.XmlNodeReader $xaml
 $window = [Windows.Markup.XamlReader]::Load($reader)
 foreach ($n in 'imgLogo', 'txtTitle', 'txtSubtitle', 'txtSearch', 'txtPlaceholder', 'btnLang', 'lstCats', 'btnSelectVisible',
                 'btnClear', 'txtCatTitle', 'txtCatCount', 'icApps', 'svApps', 'txtEmpty', 'txtSelected', 'pbar', 'txtProgress', 'btnCancel', 'btnInstall', 'btnUpgrade', 'btnUninstall', 'txtLog', 'btnLog', 'txtPercent', 'btnClearSearch', 'btnTheme', 'btnUpdate', 'btnRefresh',
-                'icSel', 'txtSelMore', 'txtPreview', 'bdKbd', 'btnMore', 'icoSun', 'icoMoon', 'menuLayer', 'btnExport', 'btnImport', 'btnShortcuts', 'btnAbout', 'btnViewGrid', 'btnViewList') {
+                'icSel', 'txtSelMore', 'txtPreview', 'bdKbd', 'btnMore', 'icoSun', 'icoMoon', 'menuLayer', 'themeLayer', 'txtAppearance', 'btnModeDark', 'btnModeLight', 'txtModeDark', 'txtModeLight', 'txtAtmosphere', 'palGrid', 'btnExport', 'btnImport', 'btnShortcuts', 'btnAbout', 'btnViewGrid', 'btnViewList') {
     Set-Variable -Name $n -Value $window.FindName($n) -Scope Script
 }
 foreach ($n in 'bdPreview', 'emptyPanel', 'txtEmptyIcon', 'txtEmptyHint', 'btnEmpty', 'bdNotice', 'icoNotice', 'txtNotice', 'btnNoticeAction', 'btnNoticeClose') {
@@ -1655,6 +1743,66 @@ $Themes = @{
 }
 $GradientDir = @{ HeaderBg = @(0, 0, 1, 0); CardBg = @(0, 0, 0, 1) }
 
+# ---- Colour palettes ("atmospheres"): they sit on top of the dark / light mode --------------
+# W = window background (dark mode), Hi = tint used to build every other surface from W,
+# AccentDark / AccentLight = highlight colour in dark / light mode. 'classic' is the default; 'mono' is the original grey look.
+$Palettes = [ordered]@{
+    classic = @{ En = 'Classic Black'; Ar = 'أسود كلاسيكي';  W = '#000000'; Hi = '#FFFFFF'; AccentDark = '#F4F4F5'; AccentLight = '#111114' }
+    mono    = @{ En = 'Mono';          Ar = 'أحادي';         Keep = $true; W = '#09090B'; Hi = '#FFFFFF'; AccentDark = '#F4F4F5'; AccentLight = '#111114' }
+    frost   = @{ En = 'Dark Frost';    Ar = 'جليد داكن';     W = '#080D12'; Hi = '#7DD3FC'; AccentDark = '#38BDF8'; AccentLight = '#0284C7' }
+    navy    = @{ En = 'Midnight Navy'; Ar = 'أزرق ليلي';     W = '#070B16'; Hi = '#7C9CFF'; AccentDark = '#5B8CFF'; AccentLight = '#2563EB' }
+    violet  = @{ En = 'Cyber Violet';  Ar = 'بنفسجي سايبر';  W = '#0C0813'; Hi = '#B79CFF'; AccentDark = '#A78BFA'; AccentLight = '#7C3AED' }
+    red     = @{ En = 'Black & Red';   Ar = 'أسود وأحمر';    W = '#0B0708'; Hi = '#FF7A7A'; AccentDark = '#F43F5E'; AccentLight = '#DC2626' }
+    emerald = @{ En = 'Emerald';       Ar = 'زمردي';         W = '#06100C'; Hi = '#6EE7B7'; AccentDark = '#34D399'; AccentLight = '#059669' }
+    amber   = @{ En = 'Amber';         Ar = 'كهرماني';       W = '#0F0B05'; Hi = '#FCD34D'; AccentDark = '#FBBF24'; AccentLight = '#D97706' }
+}
+
+function Get-Mix {
+    param([string]$A, [string]$B, [double]$T)
+    $a = $A.TrimStart('#'); $b = $B.TrimStart('#')
+    $out = '#'
+    foreach ($i in 0, 2, 4) {
+        $x = [Convert]::ToInt32($a.Substring($i, 2), 16); $y = [Convert]::ToInt32($b.Substring($i, 2), 16)
+        $out += ([int][Math]::Round($x + ($y - $x) * $T)).ToString('X2')
+    }
+    return $out
+}
+
+function Get-OnColor {
+    param([string]$Hex)    # readable text colour on top of an accent colour
+    $h = $Hex.TrimStart('#')
+    $l = (0.299 * [Convert]::ToInt32($h.Substring(0, 2), 16) + 0.587 * [Convert]::ToInt32($h.Substring(2, 2), 16) + 0.114 * [Convert]::ToInt32($h.Substring(4, 2), 16)) / 255.0
+    if ($l -gt 0.55) { return '#09090B' } else { return '#FFFFFF' }
+}
+
+function Get-ThemeTable {
+    param([string]$Mode, [string]$Key)
+    $t = @{}
+    foreach ($k in $Themes[$Mode].Keys) { $t[$k] = $Themes[$Mode][$k] }
+    if (-not $Palettes.Contains($Key)) { $Key = 'classic' }
+    $p = $Palettes[$Key]
+    if ($Mode -eq 'dark') {
+        $acc = $p.AccentDark
+        if (-not $p.Keep) {
+            $W = $p.W; $H = $p.Hi
+            $t.BgWindow = $W
+            $t.BgPanel = Get-Mix $W $H 0.035;   $t.Line = Get-Mix $W $H 0.10
+            $c1 = Get-Mix $W $H 0.035;         $t.HeaderBg = @($c1, $c1)
+            $c2 = Get-Mix $W $H 0.06;          $t.CardBg = @($c2, $c2)
+            $t.BtnBg = $c2;                    $t.BtnBorder = Get-Mix $W $H 0.15;   $t.HoverBorder = Get-Mix $W $H 0.28
+            $t.InputBg = Get-Mix $W $H 0.045;  $t.InputBgFocus = $c2;               $t.InputBorderHover = Get-Mix $W $H 0.20
+            $t.Edge = Get-Mix $W $H 0.11
+            $t.CatHover = Get-Mix $W $H 0.06;  $t.CatSelected = Get-Mix $W $H 0.13; $t.CardChecked = Get-Mix $W $H 0.075
+            $t.BadgeBg = Get-Mix $W $H 0.11;   $t.BadgeBg2 = Get-Mix $W $H 0.09
+            $t.ThumbBg = Get-Mix $W $H 0.16;   $t.ThumbHover = Get-Mix $W $H 0.28
+            $t.LogBg = Get-Mix $W '#000000' 0.45
+        }
+    }
+    else { $acc = $p.AccentLight }
+    $t.Accent = $acc; $t.FocusRing = $acc; $t.OnAccent = Get-OnColor $acc
+    return $t
+}
+
 function New-ThemeBrush {
     param([string]$Key, $Value)
     if ($Value -is [array]) {
@@ -1676,16 +1824,15 @@ function New-ThemeBrush {
 }
 
 function Update-ThemeButton {
-    # one half-filled circle icon in both modes; only the tooltip changes
-    if ($script:Theme -eq 'dark') { $script:btnTheme.ToolTip = $script:T.themeToLight }
-    else                          { $script:btnTheme.ToolTip = $script:T.themeToDark }
+    # one half-filled circle icon in both modes; the button opens the appearance panel
+    $script:btnTheme.ToolTip = $script:T.appearance.Substring(0, 1) + $script:T.appearance.Substring(1).ToLower()
     [System.Windows.Automation.AutomationProperties]::SetName($script:btnTheme, [string]$script:btnTheme.ToolTip)
 }
 
 function Set-Theme {
     param([ValidateSet('dark', 'light')][string]$Name)
     $script:Theme = $Name
-    $pal = $Themes[$Name]
+    $pal = Get-ThemeTable $Name $script:Palette
     foreach ($k in @($pal.Keys)) {
         # explicit [Brush] cast: unwraps the PowerShell PSObject wrapper (WPF rejects a wrapped value for Foreground/Background)
         [System.Windows.Media.Brush]$brush = New-ThemeBrush $k $pal[$k]
@@ -1696,7 +1843,7 @@ function Set-Theme {
     if ($Name -eq 'dark') { $cc = $CategoryColor } else { $cc = $CategoryColorLight }
     foreach ($key in $CategoryOrder) { if ($script:CatMap.ContainsKey($key)) { $script:CatMap[$key].Color = $cc[$key] } }
 
-    try { if ($script:Hwnd) { [MeshalDwm]::Apply($script:Hwnd, ($Name -eq 'dark')) } } catch { }
+    try { if ($script:Hwnd) { [MeshalDwm]::Apply($script:Hwnd, ($Name -eq 'dark'), [string]$pal.BgWindow, [string]$pal.Line) } } catch { }
     Update-ThemeButton
 }
 
@@ -2045,6 +2192,11 @@ function Apply-Language {
     $script:txtPreview.Text = $t.preview
     if ($ShowPreviewBadge) { $script:bdPreview.Visibility = 'Visible' } else { $script:bdPreview.Visibility = 'Collapsed' }
     $script:btnMore.ToolTip = $t.moreTip
+    $script:txtAppearance.Text = $t.appearance
+    $script:txtAtmosphere.Text = $t.atmosphere
+    $script:txtModeDark.Text = $t.modeDark
+    $script:txtModeLight.Text = $t.modeLight
+    Build-PaletteButtons
     $script:btnExport.Content = $t.menuExport
     $script:btnImport.Content = $t.menuImport
     $script:btnRefresh.Content = $t.menuRescan
@@ -3466,11 +3618,69 @@ $btnLang.Add_Click({
         $script:txtCatCount.Text = (Format-Apps $script:CurrentList.Count)
     })
 
+# ---- Appearance panel: dark / light mode + colour palettes -------------------------------
+function Update-ThemePanel {
+    if ($script:Theme -eq 'dark') { $script:btnModeDark.Tag = 'sel'; $script:btnModeLight.Tag = '' }
+    else                          { $script:btnModeDark.Tag = '';    $script:btnModeLight.Tag = 'sel' }
+    foreach ($c in $script:palGrid.Children) { if ([string]$c.DataContext -eq $script:Palette) { $c.Tag = 'sel' } else { $c.Tag = '' } }
+}
+
+$script:PalClick = {
+    param($s, $e)
+    $script:Palette = [string]$s.DataContext
+    Set-Theme $script:Theme
+    Save-Settings
+    Set-ViewMode $script:ViewMode
+    Update-ThemePanel
+}
+
+function Build-PaletteButtons {
+    $script:palGrid.Children.Clear()
+    $i = 0
+    foreach ($key in $Palettes.Keys) {
+        $p = $Palettes[$key]
+        $btn = New-Object System.Windows.Controls.Button
+        $btn.Style = $window.FindResource('PalBtn')
+        $btn.DataContext = $key
+        if ($i % 2 -eq 0) { $btn.Margin = New-Object System.Windows.Thickness(0, 0, 4, 8) } else { $btn.Margin = New-Object System.Windows.Thickness(4, 0, 0, 8) }
+        $sp = New-Object System.Windows.Controls.StackPanel
+        $sp.Orientation = 'Horizontal'
+        # colour preview: a circle, left half = highlight colour, right half = background colour
+        $sw = New-Object System.Windows.Controls.Grid
+        $sw.Width = 18; $sw.Height = 18; $sw.FlowDirection = 'LeftToRight'
+        $sw.Margin = New-Object System.Windows.Thickness(0, 0, 10, 0)
+        $el = New-Object System.Windows.Shapes.Ellipse
+        [System.Windows.Media.Brush]$bg = New-ThemeBrush 'x' $p.W
+        [System.Windows.Media.Brush]$ln = New-ThemeBrush 'x' (Get-Mix $p.W $p.Hi 0.45)
+        $el.Fill = $bg; $el.Stroke = $ln; $el.StrokeThickness = 1
+        $half = New-Object System.Windows.Shapes.Path
+        $half.Data = [System.Windows.Media.Geometry]::Parse('M9,0.5 A8.5,8.5 0 0 0 9,17.5 Z')
+        [System.Windows.Media.Brush]$ac = New-ThemeBrush 'x' $p.AccentDark
+        $half.Fill = $ac
+        [void]$sw.Children.Add($el); [void]$sw.Children.Add($half)
+        $tb = New-Object System.Windows.Controls.TextBlock
+        if ($script:Lang -eq 'ar') { $tb.Text = $p.Ar } else { $tb.Text = $p.En }
+        $tb.VerticalAlignment = 'Center'; $tb.TextTrimming = 'CharacterEllipsis'
+        [void]$sp.Children.Add($sw); [void]$sp.Children.Add($tb)
+        $btn.Content = $sp
+        $btn.Add_Click($script:PalClick)
+        [void]$script:palGrid.Children.Add($btn)
+        $i++
+    }
+    Update-ThemePanel
+}
+
+function Close-ThemePanel { $script:themeLayer.Visibility = 'Collapsed'; [void]$script:btnTheme.Focus() }
 $btnTheme.Add_Click({
-        if ($script:Theme -eq 'dark') { Set-Theme 'light' } else { Set-Theme 'dark' }
-        Save-Settings
-        Set-ViewMode $script:ViewMode
+        if ($script:themeLayer.Visibility -eq 'Visible') { Close-ThemePanel }
+        else { $script:menuLayer.Visibility = 'Collapsed'; Update-ThemePanel; $script:themeLayer.Visibility = 'Visible'; [void]$script:btnModeDark.Focus() }
     })
+$themeLayer.Add_MouseDown({
+        param($s, $e)
+        if ($e.OriginalSource -eq $script:themeLayer) { Close-ThemePanel }
+    })
+$btnModeDark.Add_Click({ Set-Theme 'dark'; Save-Settings; Set-ViewMode $script:ViewMode; Update-ThemePanel })
+$btnModeLight.Add_Click({ Set-Theme 'light'; Save-Settings; Set-ViewMode $script:ViewMode; Update-ThemePanel })
 
 $lstCats.Add_SelectionChanged({
         $sel = $script:lstCats.SelectedItem
@@ -3528,6 +3738,7 @@ $btnViewGrid.Add_Click({ Set-ViewMode 'grid'; Save-Settings })
 $btnViewList.Add_Click({ Set-ViewMode 'list'; Save-Settings })
 function Close-Menu { $script:menuLayer.Visibility = 'Collapsed'; [void]$script:btnMore.Focus() }
 $btnMore.Add_Click({
+        $script:themeLayer.Visibility = 'Collapsed'
         if ($script:menuLayer.Visibility -eq 'Visible') { Close-Menu } else { $script:menuLayer.Visibility = 'Visible'; [void]$script:btnExport.Focus() }
     })
 $menuLayer.Add_MouseDown({
@@ -3609,7 +3820,8 @@ function Import-Selection {
 $window.Add_PreviewKeyDown({
         param($s, $e)
         $ctrl = [System.Windows.Input.Keyboard]::Modifiers -band [System.Windows.Input.ModifierKeys]::Control
-        if ($e.Key -eq 'Escape' -and $script:menuLayer.Visibility -eq 'Visible') { Close-Menu; $e.Handled = $true }
+        if ($e.Key -eq 'Escape' -and $script:themeLayer.Visibility -eq 'Visible') { Close-ThemePanel; $e.Handled = $true }
+        elseif ($e.Key -eq 'Escape' -and $script:menuLayer.Visibility -eq 'Visible') { Close-Menu; $e.Handled = $true }
         elseif ($ctrl -and $e.Key -eq 'K') { $script:txtSearch.Focus() | Out-Null; $script:txtSearch.SelectAll(); $e.Handled = $true }
         elseif ($e.Key -eq 'Escape' -and $script:txtSearch.Text.Length -gt 0) { $script:txtSearch.Clear(); $e.Handled = $true }
         elseif ($e.Key -eq 'F5' -and (-not $script:Busy) -and (-not $script:ScanBusy)) { Start-InstalledScan; $e.Handled = $true }
