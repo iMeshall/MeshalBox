@@ -3021,6 +3021,7 @@
       "ar": "بلو ستاكس",
       "category": "Emulators",
       "domain": "bluestacks.com",
+      "lingers": true,
       "desc": "Run Android games and apps on your PC with keyboard and mouse controls.",
       "descAr": "شغّل ألعاب وتطبيقات أندرويد على الكمبيوتر بالتحكم بلوحة المفاتيح والماوس."
     },
