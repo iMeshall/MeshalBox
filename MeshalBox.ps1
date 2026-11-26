@@ -3247,17 +3247,36 @@ $worker = {
         }
 
         # is this winget id installed right now?  (used for installers that never exit by themselves)
-        function Test-WingetPresent([string]$id) {
+        function Test-WingetPresent([string]$id, [string]$name = '') {
             try {
                 $null = & winget list --id $id --exact --accept-source-agreements --disable-interactivity 2>&1
-                return ($LASTEXITCODE -eq 0)
-            } catch { return $false }
+                if ($LASTEXITCODE -eq 0) { return $true }
+            } catch { }
+            try {
+                # winget cannot always map an installed program to its package id: also look at Programs and Features
+                $keys = @()
+                $nm = ((([string]$name).ToLowerInvariant() -replace '\+', 'plus') -replace '[^\p{L}\p{Nd}]', '')
+                if ($nm.Length -ge 4) { $keys += $nm }
+                $parts = $id -split '\.'
+                if ($parts.Count -ge 2) {
+                    $tail = ((($parts | Select-Object -Skip 1) -join '').ToLowerInvariant() -replace '[^\p{L}\p{Nd}]', '')
+                    if ($tail.Length -ge 4) { $keys += $tail }
+                }
+                foreach ($rk in @('HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*', 'HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*', 'HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*')) {
+                    foreach ($it in @(Get-ItemProperty -Path $rk -ErrorAction SilentlyContinue)) {
+                        if (-not $it.DisplayName) { continue }
+                        $n = ((([string]$it.DisplayName).ToLowerInvariant() -replace '\+', 'plus') -replace '[^\p{L}\p{Nd}]', '')
+                        foreach ($k in $keys) { if ($n -eq $k -or $n.StartsWith($k)) { return $true } }
+                    }
+                }
+            } catch { }
+            return $false
         }
 
         # runs one winget command (output captured through a temp file so Stop can kill it at any moment)
         # $watchId/$watchWant ('present' after an install, 'absent' after an uninstall): for apps whose installer keeps
         # running after the work is done (Riot Client...) the real state is checked and the job is finished once it matches.
-        function Run-Winget([string]$wcmd, [string]$lineId, [string]$lineMode, [bool]$limited = $false, [string]$watchId = '', [string]$watchWant = '') {
+        function Run-Winget([string]$wcmd, [string]$lineId, [string]$lineMode, [bool]$limited = $false, [string]$watchId = '', [string]$watchWant = '', [string]$watchName = '') {
             $code = -1
             $lastOutAt = Get-Date; $lastProbeAt = Get-Date; $hits = 0; $assumed = $false
             $logFile = Join-Path $env:TEMP ('meshalbox_' + [guid]::NewGuid().ToString('N') + '.log')
@@ -3317,7 +3336,6 @@ $worker = {
                             $fs = New-Object System.IO.FileStream($logFile, [System.IO.FileMode]::Open, [System.IO.FileAccess]::Read, [System.IO.FileShare]'ReadWrite,Delete')
                             try {
                                 if ($fs.Length -gt $pos) {
-                                    $lastOutAt = Get-Date
                                     [void]$fs.Seek($pos, [System.IO.SeekOrigin]::Begin)
                                     $bytes = New-Object byte[] ([int]($fs.Length - $pos))
                                     $n = $fs.Read($bytes, 0, $bytes.Length)
@@ -3327,7 +3345,12 @@ $worker = {
                                     for ($i = 0; $i -lt $cn; $i++) {
                                         $ch = $chars[$i]
                                         if ($ch -eq [char]13 -or $ch -eq [char]10) {
-                                            if ($sb.Length -gt 0) { Send-Line $lineMode $lineId $sb.ToString(); [void]$sb.Clear() }
+                                            if ($sb.Length -gt 0) {
+                                                $ln = $sb.ToString()
+                                                # only real messages reset the silence timer, not spinner frames or "12 MB / 40 MB" progress redraws
+                                                if (($ln -match '[A-Za-z]{4,}') -and ($ln -notmatch '\d\s*[KMG]?B\s*/')) { $lastOutAt = Get-Date }
+                                                Send-Line $lineMode $lineId $ln; [void]$sb.Clear()
+                                            }
                                         }
                                         else { [void]$sb.Append($ch) }
                                     }
@@ -3339,7 +3362,7 @@ $worker = {
                     if ((-not $exited) -and $watchId -and (-not $limited) -and (-not $sync.Cancel)) {
                         $now = Get-Date
                         if ((($now - $lastOutAt).TotalSeconds -ge 20) -and (($now - $lastProbeAt).TotalSeconds -ge 6)) {
-                            if ((Test-WingetPresent $watchId) -eq ($watchWant -eq 'present')) { $hits++ } else { $hits = 0 }
+                            if ((Test-WingetPresent $watchId $watchName) -eq ($watchWant -eq 'present')) { $hits++ } else { $hits = 0 }
                             $lastProbeAt = Get-Date
                             if ($hits -ge 2) {
                                 $sync.Queue.Enqueue("log|$lineId|Finished - the installer is still open in the background, closing it.")
@@ -3411,7 +3434,7 @@ $worker = {
                     if ($app.Source -eq 'msstore') { $ucmd += ' --source msstore' }
                 }
                 $wId = ''; if ($app.Lingers) { $wId = $app.Id }
-                $code = Run-Winget $ucmd $app.Id 'install' $false $wId 'absent'
+                $code = Run-Winget $ucmd $app.Id 'install' $false $wId 'absent' ([string]$app.Name)
                 # user-scope package + elevated session -> winget refuses (0x8A15007D-style error); retry without admin rights
                 if (($code -eq -1978335107) -and -not $sync.Cancel) {
                     $sync.Queue.Enqueue("log|$($app.Id)|User-scope app - retrying the removal without administrator rights...")
@@ -3502,7 +3525,7 @@ $worker = {
             $wcmd = 'winget install --id ' + $app.Id + ' --exact --silent --accept-package-agreements --accept-source-agreements --disable-interactivity'
             if ($app.Source) { $wcmd += ' --source ' + $app.Source }
             $wId = ''; if ($app.Lingers) { $wId = $app.Id }
-            $code = Run-Winget $wcmd $app.Id 'install' $false $wId 'present'
+            $code = Run-Winget $wcmd $app.Id 'install' $false $wId 'present' ([string]$app.Name)
 
             # Some packages (e.g. Battle.net) refuse to install unless an install location is given
             # (winget error 0x8A15005F = -1978335137): retry once with --location.
