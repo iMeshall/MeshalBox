@@ -2995,6 +2995,32 @@ $worker = {
         }
         # ---------------------------------------------------------------------------------
 
+        # ---- 'direct' apps (FiveM, RedM): desktop shortcut straight to the installed launcher ----
+        # (these launchers do not reliably leave a Start Menu shortcut for the generic detection to copy)
+        function Get-DirectExe($app) {
+            $dirName = ([string]$app.Dir -replace '[^A-Za-z0-9._-]', '')
+            if (-not $dirName) { $dirName = (([string]$app.Name) -replace '[^A-Za-z0-9._-]', '') }
+            return (Join-Path (Join-Path $env:LOCALAPPDATA $dirName) ([System.IO.Path]::GetFileName(([uri]$app.Url).AbsolutePath)))
+        }
+        function New-DirectShortcut($app) {
+            $made = @()
+            try {
+                $exe = Get-DirectExe $app
+                if ((-not $desktop) -or (-not (Test-Path -LiteralPath $desktop)) -or (-not (Test-Path -LiteralPath $exe))) { return @() }
+                $leaf = (([string]$app.Name) -replace '[\\/:*?"<>|]', '_') + '.lnk'
+                $dest = Join-Path $desktop $leaf
+                if ((Test-Path -LiteralPath $dest) -or ($publicDesktop -and (Test-Path -LiteralPath (Join-Path $publicDesktop $leaf)))) { return @() }
+                $ws  = New-Object -ComObject WScript.Shell
+                $lnk = $ws.CreateShortcut($dest)
+                $lnk.TargetPath       = $exe
+                $lnk.WorkingDirectory = (Split-Path -Parent $exe)
+                $lnk.IconLocation     = $exe + ',0'
+                $lnk.Save()
+                if (Test-Path -LiteralPath $dest) { $made = @([string]$app.Name); try { Update-ShellIcons } catch { } }
+            } catch { }
+            return $made
+        }
+
         # ---- 'direct' apps (FiveM, RedM): the official small installer is downloaded and started as the normal (non-admin) user ----
         # The finished install is detected through its Programs-and-Features entry. Returns 0 = installed, -1978335135 = already
         # installed, $null = could not do it automatically (the caller opens the official page instead).
@@ -3298,7 +3324,8 @@ $worker = {
                 if (@(0, 3010, -1978335135) -contains $code) {
                     try {
                         if ($code -ne -1978335135) { Start-Sleep -Milliseconds 1500 }
-                        $made = @(New-DesktopShortcuts $app $before)
+                        $made = @(New-DirectShortcut $app)
+                        if ($made.Count -eq 0) { $made = @(New-DesktopShortcuts $app $before) }
                         if ($made.Count -gt 0) { $sync.Queue.Enqueue("shortcut|$($app.Id)|$($made -join ', ')") }
                     } catch { }
                 }
