@@ -170,7 +170,11 @@ public class MeshalApp : INotifyPropertyChanged
     public string Domain { get; set; }
     public string Source { get; set; }
     public string Url { get; set; }          // 'direct' apps: official installer link
-    public string Dir { get; set; }          // 'direct' apps: folder under %LocalAppData% the installer is started from
+    public string Dir { get; set; }          // 'direct'/'portable' apps: folder under %LocalAppData%
+    public string Repo { get; set; }         // 'portable' apps: GitHub owner/name that publishes the release archive
+    public string Asset { get; set; }        // 'portable' apps: regex that picks the right file of the latest release
+    public string Exe { get; set; }          // 'portable' apps: main program file inside Dir
+    public string[] Keep { get; set; }       // 'portable' apps: user-data folders that uninstall must keep
     public bool Lingers { get; set; }        // installer/uninstaller keeps running after it is done (e.g. Riot Client) -> finish by checking the real state
     public string Initial { get; set; }
     public string Color { get; set; }
@@ -467,7 +471,7 @@ $Strings = @{
         cat_Utilities = 'Utilities'; cat_Security = 'Security'; cat_Productivity = 'Productivity'
         cat_Design = 'Design'; cat_Cloud = 'Cloud'; cat_Runtimes = 'Runtimes'
         cat_ProTools = 'Pro Tools'; cat_Microsoft = 'Microsoft'; cat_Selfhosted = 'Self-hosted'; cat_Store = 'Store Apps'
-        cat_Peripherals = 'Peripherals'; cat_Installed = 'Installed'
+        cat_Peripherals = 'Peripherals'; cat_Installed = 'Installed'; cat_Emulators = 'Emulators'
         upgradeAll    = [string][char]0x21BB + '  Upgrade all'
         uninstallBtn  = 'Uninstall'
         st_uninstalling = [string][char]0x2715 + ' Removing...'
@@ -629,7 +633,7 @@ $Strings = @{
         cat_Utilities = 'الأدوات'; cat_Security = 'الأمان'; cat_Productivity = 'الإنتاجية'
         cat_Design = 'التصميم'; cat_Cloud = 'السحابة'; cat_Runtimes = 'المكتبات'
         cat_ProTools = 'أدوات احترافية'; cat_Microsoft = 'مايكروسوفت'; cat_Selfhosted = 'استضافة ذاتية'; cat_Store = 'تطبيقات المتجر'
-        cat_Peripherals = 'الملحقات'; cat_Installed = 'المثبّتة'
+        cat_Peripherals = 'الملحقات'; cat_Installed = 'المثبّتة'; cat_Emulators = 'المحاكيات'
         upgradeAll    = [string][char]0x21BB + '  تحديث الكل'
         uninstallBtn  = 'إزالة'
         st_uninstalling = [string][char]0x2715 + ' جارٍ الإزالة...'
@@ -746,13 +750,13 @@ $Strings = @{
 #    { "id": "Publisher.App", "en": "Name", "ar": "الاسم", "category": "Utilities", "domain": "site.com" }
 #    (add  "source": "msstore"  for Store apps).  Find ids with:  winget search <name>
 # ----------------------------------------------------------------------------
-$CategoryOrder = @('All', 'Selected', 'Installed', 'Browsers', 'Gaming', 'Peripherals', 'Communication', 'Media', 'Development',
+$CategoryOrder = @('All', 'Selected', 'Installed', 'Browsers', 'Gaming', 'Emulators', 'Peripherals', 'Communication', 'Media', 'Development',
                    'Utilities', 'Security', 'Productivity', 'Design', 'Cloud', 'Runtimes',
                    'ProTools', 'Microsoft', 'Selfhosted', 'Store')
 $CategoryGlyph = @{
     # Monochrome Segoe Fluent / MDL2 icon glyphs (same colour as the text, no coloured emoji)
     All = [string][char]0xE8A9; Selected = [string][char]0xE73E; Installed = [string][char]0xE7B8
-    Browsers = [string][char]0xE774; Gaming = [string][char]0xE7FC
+    Browsers = [string][char]0xE774; Gaming = [string][char]0xE7FC; Emulators = [string][char]0xE7F4
     Peripherals = [string][char]0xE765
     Communication = [string][char]0xE8F2; Media = [string][char]0xE714
     Development = [string][char]0xE943; Utilities = [string][char]0xE90F
@@ -765,7 +769,7 @@ $CategoryGlyph = @{
 
 # Bright colours so the (monochrome) emoji glyphs are clearly visible on the dark background
 $CategoryColor = @{
-    All = '#E5E7EB'; Selected = '#4ADE80'; Installed = '#A78BFA'; Browsers = '#60A5FA'; Gaming = '#C084FC'; Peripherals = '#F9A8D4'
+    All = '#E5E7EB'; Selected = '#4ADE80'; Installed = '#A78BFA'; Browsers = '#60A5FA'; Gaming = '#C084FC'; Emulators = '#818CF8'; Peripherals = '#F9A8D4'
     Communication = '#34D399'; Media = '#F472B6'; Development = '#38BDF8'; Utilities = '#FBBF24'
     Security = '#F87171'; Productivity = '#A3E635'; Design = '#FB923C'; Cloud = '#7DD3FC'
     Runtimes = '#CBD5E1'
@@ -774,7 +778,7 @@ $CategoryColor = @{
 
 # Darker versions of the same colours so the icons stay readable on the light background
 $CategoryColorLight = @{
-    All = '#6B7280'; Selected = '#16A34A'; Installed = '#7C3AED'; Browsers = '#2563EB'; Gaming = '#9333EA'; Peripherals = '#DB2777'
+    All = '#6B7280'; Selected = '#16A34A'; Installed = '#7C3AED'; Browsers = '#2563EB'; Gaming = '#9333EA'; Emulators = '#4F46E5'; Peripherals = '#DB2777'
     Communication = '#059669'; Media = '#BE185D'; Development = '#0284C7'; Utilities = '#D97706'
     Security = '#DC2626'; Productivity = '#65A30D'; Design = '#EA580C'; Cloud = '#0891B2'
     Runtimes = '#64748B'
@@ -824,6 +828,10 @@ foreach ($e in $catalog.apps) {
     if ([string]$e.source -eq 'web') { if ([string]$e.id -notmatch '^https://[^\s"&|<>^]+$') { $script:CatalogSkipped++; continue } }
     elseif ([string]$e.id -notmatch '^[A-Za-z0-9][A-Za-z0-9.\-_+]*$') { $script:CatalogSkipped++; continue }
     if ([string]$e.source -eq 'direct') { if ([string]$e.url -notmatch '^https://[^\s"&|<>^]+\.exe$') { $script:CatalogSkipped++; continue } }
+    if ([string]$e.source -eq 'portable') {
+        # GitHub release archive that is unpacked into %LocalAppData%\<dir> (values end up in paths and a regex, so keep them strict)
+        if (([string]$e.repo -notmatch '^[A-Za-z0-9._-]+/[A-Za-z0-9._-]+$') -or ([string]$e.asset -notmatch '^[A-Za-z0-9_.\-\\*+?|()\[\]^$]+$') -or ([string]$e.dir -notmatch '^[A-Za-z0-9._-]+$') -or ([string]$e.exe -notmatch '^[A-Za-z0-9._-]+\.exe$')) { $script:CatalogSkipped++; continue }
+    }
     if ($script:ById.ContainsKey([string]$e.id)) { continue }   # never list the same program twice
     $a = New-Object MeshalApp
     $a.Id = [string]$e.id; $a.NameEn = [string]$e.en
@@ -836,6 +844,10 @@ foreach ($e in $catalog.apps) {
     if ($e.lingers -eq $true) { $a.Lingers = $true }
     if ($e.url) { $a.Url = [string]$e.url }
     if ($e.dir) { $a.Dir = [string]$e.dir }
+    if ($e.repo) { $a.Repo = [string]$e.repo }
+    if ($e.asset) { $a.Asset = [string]$e.asset }
+    if ($e.exe) { $a.Exe = [string]$e.exe }
+    if ($e.keep) { $a.Keep = [string[]]@($e.keep | ForEach-Object { [string]$_ }) }
     if ($TileOverride.ContainsKey($a.Id)) { $a.TileForce = $TileOverride[$a.Id] }
     $a.Initial = $a.NameEn.Substring(0, 1).ToUpper()
     if ((-not $a.Domain) -and $StoreGlyph.ContainsKey($a.Id)) { $a.Initial = [char]::ConvertFromUtf32([int]$StoreGlyph[$a.Id]) }
@@ -3002,10 +3014,11 @@ $worker = {
             if (-not $dirName) { $dirName = (([string]$app.Name) -replace '[^A-Za-z0-9._-]', '') }
             return (Join-Path (Join-Path $env:LOCALAPPDATA $dirName) ([System.IO.Path]::GetFileName(([uri]$app.Url).AbsolutePath)))
         }
-        function New-DirectShortcut($app) {
+        function New-DirectShortcut($app, [string]$exeOverride = '') {
             $made = @()
             try {
-                $exe = Get-DirectExe $app
+                $exe = $exeOverride
+                if (-not $exe) { $exe = Get-DirectExe $app }
                 if ((-not $desktop) -or (-not (Test-Path -LiteralPath $desktop)) -or (-not (Test-Path -LiteralPath $exe))) { return @() }
                 $leaf = (([string]$app.Name) -replace '[\\/:*?"<>|]', '_') + '.lnk'
                 $dest = Join-Path $desktop $leaf
@@ -3097,6 +3110,123 @@ $worker = {
             }
             $q.Enqueue("log|$id|The installer did not finish within 10 minutes.")
             return $null
+        }
+
+        # ---- 'portable' apps (RPCS3): the latest GitHub release archive is downloaded and unpacked into %LocalAppData%\<dir> ----
+        function Find-SevenZip {
+            foreach ($c in @((Join-Path $env:ProgramFiles '7-Zip\7z.exe'), (Join-Path ${env:ProgramFiles(x86)} '7-Zip\7z.exe'))) { if ($c -and (Test-Path -LiteralPath $c)) { return $c } }
+            $cmd = Get-Command '7z.exe' -ErrorAction SilentlyContinue
+            if ($cmd) { return $cmd.Source }
+            return $null
+        }
+        function Get-PortableDir($app) {
+            $d = ([string]$app.Dir -replace '[^A-Za-z0-9._-]', '')
+            return (Join-Path $env:LOCALAPPDATA $d)
+        }
+        # returns 0 = installed, -1978335135 = already installed, $null = could not do it automatically
+        function Install-PortableApp($app) {
+            $q    = $sync.Queue
+            $id   = $app.Id
+            $ua   = 'MeshalBox'
+            try { [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 } catch { }
+            $dir  = Get-PortableDir $app
+            $exe  = Join-Path $dir ([string]$app.Exe)
+            if (Test-Path -LiteralPath $exe) { return -1978335135 }
+
+            $q.Enqueue("log|$id|Looking for the latest release on GitHub...")
+            $url = $null
+            try {
+                $rel = Invoke-RestMethod -Uri ('https://api.github.com/repos/' + $app.Repo + '/releases/latest') -Headers @{ 'User-Agent' = $ua; 'Accept' = 'application/vnd.github+json' } -TimeoutSec 30
+                foreach ($as in @($rel.assets)) { if ([string]$as.name -match [string]$app.Asset) { $url = [string]$as.browser_download_url; break } }
+            }
+            catch { $q.Enqueue("log|$id|GitHub request failed: $($_.Exception.Message)"); return $null }
+            if (-not $url -or $url -notmatch '^https://') { $q.Enqueue("log|$id|No matching download was found in the latest release."); return $null }
+
+            $work    = Join-Path $env:TEMP ('meshalbox_' + [guid]::NewGuid().ToString('N'))
+            $archive = Join-Path $work 'download.7z'
+            $unpack  = Join-Path $work 'unpacked'
+            try {
+                [void](New-Item -ItemType Directory -Path $unpack -Force)
+                $q.Enqueue("log|$id|Downloading: $url")
+                $req = [Net.HttpWebRequest]::Create($url); $req.UserAgent = $ua; $req.Timeout = 30000; $req.ReadWriteTimeout = 30000
+                $resp = $req.GetResponse(); $total = $resp.ContentLength
+                $inS = $resp.GetResponseStream(); $outS = [System.IO.File]::Create($archive)
+                try {
+                    $buf = New-Object byte[] 81920; $got = 0; $last = 0.0
+                    while (($n = $inS.Read($buf, 0, $buf.Length)) -gt 0) {
+                        if ($sync.Cancel) { throw 'cancelled' }
+                        $outS.Write($buf, 0, $n); $got += $n
+                        if ($total -gt 0) {
+                            $fr = $got / $total
+                            if (($fr - $last) -ge 0.01) { $last = $fr; $q.Enqueue("prog|$id|" + ([double]$fr * 0.9).ToString([Globalization.CultureInfo]::InvariantCulture)) }
+                        }
+                    }
+                } finally { $outS.Close(); $inS.Close(); $resp.Close() }
+
+                $sz = Find-SevenZip
+                if (-not $sz) {
+                    $q.Enqueue("log|$id|7-Zip is needed to unpack this download - installing it first...")
+                    try { $null = & winget install --id 7zip.7zip --exact --silent --accept-package-agreements --accept-source-agreements --disable-interactivity 2>&1 } catch { }
+                    $sz = Find-SevenZip
+                }
+                if (-not $sz) { $q.Enqueue("log|$id|7-Zip could not be installed."); return $null }
+
+                $q.Enqueue("log|$id|Unpacking...")
+                $null = & $sz x $archive ('-o' + $unpack) -y 2>&1
+                if ($LASTEXITCODE -ne 0) { $q.Enqueue("log|$id|Unpacking failed (7-Zip code $LASTEXITCODE)."); return $null }
+
+                $exeName = [string]$app.Exe
+                $hit = Get-ChildItem -LiteralPath $unpack -Recurse -Filter $exeName -File -ErrorAction SilentlyContinue | Select-Object -First 1
+                if (-not $hit) { $q.Enqueue("log|$id|$exeName was not found in the download."); return $null }
+                [void](New-Item -ItemType Directory -Path $dir -Force)
+                Copy-Item -Path (Join-Path $hit.DirectoryName '*') -Destination $dir -Recurse -Force
+                $q.Enqueue("prog|$id|1")
+            }
+            catch {
+                if (-not $sync.Cancel) { $q.Enqueue("log|$id|$($_.Exception.Message)") }
+                if ($sync.Cancel) { return -1 }
+                return $null
+            }
+            finally { try { Remove-Item -LiteralPath $work -Recurse -Force -ErrorAction SilentlyContinue } catch { } }
+
+            if (-not (Test-Path -LiteralPath $exe)) { return $null }
+            # Start Menu entry (the desktop shortcut is made by the caller)
+            try {
+                $programs = [Environment]::GetFolderPath('Programs')
+                if ($programs -and (Test-Path -LiteralPath $programs)) {
+                    $leaf = (([string]$app.Name) -replace '[\\/:*?"<>|]', '_') + '.lnk'
+                    $dest = Join-Path $programs $leaf
+                    if (-not (Test-Path -LiteralPath $dest)) {
+                        $ws = New-Object -ComObject WScript.Shell
+                        $lnk = $ws.CreateShortcut($dest); $lnk.TargetPath = $exe; $lnk.WorkingDirectory = $dir; $lnk.IconLocation = $exe + ',0'; $lnk.Save()
+                    }
+                }
+            } catch { }
+            return 0
+        }
+        # removes the program but keeps the folders listed in "keep" (saves, games, firmware...). Returns 0 when the program is gone.
+        function Remove-PortableApp($app) {
+            $q   = $sync.Queue
+            $id  = $app.Id
+            $dir = Get-PortableDir $app
+            $exe = Join-Path $dir ([string]$app.Exe)
+            try { Get-Process -Name ([System.IO.Path]::GetFileNameWithoutExtension($exe)) -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue } catch { }
+            $leaf = (([string]$app.Name) -replace '[\\/:*?"<>|]', '_') + '.lnk'
+            foreach ($folder in @($desktop, $publicDesktop, [Environment]::GetFolderPath('Programs'))) {
+                try { if ($folder) { $f = Join-Path $folder $leaf; if (Test-Path -LiteralPath $f) { Remove-Item -LiteralPath $f -Force -ErrorAction SilentlyContinue } } } catch { }
+            }
+            $keep = @($app.Keep)
+            $kept = $false
+            if (Test-Path -LiteralPath $dir) {
+                foreach ($it in @(Get-ChildItem -LiteralPath $dir -Force -ErrorAction SilentlyContinue)) {
+                    if ($keep -contains $it.Name) { $kept = $true; continue }
+                    try { Remove-Item -LiteralPath $it.FullName -Recurse -Force -ErrorAction Stop } catch { $q.Enqueue("log|$id|Could not remove $($it.Name): $($_.Exception.Message)") }
+                }
+                if (-not @(Get-ChildItem -LiteralPath $dir -Force -ErrorAction SilentlyContinue)) { try { Remove-Item -LiteralPath $dir -Force -ErrorAction SilentlyContinue } catch { } }
+            }
+            if ($kept) { $q.Enqueue("log|$id|Your data folders were kept in: $dir") }
+            if (Test-Path -LiteralPath $exe) { return -1 }
+            return 0
         }
 
         function Send-UpgradeLine([string]$raw) {
@@ -3262,6 +3392,13 @@ $worker = {
 
             # ---- Uninstall mode ----
             if ($mode -eq 'uninstall') {
+                if ($app.Source -eq 'portable') {
+                    $sync.Queue.Enqueue("start|$($app.Id)|")
+                    $code = -1
+                    try { $code = [int](Remove-PortableApp $app) } catch { $sync.Queue.Enqueue("log|$($app.Id)|$($_.Exception.Message)"); $code = -1 }
+                    $sync.Queue.Enqueue("done|$($app.Id)|$code")
+                    continue
+                }
                 if ($app.Source -eq 'web') { $sync.Queue.Enqueue("log|$($app.Id)|Cannot remove automatically - uninstall it from Windows Settings."); $sync.Queue.Enqueue("skip|$($app.Id)|"); continue }
                 $sync.Queue.Enqueue("start|$($app.Id)|")
                 if ($app.Source -eq 'nvapp') { $ucmd = 'winget uninstall --name "NVIDIA app" --silent --accept-source-agreements --disable-interactivity' }
@@ -3326,6 +3463,27 @@ $worker = {
                         if ($code -ne -1978335135) { Start-Sleep -Milliseconds 1500 }
                         $made = @(New-DirectShortcut $app)
                         if ($made.Count -eq 0) { $made = @(New-DesktopShortcuts $app $before) }
+                        if ($made.Count -gt 0) { $sync.Queue.Enqueue("shortcut|$($app.Id)|$($made -join ', ')") }
+                    } catch { }
+                }
+                $sync.Queue.Enqueue("done|$($app.Id)|$code")
+                continue
+            }
+            if ($app.Source -eq 'portable') {
+                $sync.Queue.Enqueue("start|$($app.Id)|")
+                $code = -1
+                try { $res = Install-PortableApp $app; if ($null -eq $res) { $code = $null } else { $code = [int]$res } }
+                catch { $sync.Queue.Enqueue("log|$($app.Id)|$($_.Exception.Message)"); $code = -1 }
+                if ($sync.Cancel -and (@(0, 3010, -1978335135) -notcontains $code)) { $sync.Queue.Enqueue("skip|$($app.Id)|"); continue }
+                if ($null -eq $code) {
+                    # could not install automatically: fall back to opening the official page
+                    try { if ($app.Domain) { Start-Process ('https://' + $app.Domain + '/') } } catch { }
+                    $sync.Queue.Enqueue("manual|$($app.Id)|")
+                    continue
+                }
+                if (@(0, 3010, -1978335135) -contains $code) {
+                    try {
+                        $made = @(New-DirectShortcut $app (Join-Path (Get-PortableDir $app) ([string]$app.Exe)))
                         if ($made.Count -gt 0) { $sync.Queue.Enqueue("shortcut|$($app.Id)|$($made -join ', ')") }
                     } catch { }
                 }
@@ -3443,7 +3601,11 @@ $scanWorker = {
                 $rx = '(?i)(?<![\w\.\-])' + [regex]::Escape($a.Id) + '(?:\.(?:x86|x64|arm64))?(?![\w\.\-])'
                 if ($text -match $rx) { $hit = $true }
             }
-            if (-not $hit) {
+            if ($a.Source -eq 'portable') {
+                # no Programs-and-Features entry: it is installed when its program file exists
+                try { if (Test-Path -LiteralPath (Join-Path (Join-Path $env:LOCALAPPDATA ([string]$a.Dir)) ([string]$a.Exe))) { $hit = $true } } catch { }
+            }
+            elseif (-not $hit) {
                 # candidate names: the catalog name and the winget Id without its publisher (Discord.Discord.PTB -> discordptb)
                 $keys = New-Object 'System.Collections.Generic.List[string]'
                 $nm = Norm ([string]$a.Name)
@@ -3495,7 +3657,7 @@ function Start-InstalledScan {
     if (-not $script:Busy) { $script:txtProgress.Text = $script:T.scanStart }
     if ($script:Cat -eq 'Installed') { Refresh-Grid }
     $script:ScanResult = [hashtable]::Synchronized(@{ Done = $false; Ids = @() })
-    $list = @($script:Apps | ForEach-Object { [pscustomobject]@{ Id = $_.Id; Name = $_.NameEn; Source = $_.Source } })
+    $list = @($script:Apps | ForEach-Object { [pscustomobject]@{ Id = $_.Id; Name = $_.NameEn; Source = $_.Source; Dir = $_.Dir; Exe = $_.Exe } })
     $rs = [runspacefactory]::CreateRunspace()
     $rs.ApartmentState = 'MTA'
     $rs.Open()
@@ -3705,7 +3867,7 @@ function Start-Work {
     $script:Sync.Queue = New-Object 'System.Collections.Concurrent.ConcurrentQueue[object]'
 
     $list = @()
-    if ($Mode -ne 'upgradeall') { $list = @($Sel | ForEach-Object { [pscustomobject]@{ Id = $_.Id; Name = $_.NameEn; Source = $_.Source; Lingers = $_.Lingers; Url = $_.Url; Dir = $_.Dir; Domain = $_.Domain } }) }
+    if ($Mode -ne 'upgradeall') { $list = @($Sel | ForEach-Object { [pscustomobject]@{ Id = $_.Id; Name = $_.NameEn; Source = $_.Source; Lingers = $_.Lingers; Url = $_.Url; Dir = $_.Dir; Domain = $_.Domain; Repo = $_.Repo; Asset = $_.Asset; Exe = $_.Exe; Keep = $_.Keep } }) }
 
     $rs = [runspacefactory]::CreateRunspace()
     $rs.ApartmentState = 'MTA'
