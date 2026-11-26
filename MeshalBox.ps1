@@ -128,6 +128,8 @@ public class MeshalApp : INotifyPropertyChanged
     public string CategoryName { get { return _categoryName; } set { _categoryName = value; Raise("CategoryName"); } }
     public string Domain { get; set; }
     public string Source { get; set; }
+    public string Url { get; set; }          // 'direct' apps: official installer link
+    public string Dir { get; set; }          // 'direct' apps: folder under %LocalAppData% the installer is started from
     public bool Lingers { get; set; }        // installer/uninstaller keeps running after it is done (e.g. Riot Client) -> finish by checking the real state
     public string Initial { get; set; }
     public string Color { get; set; }
@@ -780,6 +782,7 @@ foreach ($e in $catalog.apps) {
     # Safety: ids are placed into a cmd.exe command line, so only allow winget-style ids (or https links for 'web' entries)
     if ([string]$e.source -eq 'web') { if ([string]$e.id -notmatch '^https://[^\s"&|<>^]+$') { $script:CatalogSkipped++; continue } }
     elseif ([string]$e.id -notmatch '^[A-Za-z0-9][A-Za-z0-9.\-_+]*$') { $script:CatalogSkipped++; continue }
+    if ([string]$e.source -eq 'direct') { if ([string]$e.url -notmatch '^https://[^\s"&|<>^]+\.exe$') { $script:CatalogSkipped++; continue } }
     if ($script:ById.ContainsKey([string]$e.id)) { continue }   # never list the same program twice
     $a = New-Object MeshalApp
     $a.Id = [string]$e.id; $a.NameEn = [string]$e.en
@@ -790,6 +793,8 @@ foreach ($e in $catalog.apps) {
     $a.Source = if ($e.source) { [string]$e.source } else { '' }
     if ($e.pkg) { $a.Pkg = [string]$e.pkg }
     if ($e.lingers -eq $true) { $a.Lingers = $true }
+    if ($e.url) { $a.Url = [string]$e.url }
+    if ($e.dir) { $a.Dir = [string]$e.dir }
     if ($TileOverride.ContainsKey($a.Id)) { $a.TileForce = $TileOverride[$a.Id] }
     $a.Initial = $a.NameEn.Substring(0, 1).ToUpper()
     if ((-not $a.Domain) -and $StoreGlyph.ContainsKey($a.Id)) { $a.Initial = [char]::ConvertFromUtf32([int]$StoreGlyph[$a.Id]) }
@@ -2949,6 +2954,84 @@ $worker = {
         }
         # ---------------------------------------------------------------------------------
 
+        # ---- 'direct' apps (FiveM, RedM): the official small installer is downloaded and started as the normal (non-admin) user ----
+        # The finished install is detected through its Programs-and-Features entry. Returns 0 = installed, -1978335135 = already
+        # installed, $null = could not do it automatically (the caller opens the official page instead).
+        function Install-DirectApp($app) {
+            $q    = $sync.Queue
+            $id   = $app.Id
+            $name = [string]$app.Name
+            $ua   = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36'
+            try { [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 } catch { }
+            $testArp = {
+                foreach ($rk in @('HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*', 'HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*', 'HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*')) {
+                    try { if (Get-ItemProperty -Path $rk -ErrorAction SilentlyContinue | Where-Object { $_.DisplayName -like ($name + '*') }) { return $true } } catch { }
+                }
+                return $false
+            }
+            if (& $testArp) { return -1978335135 }
+
+            $dirName = ([string]$app.Dir -replace '[^A-Za-z0-9._-]', '')
+            if (-not $dirName) { $dirName = ($name -replace '[^A-Za-z0-9._-]', '') }
+            $dir  = Join-Path $env:LOCALAPPDATA $dirName
+            $file = [System.IO.Path]::GetFileName(([uri]$app.Url).AbsolutePath)
+            $exe  = Join-Path $dir $file
+            $part = $exe + '.part'
+            try { [void](New-Item -ItemType Directory -Path $dir -Force) } catch { $q.Enqueue("log|$id|$($_.Exception.Message)"); return $null }
+
+            $q.Enqueue("log|$id|Downloading: $($app.Url)")
+            try {
+                $req = [Net.HttpWebRequest]::Create($app.Url); $req.UserAgent = $ua; $req.Timeout = 30000; $req.ReadWriteTimeout = 30000
+                $resp = $req.GetResponse(); $total = $resp.ContentLength
+                $inS = $resp.GetResponseStream(); $outS = [System.IO.File]::Create($part)
+                try {
+                    $buf = New-Object byte[] 81920; $got = 0; $last = 0.0
+                    while (($n = $inS.Read($buf, 0, $buf.Length)) -gt 0) {
+                        if ($sync.Cancel) { throw 'cancelled' }
+                        $outS.Write($buf, 0, $n); $got += $n
+                        if ($total -gt 0) {
+                            $fr = $got / $total
+                            if (($fr - $last) -ge 0.01) { $last = $fr; $q.Enqueue("prog|$id|" + ([double]$fr).ToString([Globalization.CultureInfo]::InvariantCulture)) }
+                        }
+                    }
+                } finally { $outS.Close(); $inS.Close(); $resp.Close() }
+                $q.Enqueue("prog|$id|1")
+            }
+            catch {
+                Remove-Item -LiteralPath $part -Force -ErrorAction SilentlyContinue
+                if (-not $sync.Cancel) { $q.Enqueue("log|$id|Download failed: $($_.Exception.Message)") }
+                return $null
+            }
+
+            # must really be a Windows program (MZ header) and not an error page
+            $valid = $false
+            try {
+                if ((Get-Item -LiteralPath $part).Length -gt 200KB) {
+                    $fs = [System.IO.File]::OpenRead($part)
+                    try { $valid = (($fs.ReadByte() -eq 0x4D) -and ($fs.ReadByte() -eq 0x5A)) } finally { $fs.Close() }
+                }
+            } catch { }
+            if (-not $valid) {
+                Remove-Item -LiteralPath $part -Force -ErrorAction SilentlyContinue
+                $q.Enqueue("log|$id|The downloaded file is not a valid installer.")
+                return $null
+            }
+            try { Move-Item -LiteralPath $part -Destination $exe -Force } catch { $q.Enqueue("log|$id|$($_.Exception.Message)"); return $null }
+
+            # explorer.exe starts the installer WITHOUT administrator rights (these launchers expect a normal user session)
+            $q.Enqueue("log|$id|Starting the official installer ($file). It installs for your user - keep its window open until it finishes.")
+            try { Start-Process -FilePath (Join-Path $env:WINDIR 'explorer.exe') -ArgumentList ('"' + $exe + '"') } catch { $q.Enqueue("log|$id|$($_.Exception.Message)"); return $null }
+            $sw = [System.Diagnostics.Stopwatch]::StartNew(); $hits = 0
+            while ($sw.Elapsed.TotalMinutes -lt 10) {
+                if ($sync.Cancel) { return -1 }
+                Start-Sleep -Milliseconds 1500
+                if (& $testArp) { $hits++ } else { $hits = 0 }
+                if ($hits -ge 2) { return 0 }
+            }
+            $q.Enqueue("log|$id|The installer did not finish within 10 minutes.")
+            return $null
+        }
+
         function Send-UpgradeLine([string]$raw) {
             $line = $raw.Trim()
             if ($line.Length -eq 0) { return }
@@ -3115,6 +3198,10 @@ $worker = {
                 if ($app.Source -eq 'web') { $sync.Queue.Enqueue("log|$($app.Id)|Cannot remove automatically - uninstall it from Windows Settings."); $sync.Queue.Enqueue("skip|$($app.Id)|"); continue }
                 $sync.Queue.Enqueue("start|$($app.Id)|")
                 if ($app.Source -eq 'nvapp') { $ucmd = 'winget uninstall --name "NVIDIA app" --silent --accept-source-agreements --disable-interactivity' }
+                elseif ($app.Source -eq 'direct') {
+                    $safeName = ([string]$app.Name -replace '[^A-Za-z0-9 ._-]', '')
+                    $ucmd = 'winget uninstall --name "' + $safeName + '" --exact --silent --accept-source-agreements --disable-interactivity'
+                }
                 else {
                     $ucmd = 'winget uninstall --id ' + $app.Id + ' --exact --silent --accept-source-agreements --disable-interactivity'
                     if ($app.Source -eq 'msstore') { $ucmd += ' --source msstore' }
@@ -3141,6 +3228,29 @@ $worker = {
                 if ($null -eq $code) {
                     # could not download automatically: fall back to opening the official page
                     try { Start-Process 'https://www.nvidia.com/en-us/software/nvidia-app/' } catch { }
+                    $sync.Queue.Enqueue("manual|$($app.Id)|")
+                    continue
+                }
+                if (@(0, 3010, -1978335135) -contains $code) {
+                    try {
+                        if ($code -ne -1978335135) { Start-Sleep -Milliseconds 1500 }
+                        $made = @(New-DesktopShortcuts $app $before)
+                        if ($made.Count -gt 0) { $sync.Queue.Enqueue("shortcut|$($app.Id)|$($made -join ', ')") }
+                    } catch { }
+                }
+                $sync.Queue.Enqueue("done|$($app.Id)|$code")
+                continue
+            }
+            if ($app.Source -eq 'direct') {
+                $sync.Queue.Enqueue("start|$($app.Id)|")
+                $before = Get-StartLnks
+                $code = -1
+                try { $res = Install-DirectApp $app; if ($null -eq $res) { $code = $null } else { $code = [int]$res } }
+                catch { $sync.Queue.Enqueue("log|$($app.Id)|$($_.Exception.Message)"); $code = -1 }
+                if ($sync.Cancel -and (@(0, 3010, -1978335135) -notcontains $code)) { $sync.Queue.Enqueue("skip|$($app.Id)|"); continue }
+                if ($null -eq $code) {
+                    # could not install automatically: fall back to opening the official page
+                    try { if ($app.Domain) { Start-Process ('https://' + $app.Domain + '/') } } catch { }
                     $sync.Queue.Enqueue("manual|$($app.Id)|")
                     continue
                 }
@@ -3527,7 +3637,7 @@ function Start-Work {
     $script:Sync.Queue = New-Object 'System.Collections.Concurrent.ConcurrentQueue[object]'
 
     $list = @()
-    if ($Mode -ne 'upgradeall') { $list = @($Sel | ForEach-Object { [pscustomobject]@{ Id = $_.Id; Name = $_.NameEn; Source = $_.Source; Lingers = $_.Lingers } }) }
+    if ($Mode -ne 'upgradeall') { $list = @($Sel | ForEach-Object { [pscustomobject]@{ Id = $_.Id; Name = $_.NameEn; Source = $_.Source; Lingers = $_.Lingers; Url = $_.Url; Dir = $_.Dir; Domain = $_.Domain } }) }
 
     $rs = [runspacefactory]::CreateRunspace()
     $rs.ApartmentState = 'MTA'
