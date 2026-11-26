@@ -57,6 +57,41 @@ $UpdateRepo = 'iMeshall/MeshalBox'
 $ShowPreviewBadge = $false
 
 # ----------------------------------------------------------------------------
+# Console banner / goodbye message (only shown when MeshalBox is started from a PowerShell console)
+# ----------------------------------------------------------------------------
+$script:ConsoleOutput = (-not $IsCompiledExe) -and ($Host.Name -eq 'ConsoleHost')
+$script:PrevOutEnc = $null
+function Write-MeshalBanner {
+    if (-not $script:ConsoleOutput) { return }
+    try {
+        $script:PrevOutEnc = [Console]::OutputEncoding
+        [Console]::OutputEncoding = [System.Text.Encoding]::UTF8      # so the block characters are drawn correctly
+        $banner = @'
+███╗   ███╗███████╗███████╗██╗  ██╗ █████╗ ██╗     ██████╗  ██████╗ ██╗  ██╗
+████╗ ████║██╔════╝██╔════╝██║  ██║██╔══██╗██║     ██╔══██╗██╔═══██╗╚██╗██╔╝
+██╔████╔██║█████╗  ███████╗███████║███████║██║     ██████╔╝██║   ██║ ╚███╔╝ 
+██║╚██╔╝██║██╔══╝  ╚════██║██╔══██║██╔══██║██║     ██╔══██╗██║   ██║ ██╔██╗ 
+██║ ╚═╝ ██║███████╗███████║██║  ██║██║  ██║███████╗██████╔╝╚██████╔╝██╔╝ ██╗
+╚═╝     ╚═╝╚══════╝╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝╚═════╝  ╚═════╝ ╚═╝  ╚═╝
+'@
+        Write-Host ''
+        Write-Host $banner -ForegroundColor Cyan
+        Write-Host ('  v' + $AppVersion) -ForegroundColor DarkGray
+        Write-Host ''
+    } catch { }
+}
+function Write-MeshalGoodbye {
+    if (-not $script:ConsoleOutput) { return }
+    try {
+        Write-Host ''
+        Write-Host '  MeshalBox closed. Thanks for using MeshalBox - see you next time!' -ForegroundColor Cyan
+        Write-Host ''
+        if ($script:PrevOutEnc) { [Console]::OutputEncoding = $script:PrevOutEnc }
+    } catch { }
+}
+Write-MeshalBanner
+
+# ----------------------------------------------------------------------------
 # 0. Make sure we run in STA (required by WPF) and with Administrator rights
 # ----------------------------------------------------------------------------
 $isSta   = [Threading.Thread]::CurrentThread.GetApartmentState() -eq 'STA'
@@ -69,8 +104,14 @@ if ($PSCommandPath -and (-not $IsCompiledExe) -and ((-not $isSta) -or ((-not $is
         if ($AppsFile) { $argList += " -AppsFile `"$AppsFile`"" }
         if ($NoElevate) { $argList += ' -NoElevate' }
         if ($NoUpdateCheck) { $argList += ' -NoUpdateCheck' }
-        if ($isAdmin)   { Start-Process -FilePath $exe -ArgumentList $argList }
-        else            { Start-Process -FilePath $exe -ArgumentList $argList -Verb RunAs }
+        if ($isAdmin)   { $child = Start-Process -FilePath $exe -ArgumentList $argList -PassThru }
+        else            { $child = Start-Process -FilePath $exe -ArgumentList $argList -Verb RunAs -PassThru }
+        if ($script:ConsoleOutput -and $child) {
+            # the app runs in a hidden elevated copy: keep this console waiting so the goodbye message shows when it closes
+            Write-Host '  MeshalBox is running - close its window to finish.' -ForegroundColor Green
+            try { $child.WaitForExit() } catch { }
+            Write-MeshalGoodbye
+        }
         exit
     }
     catch {
@@ -4277,4 +4318,7 @@ try {
 }
 catch {
     [void][System.Windows.MessageBox]::Show("Fatal error:`n$($_.Exception.Message)`n`n$($_.ScriptStackTrace)", 'MeshalBox', 'OK', 'Error')
+}
+finally {
+    Write-MeshalGoodbye
 }
