@@ -6,7 +6,7 @@
 # What it does: downloads the repository ZIP from GitHub into %LOCALAPPDATA%\MeshalBox\app,
 # then starts MeshalBox.ps1 with Administrator rights. Nothing else is installed.
 
-function Start-MeshalBoxLauncher {
+function Invoke-MeshalBoxLauncher {
     $ErrorActionPreference = 'Stop'
     $ProgressPreference = 'SilentlyContinue'
 
@@ -79,14 +79,36 @@ function Start-MeshalBoxLauncher {
     if (-not (Test-Path -LiteralPath $psExe)) { $psExe = (Get-Process -Id $PID).Path }
     $argLine = '-NoProfile -ExecutionPolicy Bypass -STA -WindowStyle Hidden -File "{0}" -NoUpdateCheck' -f $script
     $isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+    $proc = $null
     try {
-        if ($isAdmin) { Start-Process -FilePath $psExe -ArgumentList $argLine }
-        else          { Start-Process -FilePath $psExe -ArgumentList $argLine -Verb RunAs }
-        Write-Host 'MeshalBox is starting...' -ForegroundColor Green
+        if ($isAdmin) { $proc = Start-Process -FilePath $psExe -ArgumentList $argLine -PassThru }
+        else          { $proc = Start-Process -FilePath $psExe -ArgumentList $argLine -Verb RunAs -PassThru }
     }
     catch {
         Write-Host 'Administrator permission was not granted, so MeshalBox did not start.' -ForegroundColor Yellow
+        return
     }
+    Write-Host 'MeshalBox is running - close its window to finish.' -ForegroundColor Green
+
+    # keep this console open until MeshalBox is closed, then say goodbye
+    try { if ($proc) { $proc.WaitForExit() } } catch { return }
+    Write-Host ''
+    Write-Host '  MeshalBox closed. Thanks for using MeshalBox - see you next time!' -ForegroundColor Cyan
+    Write-Host ''
+}
+
+function Start-MeshalBoxLauncher {
+    # the banner uses block characters: switch the console to UTF-8 while we run, then restore it
+    $prevEnc = $null
+    try { $prevEnc = [Console]::OutputEncoding; [Console]::OutputEncoding = [Text.Encoding]::UTF8 } catch { }
+    try {
+        $banner = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('4paI4paI4paI4pWXICAg4paI4paI4paI4pWX4paI4paI4paI4paI4paI4paI4paI4pWX4paI4paI4paI4paI4paI4paI4paI4pWX4paI4paI4pWXICDilojilojilZcg4paI4paI4paI4paI4paI4pWXIOKWiOKWiOKVlyAgICAg4paI4paI4paI4paI4paI4paI4pWXICDilojilojilojilojilojilojilZcg4paI4paI4pWXICDilojilojilZcK4paI4paI4paI4paI4pWXIOKWiOKWiOKWiOKWiOKVkeKWiOKWiOKVlOKVkOKVkOKVkOKVkOKVneKWiOKWiOKVlOKVkOKVkOKVkOKVkOKVneKWiOKWiOKVkSAg4paI4paI4pWR4paI4paI4pWU4pWQ4pWQ4paI4paI4pWX4paI4paI4pWRICAgICDilojilojilZTilZDilZDilojilojilZfilojilojilZTilZDilZDilZDilojilojilZfilZrilojilojilZfilojilojilZTilZ0K4paI4paI4pWU4paI4paI4paI4paI4pWU4paI4paI4pWR4paI4paI4paI4paI4paI4pWXICDilojilojilojilojilojilojilojilZfilojilojilojilojilojilojilojilZHilojilojilojilojilojilojilojilZHilojilojilZEgICAgIOKWiOKWiOKWiOKWiOKWiOKWiOKVlOKVneKWiOKWiOKVkSAgIOKWiOKWiOKVkSDilZrilojilojilojilZTilZ0gCuKWiOKWiOKVkeKVmuKWiOKWiOKVlOKVneKWiOKWiOKVkeKWiOKWiOKVlOKVkOKVkOKVnSAg4pWa4pWQ4pWQ4pWQ4pWQ4paI4paI4pWR4paI4paI4pWU4pWQ4pWQ4paI4paI4pWR4paI4paI4pWU4pWQ4pWQ4paI4paI4pWR4paI4paI4pWRICAgICDilojilojilZTilZDilZDilojilojilZfilojilojilZEgICDilojilojilZEg4paI4paI4pWU4paI4paI4pWXIArilojilojilZEg4pWa4pWQ4pWdIOKWiOKWiOKVkeKWiOKWiOKWiOKWiOKWiOKWiOKWiOKVl+KWiOKWiOKWiOKWiOKWiOKWiOKWiOKVkeKWiOKWiOKVkSAg4paI4paI4pWR4paI4paI4pWRICDilojilojilZHilojilojilojilojilojilojilojilZfilojilojilojilojilojilojilZTilZ3ilZrilojilojilojilojilojilojilZTilZ3ilojilojilZTilZ0g4paI4paI4pWXCuKVmuKVkOKVnSAgICAg4pWa4pWQ4pWd4pWa4pWQ4pWQ4pWQ4pWQ4pWQ4pWQ4pWd4pWa4pWQ4pWQ4pWQ4pWQ4pWQ4pWQ4pWd4pWa4pWQ4pWdICDilZrilZDilZ3ilZrilZDilZ0gIOKVmuKVkOKVneKVmuKVkOKVkOKVkOKVkOKVkOKVkOKVneKVmuKVkOKVkOKVkOKVkOKVkOKVnSAg4pWa4pWQ4pWQ4pWQ4pWQ4pWQ4pWdIOKVmuKVkOKVnSAg4pWa4pWQ4pWd'))
+        Write-Host ''
+        Write-Host $banner -ForegroundColor Cyan
+        Write-Host ''
+    } catch { }
+    try { Invoke-MeshalBoxLauncher }
+    finally { try { if ($prevEnc) { [Console]::OutputEncoding = $prevEnc } } catch { } }
 }
 
 Start-MeshalBoxLauncher
