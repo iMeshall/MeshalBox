@@ -2105,10 +2105,12 @@ function Refresh-Grid {
     $hasQ = -not [string]::IsNullOrWhiteSpace($q)
     $ic = [StringComparison]::OrdinalIgnoreCase
     $list = New-Object 'System.Collections.Generic.List[MeshalApp]'
+    $catTotal = 0                                      # apps in this category before the search filter is applied
     foreach ($a in $script:Apps) {
         if ($cat -eq 'Selected') { if (-not $a.IsSelected) { continue } }
         elseif ($cat -eq 'Installed') { if (-not $script:InstalledIds.ContainsKey($a.Id)) { continue } }
         elseif ($cat -ne 'All' -and $a.Category -ne $cat) { continue }
+        $catTotal++
         if ($hasQ -and -not (($a.NameEn.IndexOf($q, $ic) -ge 0) -or ($a.NameAr.IndexOf($q, $ic) -ge 0) -or ($a.Id.IndexOf($q, $ic) -ge 0))) { continue }
         $list.Add($a)
     }
@@ -2119,7 +2121,12 @@ function Refresh-Grid {
     Add-GridBatch 36                                   # first screen appears immediately
     if ($script:GridPos -lt $list.Count) { $script:GridTimer.Start() }   # the rest streams in without freezing the UI
     $script:txtCatTitle.Text = [string]$script:T["cat_$($script:Cat)"]
-    $script:txtCatCount.Text = (Format-Apps $list.Count)
+    if ($hasQ) {
+        # a search is active: show "1 of 14" so a filtered list is never mistaken for the whole category
+        if ($script:Lang -eq 'ar') { $script:txtCatCount.Text = ('{0} من {1}' -f $list.Count, $catTotal) }
+        else { $script:txtCatCount.Text = ('{0} of {1} apps' -f $list.Count, $catTotal) }
+    }
+    else { $script:txtCatCount.Text = (Format-Apps $list.Count) }
     Update-EmptyText
     if ($list.Count -eq 0) { $script:emptyPanel.Visibility = 'Visible' } else { $script:emptyPanel.Visibility = 'Collapsed' }
 }
