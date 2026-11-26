@@ -119,24 +119,28 @@
       "descAr": "مشغّل روكستار لألعاب GTA V وRed Dead Redemption 2 وغيرها من ألعابها."
     },
     {
-      "id": "https://fivem.net/",
+      "id": "CitizenFX.FiveM",
       "en": "FiveM",
       "ar": "فايف إم",
       "category": "Gaming",
       "domain": "fivem.net",
-      "source": "web",
-      "desc": "Multiplayer modification for GTA V with custom servers. (Opens the download page.)",
-      "descAr": "تعديل لعب جماعي للعبة GTA V مع سيرفرات مخصصة. (يفتح صفحة التحميل.)"
+      "source": "direct",
+      "url": "https://runtime.fivem.net/client/FiveM.exe",
+      "dir": "FiveM",
+      "desc": "Multiplayer modification for GTA V with custom servers.",
+      "descAr": "تعديل لعب جماعي للعبة GTA V مع سيرفرات مخصصة."
     },
     {
-      "id": "https://redm.net/",
+      "id": "CitizenFX.RedM",
       "en": "RedM",
       "ar": "ريد إم",
       "category": "Gaming",
       "domain": "redm.net",
-      "source": "web",
-      "desc": "Multiplayer modification for Red Dead Redemption 2. (Opens the download page.)",
-      "descAr": "تعديل لعب جماعي للعبة Red Dead Redemption 2. (يفتح صفحة التحميل.)"
+      "source": "direct",
+      "url": "https://runtime.fivem.net/client/RedM.exe",
+      "dir": "RedM",
+      "desc": "Multiplayer modification for Red Dead Redemption 2.",
+      "descAr": "تعديل لعب جماعي للعبة Red Dead Redemption 2."
     },
     {
       "id": "Blizzard.BattleNet",
@@ -2809,14 +2813,14 @@
       "descAr": "يتحكم بإضاءة RGB ومراوح وملحقات Corsair."
     },
     {
-      "id": "https://hyperx.com/pages/ngenuity",
+      "id": "9P1TBXR6QDCX",
       "en": "HyperX NGENUITY",
       "ar": "هايبر إكس NGENUITY",
       "category": "Peripherals",
       "domain": "hyperx.com",
-      "source": "web",
-      "desc": "HyperX software for keyboards, mice, and headsets. (Opens the download page.)",
-      "descAr": "برنامج HyperX لتخصيص لوحات مفاتيح وفأرات وسماعات HyperX. (يفتح صفحة التحميل.)"
+      "source": "msstore",
+      "desc": "HyperX software for keyboards, mice, and headsets (NGENUITY Legacy, installed from the Microsoft Store).",
+      "descAr": "برنامج HyperX لتخصيص لوحات مفاتيح وفأرات وسماعات HyperX (نسخة NGENUITY Legacy من متجر مايكروسوفت)."
     },
     {
       "id": "https://www.gloriousgaming.com/pages/software",
