@@ -4160,6 +4160,7 @@
       "ar": "حزمة Sysinternals",
       "category": "Microsoft",
       "domain": "learn.microsoft.com",
+      "cli": true,
       "desc": "The whole Sysinternals toolkit of Windows diagnostic tools in one install.",
       "descAr": "حزمة أدوات Sysinternals التشخيصية لويندوز كاملة في تثبيت واحد."
     },
@@ -4169,6 +4170,7 @@
       "ar": "بي إس تولز",
       "category": "Microsoft",
       "domain": "learn.microsoft.com",
+      "cli": true,
       "desc": "Command-line tools to manage local and remote Windows systems.",
       "descAr": "أدوات سطر أوامر لإدارة أنظمة ويندوز المحلية والبعيدة."
     },
@@ -4614,6 +4616,161 @@
       "domain": "play.google.com",
       "desc": "Google's official way to play Android games on PC (needs virtualization enabled).",
       "descAr": "الطريقة الرسمية من جوجل لتشغيل ألعاب أندرويد على الكمبيوتر (يتطلب تفعيل المحاكاة الافتراضية)."
+    },
+    {
+      "id": "Microsoft.Sysinternals.Autologon",
+      "en": "Autologon",
+      "ar": "أوتولوجون",
+      "category": "Microsoft",
+      "domain": "learn.microsoft.com",
+      "desc": "Sign in to Windows automatically at startup without typing the password.",
+      "descAr": "سجّل الدخول إلى ويندوز تلقائياً عند التشغيل بدون كتابة كلمة المرور."
+    },
+    {
+      "id": "Microsoft.Sysinternals.BGInfo",
+      "en": "BgInfo",
+      "ar": "بي جي إنفو",
+      "category": "Microsoft",
+      "domain": "learn.microsoft.com",
+      "desc": "Shows computer name, IP address and disk info right on your desktop wallpaper.",
+      "descAr": "يعرض اسم الجهاز وعنوان IP ومعلومات الأقراص مباشرة على خلفية سطح المكتب."
+    },
+    {
+      "id": "Microsoft.Sysinternals.Ctrl2Cap",
+      "en": "Ctrl2Cap",
+      "ar": "كنترول تو كاب",
+      "category": "Microsoft",
+      "domain": "learn.microsoft.com",
+      "cli": true,
+      "desc": "Turns the Caps Lock key into a Ctrl key (command-line installer).",
+      "descAr": "يحوّل مفتاح Caps Lock إلى مفتاح Ctrl (يُثبَّت من سطر الأوامر)."
+    },
+    {
+      "id": "Microsoft.Sysinternals.DebugView",
+      "en": "DebugView",
+      "ar": "ديبج فيو",
+      "category": "Microsoft",
+      "domain": "learn.microsoft.com",
+      "desc": "Shows the debug messages that programs and drivers print, live.",
+      "descAr": "يعرض رسائل التصحيح التي تطبعها البرامج والتعريفات مباشرة."
+    },
+    {
+      "id": "Microsoft.Sysinternals.Desktops",
+      "en": "Desktops",
+      "ar": "ديسكتوبس",
+      "category": "Microsoft",
+      "domain": "learn.microsoft.com",
+      "desc": "Create up to four virtual desktops and switch between them.",
+      "descAr": "أنشئ حتى أربعة أسطح مكتب افتراضية وتنقّل بينها."
+    },
+    {
+      "id": "Microsoft.Sysinternals.FindLinks",
+      "en": "FindLinks",
+      "ar": "فايند لينكس",
+      "category": "Microsoft",
+      "domain": "learn.microsoft.com",
+      "cli": true,
+      "desc": "Shows the hard links of a file (command line).",
+      "descAr": "يعرض الروابط الصلبة (Hard Links) لملف ما (سطر أوامر)."
+    },
+    {
+      "id": "Microsoft.Sysinternals.Handle",
+      "en": "Handle",
+      "ar": "هاندل",
+      "category": "Microsoft",
+      "domain": "learn.microsoft.com",
+      "cli": true,
+      "desc": "Finds which program has a file or folder open (command line).",
+      "descAr": "يكشف أي برنامج يفتح ملفاً أو مجلداً معيّناً (سطر أوامر)."
+    },
+    {
+      "id": "Microsoft.Sysinternals.MoveFile",
+      "en": "MoveFile",
+      "ar": "موف فايل",
+      "category": "Microsoft",
+      "domain": "learn.microsoft.com",
+      "cli": true,
+      "desc": "Schedules a file to be moved or deleted at the next reboot (command line).",
+      "descAr": "يجدول نقل أو حذف ملف عند إعادة التشغيل القادمة (سطر أوامر)."
+    },
+    {
+      "id": "Microsoft.Sysinternals.PendMoves",
+      "en": "PendMoves",
+      "ar": "بيند موفز",
+      "category": "Microsoft",
+      "domain": "learn.microsoft.com",
+      "cli": true,
+      "desc": "Lists the file moves and deletes waiting for the next reboot (command line).",
+      "descAr": "يعرض عمليات النقل والحذف المنتظرة لإعادة التشغيل القادمة (سطر أوامر)."
+    },
+    {
+      "id": "Microsoft.Sysinternals.RegJump",
+      "en": "RegJump",
+      "ar": "ريج جامب",
+      "category": "Microsoft",
+      "domain": "learn.microsoft.com",
+      "cli": true,
+      "desc": "Opens Regedit straight at the registry key you give it (command line).",
+      "descAr": "يفتح محرر السجل مباشرة عند المفتاح الذي تحدده (سطر أوامر)."
+    },
+    {
+      "id": "Microsoft.Sysinternals.SDelete",
+      "en": "SDelete",
+      "ar": "إس ديليت",
+      "category": "Microsoft",
+      "domain": "learn.microsoft.com",
+      "cli": true,
+      "desc": "Securely deletes files and wipes free disk space so they cannot be recovered (command line).",
+      "descAr": "يحذف الملفات بشكل آمن ويمسح المساحة الفارغة فلا يمكن استرجاعها (سطر أوامر)."
+    },
+    {
+      "id": "Microsoft.Sysinternals.Sigcheck",
+      "en": "Sigcheck",
+      "ar": "سيج تشيك",
+      "category": "Microsoft",
+      "domain": "learn.microsoft.com",
+      "cli": true,
+      "desc": "Checks a file's digital signature and version, and can query VirusTotal (command line).",
+      "descAr": "يفحص التوقيع الرقمي ورقم إصدار الملف ويمكنه الاستعلام من VirusTotal (سطر أوامر)."
+    },
+    {
+      "id": "Microsoft.Sysinternals.Strings",
+      "en": "Strings",
+      "ar": "ستريجنز",
+      "category": "Microsoft",
+      "domain": "learn.microsoft.com",
+      "cli": true,
+      "desc": "Pulls readable text out of binary files (command line).",
+      "descAr": "يستخرج النصوص المقروءة من الملفات الثنائية (سطر أوامر)."
+    },
+    {
+      "id": "Microsoft.Sysinternals.Sysmon",
+      "en": "Sysmon",
+      "ar": "سيس مون",
+      "category": "Microsoft",
+      "domain": "learn.microsoft.com",
+      "cli": true,
+      "desc": "Logs detailed process, network and file activity to the Windows event log for security monitoring (command line).",
+      "descAr": "يسجّل نشاط العمليات والشبكة والملفات بالتفصيل في سجل أحداث ويندوز للمراقبة الأمنية (سطر أوامر)."
+    },
+    {
+      "id": "Microsoft.Sysinternals.VMMap",
+      "en": "VMMap",
+      "ar": "في إم ماب",
+      "category": "Microsoft",
+      "domain": "learn.microsoft.com",
+      "desc": "Shows exactly how a program uses virtual and physical memory.",
+      "descAr": "يعرض بالتفصيل كيف يستخدم برنامج ما الذاكرة الافتراضية والفعلية."
+    },
+    {
+      "id": "Microsoft.Sysinternals.Whois",
+      "en": "Whois",
+      "ar": "هو إيز",
+      "category": "Microsoft",
+      "domain": "learn.microsoft.com",
+      "cli": true,
+      "desc": "Looks up who registered a domain name (command line).",
+      "descAr": "يستعلم عن مالك تسجيل اسم النطاق (سطر أوامر)."
     }
   ]
 }
