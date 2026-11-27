@@ -176,6 +176,7 @@ public class MeshalApp : INotifyPropertyChanged
     public string Exe { get; set; }          // 'portable' apps: main program file inside Dir
     public string[] Keep { get; set; }       // 'portable' apps: user-data folders that uninstall must keep
     public object Extras { get; set; }       // emulators: desktop folder with what the program needs (README, official firmware...)
+    public bool Cli { get; set; }            // command-line tool: no desktop shortcut (it would only flash a console window)
     public bool Lingers { get; set; }        // installer/uninstaller keeps running after it is done (e.g. Riot Client) -> finish by checking the real state
     public string Initial { get; set; }
     public string Color { get; set; }
@@ -973,6 +974,7 @@ foreach ($e in $catalog.apps) {
     $a.Source = if ($e.source) { [string]$e.source } else { '' }
     if ($e.pkg) { $a.Pkg = [string]$e.pkg }
     if ($e.lingers -eq $true) { $a.Lingers = $true }
+    if ($e.cli -eq $true) { $a.Cli = $true }
     if ($e.url) { $a.Url = [string]$e.url }
     if ($e.dir) { $a.Dir = [string]$e.dir }
     if ($e.repo) { $a.Repo = [string]$e.repo }
@@ -3201,6 +3203,7 @@ $worker = {
         function Ensure-DesktopShortcut($app, $before, [string]$exeHint = '') {
             $made = @()
             try {
+                if ($app.Cli) { return @() }                              # command-line tools get no desktop shortcut
                 if ($exeHint) { $made = @(New-DirectShortcut $app $exeHint) }
                 if ($made.Count -eq 0) { $made = @(New-DesktopShortcuts $app $before) }
                 if (($made.Count -eq 0) -and ($app.Source -ne 'msstore')) {
@@ -4174,7 +4177,7 @@ function Start-Work {
     $script:Sync.Queue = New-Object 'System.Collections.Concurrent.ConcurrentQueue[object]'
 
     $list = @()
-    if ($Mode -ne 'upgradeall') { $list = @($Sel | ForEach-Object { [pscustomobject]@{ Id = $_.Id; Name = $_.NameEn; Source = $_.Source; Lingers = $_.Lingers; Url = $_.Url; Dir = $_.Dir; Domain = $_.Domain; Repo = $_.Repo; Asset = $_.Asset; Exe = $_.Exe; Keep = $_.Keep; Extras = $_.Extras } }) }
+    if ($Mode -ne 'upgradeall') { $list = @($Sel | ForEach-Object { [pscustomobject]@{ Id = $_.Id; Name = $_.NameEn; Source = $_.Source; Lingers = $_.Lingers; Url = $_.Url; Dir = $_.Dir; Domain = $_.Domain; Repo = $_.Repo; Asset = $_.Asset; Exe = $_.Exe; Keep = $_.Keep; Extras = $_.Extras; Cli = $_.Cli } }) }
 
     $rs = [runspacefactory]::CreateRunspace()
     $rs.ApartmentState = 'MTA'
