@@ -197,7 +197,7 @@ public class MeshalApp : INotifyPropertyChanged
     public bool IsSelected { get { return _isSelected; } set { _isSelected = value; Raise("IsSelected"); } }
 
     private object _icon;
-    public object Icon { get { return _icon; } set { _icon = value; UpdateTile(); Raise("Icon"); Raise("HasIcon"); } }
+    public object Icon { get { return _icon; } set { _icon = MeshalImg.CleanBackground(value); UpdateTile(); Raise("Icon"); Raise("HasIcon"); } }
     private string _tileForce = "";          // "black" or "white" = fixed tile colour for this app, "" = decide from the logo
     public string TileForce { get { return _tileForce; } set { _tileForce = value ?? ""; UpdateTile(); } }
     private void UpdateTile()
@@ -216,6 +216,109 @@ public class MeshalApp : INotifyPropertyChanged
 
 public static class MeshalImg
 {
+    // Many logos come as a picture with a solid white square behind them. On the black tile that shows up as an ugly white box.
+    // When the picture's border is (almost) all white, the white that is connected to the border is made transparent so the
+    // logo sits on the tile directly. Anti-aliased edge pixels are un-mixed from white so they do not leave a light halo.
+    // Pictures that do not look like "logo on a white box" (transparent already, white logos, white inside the logo...) are returned untouched.
+    public static object CleanBackground(object o)
+    {
+        try
+        {
+            System.Windows.Media.Imaging.BitmapSource src = o as System.Windows.Media.Imaging.BitmapSource;
+            if (src == null) return o;
+            System.Windows.Media.Imaging.FormatConvertedBitmap fc = new System.Windows.Media.Imaging.FormatConvertedBitmap(src, System.Windows.Media.PixelFormats.Bgra32, null, 0);
+            int w = fc.PixelWidth, h = fc.PixelHeight;
+            if (w < 16 || h < 16 || w > 1024 || h > 1024) return o;
+            int stride = w * 4;
+            byte[] buf = new byte[stride * h];
+            fc.CopyPixels(buf, stride, 0);
+
+            // border statistics
+            long borderN = 0, borderBg = 0, borderWhite = 0;
+            for (int y = 0; y < h; y++)
+                for (int x = 0; x < w; x++)
+                {
+                    if (y != 0 && y != h - 1 && x != 0 && x != w - 1) { x = w - 2; continue; }
+                    borderN++;
+                    int i = y * stride + x * 4;
+                    if (IsBg(buf, i)) borderBg++;
+                    if (IsWhite(buf, i)) borderWhite++;
+                }
+            if (borderN == 0 || borderBg * 100 < borderN * 92 || borderWhite * 100 < borderN * 35) return o;
+
+            // flood fill the background from the border (4-connected)
+            bool[] bg = new bool[w * h];
+            int[] stack = new int[w * h];
+            int sp = 0;
+            for (int x = 0; x < w; x++) { Seed(buf, stride, w, bg, stack, ref sp, x, 0); Seed(buf, stride, w, bg, stack, ref sp, x, h - 1); }
+            for (int y = 0; y < h; y++) { Seed(buf, stride, w, bg, stack, ref sp, 0, y); Seed(buf, stride, w, bg, stack, ref sp, w - 1, y); }
+            while (sp > 0)
+            {
+                int p = stack[--sp];
+                int px = p % w, py = p / w;
+                if (px > 0) Seed(buf, stride, w, bg, stack, ref sp, px - 1, py);
+                if (px < w - 1) Seed(buf, stride, w, bg, stack, ref sp, px + 1, py);
+                if (py > 0) Seed(buf, stride, w, bg, stack, ref sp, px, py - 1);
+                if (py < h - 1) Seed(buf, stride, w, bg, stack, ref sp, px, py + 1);
+            }
+
+            long removed = 0, removedWhite = 0;
+            for (int p = 0; p < w * h; p++)
+                if (bg[p]) { removed++; if (IsWhite(buf, (p / w) * stride + (p % w) * 4)) removedWhite++; }
+            long total = (long)w * h;
+            if (removedWhite * 100 < total * 8) return o;        // hardly any white box: nothing to do
+            if (removed * 100 > total * 94) return o;            // almost everything is "background": a white logo, keep it as it was
+
+            // build the result
+            byte[] outb = new byte[buf.Length];
+            long visible = 0;
+            for (int y = 0; y < h; y++)
+                for (int x = 0; x < w; x++)
+                {
+                    int p = y * w + x, i = y * stride + x * 4;
+                    if (bg[p]) continue;                          // stays 0,0,0,0 (transparent)
+                    byte b = buf[i], g = buf[i + 1], r = buf[i + 2], a = buf[i + 3];
+                    bool nearBg = false;
+                    for (int dy = -2; dy <= 2 && !nearBg; dy++)
+                        for (int dx = -2; dx <= 2; dx++)
+                        {
+                            int nx = x + dx, ny = y + dy;
+                            if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
+                            if (bg[ny * w + nx]) { nearBg = true; break; }
+                        }
+                    if (nearBg && a > 0)
+                    {
+                        // edge pixel: remove the white it was mixed with  (colour = alpha*fg + (1-alpha)*white)
+                        double mn = Math.Min(r, Math.Min(g, b));
+                        double al = 1.0 - mn / 255.0;
+                        if (al < 0.05) continue;                  // pure fringe of white: transparent
+                        double fr = (r - 255.0 * (1 - al)) / al, fg2 = (g - 255.0 * (1 - al)) / al, fb = (b - 255.0 * (1 - al)) / al;
+                        outb[i]     = (byte)Math.Max(0, Math.Min(255, fb));
+                        outb[i + 1] = (byte)Math.Max(0, Math.Min(255, fg2));
+                        outb[i + 2] = (byte)Math.Max(0, Math.Min(255, fr));
+                        outb[i + 3] = (byte)Math.Max(0, Math.Min(255, al * a));
+                    }
+                    else { outb[i] = b; outb[i + 1] = g; outb[i + 2] = r; outb[i + 3] = a; }
+                    if (outb[i + 3] > 128) visible++;
+                }
+            if (visible * 100 < total * 2) return o;              // nothing meaningful would be left
+            System.Windows.Media.Imaging.BitmapSource res = System.Windows.Media.Imaging.BitmapSource.Create(w, h, 96, 96, System.Windows.Media.PixelFormats.Bgra32, null, outb, stride);
+            res.Freeze();
+            return res;
+        }
+        catch { return o; }
+    }
+    private static bool IsWhite(byte[] b, int i) { return b[i + 3] >= 200 && b[i] >= 236 && b[i + 1] >= 236 && b[i + 2] >= 236; }
+    private static bool IsBg(byte[] b, int i) { return b[i + 3] < 40 || IsWhite(b, i); }
+    private static void Seed(byte[] buf, int stride, int w, bool[] bg, int[] stack, ref int sp, int x, int y)
+    {
+        int p = y * w + x;
+        if (bg[p]) return;
+        if (!IsBg(buf, y * stride + x * 4)) return;
+        bg[p] = true;
+        stack[sp++] = p;
+    }
+
     // true when most of the visible pixels of the logo are dark (it would vanish on a black tile)
     public static bool IsDarkLogo(object o)
     {
