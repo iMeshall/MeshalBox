@@ -3200,6 +3200,39 @@ $worker = {
             }
             return $false
         }
+        # ---- after an uninstall: remove the app's desktop shortcuts that now point to nothing -------------------
+        # A shortcut is removed when its name matches the app AND (its target no longer exists, or it has no file target such as a
+        # Store-app shortcut and its name is exactly the app's name). A shortcut whose program still exists is never touched.
+        function Remove-DesktopShortcuts($app) {
+            $removed = @()
+            try {
+                $names = @()
+                $k1 = Get-Norm ([string]$app.Name); if ($k1.Length -ge 3) { $names += $k1 }
+                if ($app.Source -ne 'msstore') {
+                    $parts = @(([string]$app.Id) -split '\.')
+                    if ($parts.Count -gt 1) { $k2 = Get-Norm (($parts[1..($parts.Count - 1)]) -join ''); if ($k2.Length -ge 3) { $names += $k2 } }
+                }
+                if ($names.Count -eq 0) { return @() }
+                $ws = New-Object -ComObject WScript.Shell
+                foreach ($folder in @($desktop, $publicDesktop)) {
+                    if ((-not $folder) -or (-not (Test-Path -LiteralPath $folder))) { continue }
+                    foreach ($f in @(Get-ChildItem -LiteralPath $folder -Filter '*.lnk' -ErrorAction SilentlyContinue)) {
+                        if (-not (Test-NameHit $f.FullName $names $true)) { continue }
+                        $target = ''
+                        try { $target = [string]$ws.CreateShortcut($f.FullName).TargetPath } catch { }
+                        $targetExists = $false
+                        if ($target) { try { $targetExists = Test-Path -LiteralPath $target } catch { } }
+                        if ($targetExists) { continue }                                   # the program is still there: leave it alone
+                        $exact = ($names -contains (Get-Norm ([System.IO.Path]::GetFileNameWithoutExtension($f.Name))))
+                        if (($target -and (-not $targetExists)) -or ((-not $target) -and $exact)) {
+                            try { Remove-Item -LiteralPath $f.FullName -Force -ErrorAction Stop; $removed += $f.BaseName } catch { }
+                        }
+                    }
+                }
+            } catch { }
+            return $removed
+        }
+
         function Ensure-DesktopShortcut($app, $before, [string]$exeHint = '') {
             $made = @()
             try {
@@ -3726,6 +3759,14 @@ $worker = {
                     $code = Run-Winget $ucmd $app.Id 'install' $true
                 }
                 if ($sync.Cancel -and (@(0, 3010, -1978334967) -notcontains $code)) { $sync.Queue.Enqueue("skip|$($app.Id)|"); continue }
+                if (@(0, 3010, -1978334967) -contains $code) {
+                    # the program is gone: take its leftover desktop shortcut with it
+                    try {
+                        Start-Sleep -Milliseconds 800
+                        $gone = @(Remove-DesktopShortcuts $app)
+                        if ($gone.Count -gt 0) { $sync.Queue.Enqueue("log|$($app.Id)|Removed the desktop shortcut: $($gone -join ', ')") }
+                    } catch { }
+                }
                 $sync.Queue.Enqueue("done|$($app.Id)|$code")
                 continue
             }
