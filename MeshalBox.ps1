@@ -175,6 +175,7 @@ public class MeshalApp : INotifyPropertyChanged
     public string Asset { get; set; }        // 'portable' apps: regex that picks the right file of the latest release
     public string Exe { get; set; }          // 'portable' apps: main program file inside Dir
     public string[] Keep { get; set; }       // 'portable' apps: user-data folders that uninstall must keep
+    public object Extras { get; set; }       // emulators: desktop folder with what the program needs (README, official firmware...)
     public bool Lingers { get; set; }        // installer/uninstaller keeps running after it is done (e.g. Riot Client) -> finish by checking the real state
     public string Initial { get; set; }
     public string Color { get; set; }
@@ -978,6 +979,7 @@ foreach ($e in $catalog.apps) {
     if ($e.asset) { $a.Asset = [string]$e.asset }
     if ($e.exe) { $a.Exe = [string]$e.exe }
     if ($e.keep) { $a.Keep = [string[]]@($e.keep | ForEach-Object { [string]$_ }) }
+    if ($e.extras -and $e.extras.folder) { $a.Extras = $e.extras }
     if ($TileOverride.ContainsKey($a.Id)) { $a.TileForce = $TileOverride[$a.Id] }
     if (([string]$e.tile -eq 'black') -or ([string]$e.tile -eq 'white')) { $a.TileForce = [string]$e.tile }   # catalog override for a logo that looks wrong
     $a.Initial = $a.NameEn.Substring(0, 1).ToUpper()
@@ -3213,6 +3215,79 @@ $worker = {
             return $made
         }
 
+        # ---- emulators: put what the program needs next to it in a desktop folder (e.g. "PCSX2 BIOS") ----------
+        # Always writes a README that says what to put there. Files that Sony publishes officially (PS3/Vita firmware) are
+        # downloaded from Sony's own pages (only playstation.net / playstation.com / sony.com links are accepted).
+        # BIOS files are copyrighted and are never downloaded: the README explains how to dump your own.
+        function Add-EmulatorExtras($app) {
+            $ex = $app.Extras
+            if (-not $ex) { return }
+            $q = $sync.Queue; $id = $app.Id
+            $ua = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36'
+            try { [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 } catch { }
+            $folderName = (([string]$ex.folder) -replace '[\\/:*?"<>|]', '').Trim()
+            if ((-not $folderName) -or (-not $desktop) -or (-not (Test-Path -LiteralPath $desktop))) { return }
+            $dir = Join-Path $desktop $folderName
+            try { [void](New-Item -ItemType Directory -Path $dir -Force) } catch { $q.Enqueue("log|$id|Could not create the folder '$folderName': $($_.Exception.Message)"); return }
+
+            $readme = Join-Path $dir 'README.txt'
+            try {
+                if ((-not (Test-Path -LiteralPath $readme)) -and $ex.readme) {
+                    $txt = (@($ex.readme) | ForEach-Object { [string]$_ }) -join "`r`n"
+                    [System.IO.File]::WriteAllText($readme, $txt, (New-Object System.Text.UTF8Encoding($true)))
+                }
+            } catch { }
+
+            foreach ($f in @($ex.fetch)) {
+                if ((-not $f) -or $sync.Cancel) { continue }
+                $name = (([string]$f.name) -replace '[^A-Za-z0-9._ -]', '')
+                if (-not $name) { continue }
+                $dest = Join-Path $dir $name
+                $minB = [int64]([double]$f.minMB * 1MB); if ($minB -lt 1MB) { $minB = 1MB }
+                if ((Test-Path -LiteralPath $dest) -and ((Get-Item -LiteralPath $dest).Length -ge $minB)) { continue }
+
+                $url = $null
+                foreach ($pg in @($f.pages)) {
+                    if ($url) { break }
+                    try {
+                        $html = [string](Invoke-WebRequest -Uri ([string]$pg) -UseBasicParsing -TimeoutSec 30 -UserAgent $ua).Content
+                        $m = [regex]::Match($html, [string]$f.rx, [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
+                        if ($m.Success) { $url = $m.Value }
+                    } catch { }
+                }
+                if ((-not $url) -or ($url -notmatch '^https?://([A-Za-z0-9-]+\.)*(playstation\.net|playstation\.com|sony\.com)(/|$)')) {
+                    $q.Enqueue("log|$id|Could not find the official $name link automatically - the README in '$folderName' explains where to get it.")
+                    continue
+                }
+                $part = $dest + '.part'
+                try {
+                    $q.Enqueue("log|$id|Downloading $name from Sony: $url")
+                    $req = [Net.HttpWebRequest]::Create($url); $req.UserAgent = $ua; $req.Timeout = 30000; $req.ReadWriteTimeout = 60000
+                    $resp = $req.GetResponse(); $total = $resp.ContentLength
+                    $inS = $resp.GetResponseStream(); $outS = [System.IO.File]::Create($part)
+                    try {
+                        $buf = New-Object byte[] 262144; $got = 0; $last = 0.0
+                        while (($n = $inS.Read($buf, 0, $buf.Length)) -gt 0) {
+                            if ($sync.Cancel) { throw 'cancelled' }
+                            $outS.Write($buf, 0, $n); $got += $n
+                            if ($total -gt 0) {
+                                $fr = $got / $total
+                                if (($fr - $last) -ge 0.01) { $last = $fr; $q.Enqueue("prog|$id|" + ([double]$fr).ToString([Globalization.CultureInfo]::InvariantCulture)) }
+                            }
+                        }
+                    } finally { $outS.Close(); $inS.Close(); $resp.Close() }
+                    if ((Get-Item -LiteralPath $part).Length -lt $minB) { throw 'the downloaded file is too small' }
+                    Move-Item -LiteralPath $part -Destination $dest -Force
+                    $q.Enqueue("log|$id|Saved $name in the desktop folder '$folderName'.")
+                }
+                catch {
+                    Remove-Item -LiteralPath $part -Force -ErrorAction SilentlyContinue
+                    if (-not $sync.Cancel) { $q.Enqueue("log|$id|Download of $name failed ($($_.Exception.Message)) - see the README in '$folderName'.") }
+                }
+            }
+            $q.Enqueue("log|$id|Folder on the desktop: $folderName")
+        }
+
         # ---- 'direct' apps (FiveM, RedM): desktop shortcut straight to the installed launcher ----
         # (these launchers do not reliably leave a Start Menu shortcut for the generic detection to copy)
         function Get-DirectExe($app) {
@@ -3716,6 +3791,7 @@ $worker = {
                         $made = @(Ensure-DesktopShortcut $app $before (Join-Path (Get-PortableDir $app) ([string]$app.Exe)))
                         if ($made.Count -gt 0) { $sync.Queue.Enqueue("shortcut|$($app.Id)|$($made -join ', ')") }
                     } catch { }
+                    try { Add-EmulatorExtras $app } catch { }
                 }
                 $sync.Queue.Enqueue("done|$($app.Id)|$code")
                 continue
@@ -3757,6 +3833,7 @@ $worker = {
                     $made = @(Ensure-DesktopShortcut $app $before)
                     if ($made.Count -gt 0) { $sync.Queue.Enqueue("shortcut|$($app.Id)|$($made -join ', ')") }
                 } catch { }
+                try { Add-EmulatorExtras $app } catch { }
             }
             $sync.Queue.Enqueue("done|$($app.Id)|$code")
         }
@@ -4097,7 +4174,7 @@ function Start-Work {
     $script:Sync.Queue = New-Object 'System.Collections.Concurrent.ConcurrentQueue[object]'
 
     $list = @()
-    if ($Mode -ne 'upgradeall') { $list = @($Sel | ForEach-Object { [pscustomobject]@{ Id = $_.Id; Name = $_.NameEn; Source = $_.Source; Lingers = $_.Lingers; Url = $_.Url; Dir = $_.Dir; Domain = $_.Domain; Repo = $_.Repo; Asset = $_.Asset; Exe = $_.Exe; Keep = $_.Keep } }) }
+    if ($Mode -ne 'upgradeall') { $list = @($Sel | ForEach-Object { [pscustomobject]@{ Id = $_.Id; Name = $_.NameEn; Source = $_.Source; Lingers = $_.Lingers; Url = $_.Url; Dir = $_.Dir; Domain = $_.Domain; Repo = $_.Repo; Asset = $_.Asset; Exe = $_.Exe; Keep = $_.Keep; Extras = $_.Extras } }) }
 
     $rs = [runspacefactory]::CreateRunspace()
     $rs.ApartmentState = 'MTA'
