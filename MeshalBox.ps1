@@ -3138,6 +3138,81 @@ $worker = {
         }
         # ---------------------------------------------------------------------------------
 
+        # ---- desktop shortcut safety net for EVERY install ----------------------------------------------
+        # 1) copy the app's new Start Menu shortcut (New-DesktopShortcuts), 2) look again a few seconds later (some installers are late),
+        # 3) take the program file from Programs and Features (DisplayIcon / install folder) and make a shortcut to it.
+        function Find-AppExe($app) {
+            $keys = @()
+            $k1 = Get-Norm ([string]$app.Name); if ($k1.Length -ge 3) { $keys += $k1 }
+            $parts = @(([string]$app.Id) -split '\.')
+            if ($parts.Count -gt 1) { $k2 = Get-Norm (($parts[1..($parts.Count - 1)]) -join ''); if ($k2.Length -ge 3) { $keys += $k2 } }
+            if ($keys.Count -eq 0) { return $null }
+            $badRx = '(?i)unins|uninstall|setup|install|update|upgrade|crash|helper|repair|redist|vc_|dxsetup|elevat|report'
+            foreach ($rk in @('HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*', 'HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*', 'HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*')) {
+                foreach ($it in @(Get-ItemProperty -Path $rk -ErrorAction SilentlyContinue)) {
+                    if (-not $it.DisplayName) { continue }
+                    $n = Get-Norm ([string]$it.DisplayName)
+                    $hit = $false
+                    foreach ($k in $keys) { if ($n -eq $k -or $n.StartsWith($k) -or ($n.Length -ge 4 -and $k.StartsWith($n))) { $hit = $true; break } }
+                    if (-not $hit) { continue }
+                    # the icon entry normally points at the main program
+                    $ic = ([string]$it.DisplayIcon).Trim()
+                    if ($ic -and ($ic -match '^"?(.+?\.exe)"?(,\s*-?\d+)?$')) {
+                        $cand = [Environment]::ExpandEnvironmentVariables($Matches[1])
+                        if ((Test-Path -LiteralPath $cand) -and ([System.IO.Path]::GetFileName($cand) -notmatch $badRx)) { return $cand }
+                    }
+                    # otherwise the program file in the install folder that looks most like the app name
+                    $dirs = @()
+                    if ($it.InstallLocation) { $dirs += ([string]$it.InstallLocation).Trim().Trim('"') }
+                    $us = [string]$it.UninstallString
+                    if ($us -match '^"?([^"]+?\.exe)') { $ud = Split-Path -Parent ([Environment]::ExpandEnvironmentVariables($Matches[1])); if ($ud) { $dirs += $ud } }
+                    foreach ($d in @($dirs | Select-Object -Unique)) {
+                        if ((-not $d) -or (-not (Test-Path -LiteralPath $d))) { continue }
+                        $exes = @(Get-ChildItem -LiteralPath $d -Filter '*.exe' -File -ErrorAction SilentlyContinue | Where-Object { $_.Name -notmatch $badRx })
+                        $best = $null
+                        foreach ($e in $exes) {
+                            $bn = Get-Norm ([System.IO.Path]::GetFileNameWithoutExtension($e.Name))
+                            foreach ($k in $keys) { if ($bn.Length -ge 3 -and ($bn -eq $k -or $k.Contains($bn) -or $bn.Contains($k))) { $best = $e; break } }
+                            if ($best) { break }
+                        }
+                        if ((-not $best) -and $exes.Count -eq 1) { $best = $exes[0] }
+                        if ($best) { return $best.FullName }
+                    }
+                }
+            }
+            return $null
+        }
+        function Test-DesktopHas($app) {
+            $names = @()
+            $k1 = Get-Norm ([string]$app.Name); if ($k1.Length -ge 3) { $names += $k1 }
+            if ($app.Source -ne 'msstore') {
+                $parts = @(([string]$app.Id) -split '\.')
+                if ($parts.Count -gt 1) { $k2 = Get-Norm (($parts[1..($parts.Count - 1)]) -join ''); if ($k2.Length -ge 3) { $names += $k2 } }
+            }
+            if ($names.Count -eq 0) { return $false }
+            foreach ($folder in @($desktop, $publicDesktop)) {
+                if ((-not $folder) -or (-not (Test-Path -LiteralPath $folder))) { continue }
+                foreach ($f in @(Get-ChildItem -LiteralPath $folder -Filter '*.lnk' -ErrorAction SilentlyContinue)) { if (Test-NameHit $f.FullName $names $true) { return $true } }
+            }
+            return $false
+        }
+        function Ensure-DesktopShortcut($app, $before, [string]$exeHint = '') {
+            $made = @()
+            try {
+                if ($exeHint) { $made = @(New-DirectShortcut $app $exeHint) }
+                if ($made.Count -eq 0) { $made = @(New-DesktopShortcuts $app $before) }
+                if (($made.Count -eq 0) -and ($app.Source -ne 'msstore')) {
+                    if (Test-DesktopHas $app) { return @() }            # there already is one (made earlier, by the installer, or by the user)
+                    Start-Sleep -Seconds 4                               # some installers write their Start Menu entry a little late
+                    $made = @(New-DesktopShortcuts $app $before)
+                    if (($made.Count -eq 0) -and (-not (Test-DesktopHas $app))) { $made = @(New-DirectShortcut $app) }
+                    if (($made.Count -eq 0) -and (-not (Test-DesktopHas $app))) { $sync.Queue.Enqueue("log|$($app.Id)|No desktop shortcut could be made: the program file was not found.") }
+                }
+            }
+            catch { try { $sync.Queue.Enqueue("log|$($app.Id)|Desktop shortcut: $($_.Exception.Message)") } catch { } }
+            return $made
+        }
+
         # ---- 'direct' apps (FiveM, RedM): desktop shortcut straight to the installed launcher ----
         # (these launchers do not reliably leave a Start Menu shortcut for the generic detection to copy)
         function Get-DirectExe($app) {
@@ -3149,8 +3224,9 @@ $worker = {
             $made = @()
             try {
                 $exe = $exeOverride
-                if (-not $exe) { $exe = Get-DirectExe $app }
-                if ((-not $desktop) -or (-not (Test-Path -LiteralPath $desktop)) -or (-not (Test-Path -LiteralPath $exe))) { return @() }
+                if ((-not $exe) -and $app.Url) { $exe = Get-DirectExe $app }
+                if ((-not $exe) -or (-not (Test-Path -LiteralPath $exe))) { $exe = Find-AppExe $app }     # wherever the program really was installed
+                if ((-not $exe) -or (-not $desktop) -or (-not (Test-Path -LiteralPath $desktop)) -or (-not (Test-Path -LiteralPath $exe))) { return @() }
                 $leaf = (([string]$app.Name) -replace '[\\/:*?"<>|]', '_') + '.lnk'
                 $dest = Join-Path $desktop $leaf
                 if ((Test-Path -LiteralPath $dest) -or ($publicDesktop -and (Test-Path -LiteralPath (Join-Path $publicDesktop $leaf)))) { return @() }
@@ -3592,7 +3668,7 @@ $worker = {
                 if (@(0, 3010, -1978335135) -contains $code) {
                     try {
                         if ($code -ne -1978335135) { Start-Sleep -Milliseconds 1500 }
-                        $made = @(New-DesktopShortcuts $app $before)
+                        $made = @(Ensure-DesktopShortcut $app $before)
                         if ($made.Count -gt 0) { $sync.Queue.Enqueue("shortcut|$($app.Id)|$($made -join ', ')") }
                     } catch { }
                 }
@@ -3615,8 +3691,7 @@ $worker = {
                 if (@(0, 3010, -1978335135) -contains $code) {
                     try {
                         if ($code -ne -1978335135) { Start-Sleep -Milliseconds 1500 }
-                        $made = @(New-DirectShortcut $app)
-                        if ($made.Count -eq 0) { $made = @(New-DesktopShortcuts $app $before) }
+                        $made = @(Ensure-DesktopShortcut $app $before (Get-DirectExe $app))
                         if ($made.Count -gt 0) { $sync.Queue.Enqueue("shortcut|$($app.Id)|$($made -join ', ')") }
                     } catch { }
                 }
@@ -3625,6 +3700,7 @@ $worker = {
             }
             if ($app.Source -eq 'portable') {
                 $sync.Queue.Enqueue("start|$($app.Id)|")
+                $before = Get-StartLnks
                 $code = -1
                 try { $res = Install-PortableApp $app; if ($null -eq $res) { $code = $null } else { $code = [int]$res } }
                 catch { $sync.Queue.Enqueue("log|$($app.Id)|$($_.Exception.Message)"); $code = -1 }
@@ -3637,7 +3713,7 @@ $worker = {
                 }
                 if (@(0, 3010, -1978335135) -contains $code) {
                     try {
-                        $made = @(New-DirectShortcut $app (Join-Path (Get-PortableDir $app) ([string]$app.Exe)))
+                        $made = @(Ensure-DesktopShortcut $app $before (Join-Path (Get-PortableDir $app) ([string]$app.Exe)))
                         if ($made.Count -gt 0) { $sync.Queue.Enqueue("shortcut|$($app.Id)|$($made -join ', ')") }
                     } catch { }
                 }
@@ -3678,7 +3754,7 @@ $worker = {
             if (@(0, 3010, -1978334967, -1978335135, -1978335189) -contains $code) {
                 try {
                     if ($code -ne -1978335135 -and $code -ne -1978335189) { Start-Sleep -Milliseconds 1500 }
-                    $made = @(New-DesktopShortcuts $app $before)
+                    $made = @(Ensure-DesktopShortcut $app $before)
                     if ($made.Count -gt 0) { $sync.Queue.Enqueue("shortcut|$($app.Id)|$($made -join ', ')") }
                 } catch { }
             }
