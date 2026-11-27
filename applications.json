@@ -3003,6 +3003,26 @@
       "ar": "بي سي إس إكس 2",
       "category": "Emulators",
       "domain": "pcsx2.net",
+      "extras": {
+        "folder": "PCSX2 BIOS",
+        "readme": [
+          "PCSX2 BIOS",
+          "==========",
+          "",
+          "[العربية]",
+          "محاكي PCSX2 لا يعمل بدون ملف BIOS الخاص بجهاز PlayStation 2.",
+          "ملفات BIOS محمية بحقوق النشر ولا توجد نسخة رسمية للتنزيل، لذلك لا يستطيع البرنامج تنزيلها لك.",
+          "الطريقة القانونية: استخرج (Dump) ملف BIOS من جهاز PS2 الذي تملكه باستخدام أداة مثل BIOS Drain.",
+          "1) انسخ ملفات BIOS الناتجة (امتداد .bin) إلى هذا المجلد.",
+          "2) افتح PCSX2 ثم Settings ثم BIOS، واختر هذا المجلد كمجلد BIOS، ثم اختر الملف من القائمة.",
+          "",
+          "[English]",
+          "PCSX2 needs a PlayStation 2 BIOS to run. BIOS files are copyrighted and there is no official download,",
+          "so MeshalBox cannot fetch one for you. The legal way is to dump the BIOS from a PS2 you own (for example with BIOS Drain).",
+          "1) Copy the dumped BIOS files (.bin) into this folder.",
+          "2) Open PCSX2, go to Settings > BIOS, choose this folder as the BIOS folder and select the file in the list."
+        ]
+      },
       "desc": "The leading PlayStation 2 emulator with HD upscaling and save states.",
       "descAr": "أشهر محاكي لبلايستيشن 2 مع رفع الدقة وحفظ الحالة."
     },
@@ -4349,6 +4369,36 @@
       "asset": "_win64_msvc\\.7z$",
       "exe": "rpcs3.exe",
       "keep": ["dev_hdd0", "dev_hdd1", "dev_flash", "dev_flash2", "dev_flash3", "dev_bdvd", "dev_usb000", "config", "custom_configs", "custom_input_configs", "games", "savestates", "captures", "patches", "GuiConfigs", "cache"],
+      "extras": {
+        "folder": "RPCS3 Firmware",
+        "fetch": [
+          {
+            "name": "PS3UPDAT.PUP",
+            "minMB": 100,
+            "pages": [
+              "https://www.playstation.com/en-us/support/system-updates/ps3/",
+              "https://www.playstation.com/en-us/support/hardware/ps3/system-software/"
+            ],
+            "rx": "https?://[A-Za-z0-9./_-]+PS3UPDAT\\.PUP"
+          }
+        ],
+        "readme": [
+          "RPCS3 Firmware",
+          "==============",
+          "",
+          "[العربية]",
+          "محاكي RPCS3 يحتاج برنامج النظام الرسمي لجهاز PlayStation 3 (ملف PS3UPDAT.PUP) حتى يشغّل أي لعبة.",
+          "سوني تنشر هذا الملف مجانًا على موقعها الرسمي، ويحاول البرنامج تنزيله لك تلقائيًا في هذا المجلد.",
+          "إذا لم يكن الملف موجودًا هنا، نزّله من صفحة تحديث PS3 الرسمية: https://www.playstation.com/en-us/support/system-updates/ps3/",
+          "للتثبيت: افتح RPCS3 ثم File ثم Install Firmware، واختر الملف PS3UPDAT.PUP من هذا المجلد.",
+          "",
+          "[English]",
+          "RPCS3 needs the official PlayStation 3 system software (PS3UPDAT.PUP) to run any game.",
+          "Sony publishes it for free on its own site and MeshalBox tries to download it into this folder automatically.",
+          "If the file is not here, download it from Sony's official PS3 update page: https://www.playstation.com/en-us/support/system-updates/ps3/",
+          "To install: open RPCS3, File > Install Firmware, and choose PS3UPDAT.PUP from this folder."
+        ]
+      },
       "desc": "The leading PlayStation 3 emulator. Downloaded from the official GitHub releases (needs Visual C++ 2015-2022 x64).",
       "descAr": "أشهر محاكي لبلايستيشن 3. يُحمَّل من إصدارات GitHub الرسمية (يحتاج مكتبات Visual C++ 2015-2022 x64)."
     },
@@ -4367,6 +4417,26 @@
       "ar": "داك ستيشن",
       "category": "Emulators",
       "domain": "duckstation.org",
+      "extras": {
+        "folder": "DuckStation BIOS",
+        "readme": [
+          "DuckStation BIOS",
+          "================",
+          "",
+          "[العربية]",
+          "محاكي DuckStation يحتاج ملف BIOS الخاص بجهاز PlayStation 1.",
+          "ملفات BIOS محمية بحقوق النشر ولا توجد نسخة رسمية للتنزيل، لذلك لا يستطيع البرنامج تنزيلها لك.",
+          "الطريقة القانونية: استخرج ملف BIOS من جهاز PS1 الذي تملكه.",
+          "1) انسخ ملفات BIOS (امتداد .bin) إلى هذا المجلد.",
+          "2) افتح DuckStation ثم Settings ثم BIOS، واجعل هذا المجلد مجلد البحث عن BIOS.",
+          "",
+          "[English]",
+          "DuckStation needs a PlayStation 1 BIOS. BIOS files are copyrighted and there is no official download, so MeshalBox cannot fetch one.",
+          "The legal way is to dump the BIOS from a PS1 console you own.",
+          "1) Copy the BIOS files (.bin) into this folder.",
+          "2) Open DuckStation > Settings > BIOS and set this folder as the BIOS search directory."
+        ]
+      },
       "desc": "Fast and accurate PlayStation 1 emulator.",
       "descAr": "محاكي بلايستيشن 1 سريع ودقيق."
     },
@@ -4394,6 +4464,25 @@
       "ar": "إكس إيمو",
       "category": "Emulators",
       "domain": "xemu.app",
+      "extras": {
+        "folder": "xemu BIOS",
+        "readme": [
+          "xemu files",
+          "==========",
+          "",
+          "[العربية]",
+          "محاكي xemu يحتاج 3 أشياء: ملف MCPX Boot ROM، وملف Xbox BIOS، وصورة قرص صلب (HDD).",
+          "ملفا MCPX وBIOS محميان بحقوق النشر ويجب استخراجهما من جهاز Xbox الأصلي الذي تملكه، ولا يستطيع البرنامج تنزيلهما.",
+          "صورة القرص الصلب الفارغة متوفرة رسميًا من موقع xemu (xemu.app ثم صفحة Required Files).",
+          "ضع الملفات في هذا المجلد، ثم حدّد مساراتها داخل xemu من إعدادات النظام (System).",
+          "",
+          "[English]",
+          "xemu needs 3 things: the MCPX boot ROM, an Xbox BIOS and a hard-disk image.",
+          "The MCPX and BIOS files are copyrighted and must be dumped from an original Xbox you own; MeshalBox cannot download them.",
+          "An empty HDD image is available officially from the xemu website (xemu.app, Required Files page).",
+          "Put the files in this folder and select them in xemu's System settings."
+        ]
+      },
       "desc": "Original Xbox emulator.",
       "descAr": "محاكي Xbox الأصلي."
     },
@@ -4412,6 +4501,36 @@
       "ar": "فيتا 3K",
       "category": "Emulators",
       "domain": "vita3k.org",
+      "extras": {
+        "folder": "Vita3K Firmware",
+        "fetch": [
+          {
+            "name": "PSVUPDAT.PUP",
+            "minMB": 30,
+            "pages": [
+              "https://www.playstation.com/en-us/support/hardware/psvita/system-software/",
+              "https://www.playstation.com/en-us/support/system-updates/psvita/"
+            ],
+            "rx": "https?://[A-Za-z0-9./_-]+PSVUPDAT\\.PUP"
+          }
+        ],
+        "readme": [
+          "Vita3K Firmware",
+          "===============",
+          "",
+          "[العربية]",
+          "محاكي Vita3K يحتاج برنامج النظام الرسمي لجهاز PS Vita (ملف PSVUPDAT.PUP).",
+          "سوني تنشر هذا الملف على موقعها الرسمي، ويحاول البرنامج تنزيله لك تلقائيًا في هذا المجلد.",
+          "للتثبيت: افتح Vita3K ثم File ثم Install Firmware، واختر الملف من هذا المجلد.",
+          "كما يحتاج Vita3K إلى حزمة الخطوط (font package): تجد رابطها في صفحة الإعداد الرسمية https://vita3k.org/quickstart.html",
+          "",
+          "[English]",
+          "Vita3K needs the official PS Vita system software (PSVUPDAT.PUP).",
+          "Sony publishes it on its own site and MeshalBox tries to download it into this folder automatically.",
+          "To install: open Vita3K, File > Install Firmware, and choose the file from this folder.",
+          "Vita3K also needs the font package: the link is on the official setup page https://vita3k.org/quickstart.html"
+        ]
+      },
       "desc": "PlayStation Vita emulator.",
       "descAr": "محاكي PlayStation Vita."
     },
