@@ -244,7 +244,10 @@ public static class MeshalImg
                     if (IsBg(buf, i)) borderBg++;
                     if (IsWhite(buf, i)) borderWhite++;
                 }
-            if (borderN == 0 || borderBg * 100 < borderN * 92 || borderWhite * 100 < borderN * 35) return o;
+            if (borderN == 0) return o;
+            bool fullFrame = (borderBg * 100 >= borderN * 92) && (borderWhite * 100 >= borderN * 35);   // white (or transparent) all around the logo
+            bool partFrame = !fullFrame && (borderWhite * 100 >= borderN * 18);                          // e.g. white strips only above and below the logo (WinRAR)
+            if (!fullFrame && !partFrame) return o;
 
             // flood fill the background from the border (4-connected)
             bool[] bg = new bool[w * h];
@@ -266,7 +269,15 @@ public static class MeshalImg
             for (int p = 0; p < w * h; p++)
                 if (bg[p]) { removed++; if (IsWhite(buf, (p / w) * stride + (p % w) * 4)) removedWhite++; }
             long total = (long)w * h;
-            if (removedWhite * 100 < total * 8) return o;        // hardly any white box: nothing to do
+            if (removedWhite * 100 < total * (partFrame ? 3 : 8)) return o;   // hardly any white box: nothing to do
+            if (partFrame)
+            {
+                // only thin white margins along the edge count as background; a big white area is part of the logo
+                int maxDepth = 0;
+                for (int q = 0; q < w * h; q++)
+                    if (bg[q]) { int qx = q % w, qy = q / w; int dd = Math.Min(Math.Min(qx, qy), Math.Min(w - 1 - qx, h - 1 - qy)); if (dd > maxDepth) maxDepth = dd; }
+                if (maxDepth > Math.Min(w, h) * 0.2) return o;
+            }
             if (removed * 100 > total * 94) return o;            // almost everything is "background": a white logo, keep it as it was
 
             // build the result
@@ -302,12 +313,28 @@ public static class MeshalImg
                     if (outb[i + 3] > 128) visible++;
                 }
             if (visible * 100 < total * 2) return o;              // nothing meaningful would be left
+
+            // the cleaned logo must stay clearly visible on the black tile, otherwise keep the picture with its white box
+            long strong = 0, vis2 = 0, darkPx = 0;
+            for (int k = 0; k < outb.Length; k += 4)
+            {
+                if (outb[k + 3] <= 128) continue;
+                vis2++;
+                double lum = 0.2126 * Lin(outb[k + 2]) + 0.7152 * Lin(outb[k + 1]) + 0.0722 * Lin(outb[k]);
+                if (lum >= 0.12) strong++;
+                double pl = (0.114 * outb[k] + 0.587 * outb[k + 1] + 0.299 * outb[k + 2]) / 255.0;
+                int pmx = Math.Max(outb[k], Math.Max(outb[k + 1], outb[k + 2])), pmn = Math.Min(outb[k], Math.Min(outb[k + 1], outb[k + 2]));
+                if (pl < 0.12 || (pl < 0.30 && (pmx - pmn) < 35)) darkPx++;
+            }
+            // dark logos go on a white tile anyway; everything else needs enough bright pixels to be seen on black
+            if (vis2 > 0 && darkPx * 100 <= vis2 * 60 && strong * 100 < vis2 * 30) return o;
             System.Windows.Media.Imaging.BitmapSource res = System.Windows.Media.Imaging.BitmapSource.Create(w, h, 96, 96, System.Windows.Media.PixelFormats.Bgra32, null, outb, stride);
             res.Freeze();
             return res;
         }
         catch { return o; }
     }
+    private static double Lin(byte v) { double c = v / 255.0; return c <= 0.04045 ? c / 12.92 : Math.Pow((c + 0.055) / 1.055, 2.4); }
     private static bool IsWhite(byte[] b, int i) { return b[i + 3] >= 200 && b[i] >= 236 && b[i + 1] >= 236 && b[i + 2] >= 236; }
     private static bool IsBg(byte[] b, int i) { return b[i + 3] < 40 || IsWhite(b, i); }
     private static void Seed(byte[] buf, int stride, int w, bool[] bg, int[] stack, ref int sp, int x, int y)
@@ -952,6 +979,7 @@ foreach ($e in $catalog.apps) {
     if ($e.exe) { $a.Exe = [string]$e.exe }
     if ($e.keep) { $a.Keep = [string[]]@($e.keep | ForEach-Object { [string]$_ }) }
     if ($TileOverride.ContainsKey($a.Id)) { $a.TileForce = $TileOverride[$a.Id] }
+    if (([string]$e.tile -eq 'black') -or ([string]$e.tile -eq 'white')) { $a.TileForce = [string]$e.tile }   # catalog override for a logo that looks wrong
     $a.Initial = $a.NameEn.Substring(0, 1).ToUpper()
     if ((-not $a.Domain) -and $StoreGlyph.ContainsKey($a.Id)) { $a.Initial = [char]::ConvertFromUtf32([int]$StoreGlyph[$a.Id]) }
     $sum = 0; foreach ($ch in $a.Id.ToCharArray()) { $sum += [int]$ch }
