@@ -2823,14 +2823,16 @@
       "descAr": "برنامج HyperX لتخصيص لوحات مفاتيح وفأرات وسماعات HyperX (نسخة NGENUITY Legacy من متجر مايكروسوفت)."
     },
     {
-      "id": "https://www.gloriousgaming.com/pages/software",
+      "id": "Glorious.CORE",
       "en": "Glorious CORE",
       "ar": "جلوريوس CORE",
       "category": "Peripherals",
       "domain": "gloriousgaming.com",
-      "source": "web",
-      "desc": "Glorious software for mice and keyboards. (Opens the download page.)",
-      "descAr": "برنامج Glorious لضبط فأرات ولوحات مفاتيح Glorious. (يفتح صفحة التحميل.)"
+      "source": "direct",
+      "url": "https://gloriouscore.nyc3.digitaloceanspaces.com/CORE2/app/GloriousCORE_2.1.23_Setup.zip",
+      "dir": "GloriousCORE",
+      "desc": "One app to configure most Glorious mice and keyboards: macros, RGB, DPI, polling rate and firmware.",
+      "descAr": "برنامج واحد يضبط معظم ماوسات ولوحات مفاتيح Glorious: الماكرو والإضاءة وDPI ومعدل الاستطلاع والبرنامج الثابت."
     },
     {
       "id": "https://wooting.io/wootility",
