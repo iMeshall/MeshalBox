@@ -216,6 +216,26 @@ public class MeshalApp : INotifyPropertyChanged
     public double IconSize { get { return _iconSize; } set { _iconSize = value; Raise("IconSize"); } }
 }
 
+public class MeshalLeft
+{
+    public bool Checked { get; set; }
+    public string Kind { get; set; }        // Folder | Registry | Startup | Task
+    public string Target { get; set; }      // folder path / registry key / task folder
+    public string Extra { get; set; }       // Startup: value name, Task: task name
+    public string AppName { get; set; }
+    public bool Personal { get; set; }      // documents / saved games: not ticked by default
+    public string Badge { get { return Personal ? "Personal" : Kind; } }
+    public string Display
+    {
+        get
+        {
+            if (Kind == "Task") return Target + Extra;
+            if (string.IsNullOrEmpty(Extra)) return Target;
+            return Target + "  [" + Extra + "]";
+        }
+    }
+}
+
 public static class MeshalImg
 {
     // Many logos come as a picture with a solid white square behind them. On the black tile that shows up as an ugly white box.
@@ -677,6 +697,17 @@ $Strings = @{
         dlgUninstTitle  = 'Uninstall {0}?'
         dlgUninstBody   = 'This removes them from this PC. You can install them again later.'
         btnUninstN    = 'Uninstall {0}'
+        btnDeepUninst = 'Uninstall + deep clean'
+        dlgUninstNote = 'Deep clean also looks for leftover folders, registry keys, startup entries and scheduled tasks afterwards. You review the list before anything is deleted.'
+        dlgLeftTitle  = 'Leftovers found'
+        dlgLeftBody   = '{0} leftover item(s) were found. Untick anything you want to keep. Folders go to the Recycle Bin and registry keys are saved to a backup file first.'
+        dlgLeftPersonal = 'Items marked Personal (documents, saved games) are unticked by default.'
+        btnLeftSkip   = 'Keep them'
+        btnLeftDelete = 'Delete selected'
+        leftNone      = 'Deep clean: no leftovers were found.'
+        leftKept      = 'Deep clean: the leftovers were kept.'
+        leftDone      = 'Deep clean finished: {0} removed, {1} failed.'
+        leftBackup    = 'Registry backup saved in: {0}'
         dlgUpgTitle   = 'Upgrade all apps?'
         dlgUpgBody    = 'Every app on this PC that has an update will be upgraded, including apps that are not in MeshalBox.'
         btnUpgAll     = 'Upgrade all'
@@ -839,6 +870,17 @@ $Strings = @{
         dlgUninstTitle  = 'إزالة {0}؟'
         dlgUninstBody   = 'ستُزال من هذا الجهاز. يمكنك تثبيتها مجددًا لاحقًا.'
         btnUninstN    = 'إزالة {0}'
+        btnDeepUninst = 'إزالة + تنظيف عميق'
+        dlgUninstNote = 'التنظيف العميق يبحث بعد الإزالة عن المجلدات ومفاتيح السجل وعناصر بدء التشغيل والمهام المجدولة المتبقية. تراجع القائمة قبل حذف أي شيء.'
+        dlgLeftTitle  = 'تم العثور على بقايا'
+        dlgLeftBody   = 'تم العثور على {0} عنصر متبقٍ. ألغِ تحديد ما تريد إبقاءه. المجلدات تذهب إلى سلة المحذوفات ومفاتيح السجل تُحفظ في نسخة احتياطية أولًا.'
+        dlgLeftPersonal = 'العناصر المعلّمة Personal (مستندات وحفظ ألعاب) غير محددة افتراضيًا.'
+        btnLeftSkip   = 'إبقاؤها'
+        btnLeftDelete = 'حذف المحدد'
+        leftNone      = 'التنظيف العميق: لم يتم العثور على بقايا.'
+        leftKept      = 'التنظيف العميق: تم إبقاء البقايا.'
+        leftDone      = 'انتهى التنظيف العميق: تم حذف {0} وفشل {1}.'
+        leftBackup    = 'نسخة السجل الاحتياطية في: {0}'
         dlgUpgTitle   = 'تحديث كل البرامج؟'
         dlgUpgBody    = 'سيتم تحديث كل برنامج على هذا الجهاز له تحديث، بما فيها البرامج غير الموجودة في MeshalBox.'
         btnUpgAll     = 'تحديث الكل'
@@ -2128,6 +2170,21 @@ $script:DlgXaml = @'
               </DataTemplate>
             </ItemsControl.ItemTemplate>
           </ItemsControl>
+          <ItemsControl x:Name="dChecks" Focusable="False" Visibility="Collapsed">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <Grid Margin="0,3">
+                  <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                  <CheckBox IsChecked="{Binding Checked, Mode=TwoWay}" VerticalAlignment="Center"/>
+                  <Border Grid.Column="1" CornerRadius="6" Background="{DynamicResource BadgeBg}" Padding="8,3" Margin="8,0,12,0" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding Badge}" FontSize="12" Foreground="{DynamicResource TextSoft}" FlowDirection="LeftToRight"/>
+                  </Border>
+                  <TextBlock Grid.Column="2" Text="{Binding Display}" ToolTip="{Binding Display}" VerticalAlignment="Center" TextWrapping="Wrap"
+                             FlowDirection="LeftToRight" Foreground="{DynamicResource TextPrimary}" FontSize="12.5"/>
+                </Grid>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
           <TextBlock x:Name="dNotes" FontSize="13" LineHeight="19" LineStackingStrategy="BlockLineHeight" TextWrapping="Wrap"
                      Foreground="{DynamicResource TextSec2}" Visibility="Collapsed"/>
         </StackPanel>
@@ -2144,6 +2201,8 @@ function Show-Dialog {
         [string]$Message = '',
         $Items = $null,
         $Rows = $null,
+        $Checks = $null,
+        [switch]$Wide,
         [string]$Notes = '',
         $Buttons
     )
@@ -2158,6 +2217,8 @@ function Show-Dialog {
     $showScroll = $false
     if ($Items -and @($Items).Count -gt 0) { $c = $d.FindName('dItems'); $c.ItemsSource = @($Items); $c.Visibility = 'Visible'; $showScroll = $true }
     if ($Rows -and @($Rows).Count -gt 0)   { $c = $d.FindName('dRows');  $c.ItemsSource = @($Rows);  $c.Visibility = 'Visible'; $showScroll = $true }
+    if ($Checks -and @($Checks).Count -gt 0) { $c = $d.FindName('dChecks'); $c.ItemsSource = @($Checks); $c.Visibility = 'Visible'; $showScroll = $true; $d.FindName('dScroll').MaxHeight = 330 }
+    if ($Wide) { $d.Width = 720 }
     if ($Notes) { $n = $d.FindName('dNotes'); $n.Text = $Notes; $n.Visibility = 'Visible'; $showScroll = $true }
     if ($showScroll) { $d.FindName('dScroll').Visibility = 'Visible' }
 
@@ -3233,6 +3294,190 @@ $worker = {
             return $removed
         }
 
+        # ---- deep clean (Revo-style): remember what the program owns BEFORE the uninstall, look for what it left AFTER ---------
+        # Nothing is deleted here. Everything found goes into $sync.Left and the user reviews it. Only exact name matches are used
+        # (the app's name or the Id without its publisher), folders of programs that are still installed are never offered.
+        function Get-ArpEntries($app) {
+            $keys = @()
+            $k1 = Get-Norm ([string]$app.Name); if ($k1.Length -ge 3) { $keys += $k1 }
+            $parts = @(([string]$app.Id) -split '\.')
+            if (($app.Source -ne 'msstore') -and ($parts.Count -gt 1)) { $k2 = Get-Norm (($parts[1..($parts.Count - 1)]) -join ''); if ($k2.Length -ge 3) { $keys += $k2 } }
+            $exact = @(); $fuzzy = @()
+            if ($keys.Count -eq 0) { return @() }
+            foreach ($rk in @('HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*', 'HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*', 'HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*')) {
+                foreach ($it in @(Get-ItemProperty -Path $rk -ErrorAction SilentlyContinue)) {
+                    if (-not $it.DisplayName) { continue }
+                    $n = Get-Norm ([string]$it.DisplayName)
+                    foreach ($k in $keys) {
+                        if ($n -eq $k) { $exact += $it; break }
+                        if ($n.StartsWith($k) -or ($n.Length -ge 4 -and $k.StartsWith($n))) { $fuzzy += $it; break }
+                    }
+                }
+            }
+            if ($exact.Count -gt 0) { return $exact }
+            return $fuzzy
+        }
+        function Get-EntryDirs($it) {
+            $c = @()
+            if ($it.InstallLocation) { $c += ([string]$it.InstallLocation).Trim().Trim('"') }
+            $ic = ([string]$it.DisplayIcon).Trim()
+            if ($ic -and ($ic -match '^"?(.+?\.(exe|ico))"?(,\s*-?\d+)?$')) { $c += (Split-Path -Parent ([Environment]::ExpandEnvironmentVariables($Matches[1]))) }
+            $us = [string]$it.UninstallString
+            if ($us -match '^"?([^"]+?\.exe)') { $c += (Split-Path -Parent ([Environment]::ExpandEnvironmentVariables($Matches[1]))) }
+            $out = @()
+            foreach ($x in $c) { try { if ($x) { $out += ([System.IO.Path]::GetFullPath($x)).TrimEnd('\') } } catch { } }
+            return @($out | Select-Object -Unique)
+        }
+        function Get-AppFootprint($app) {
+            $fp = @{ Dirs = @(); Publishers = @() }
+            try {
+                $dirs = @()
+                foreach ($it in @(Get-ArpEntries $app)) {
+                    if ($it.Publisher) { $fp.Publishers += [string]$it.Publisher }
+                    foreach ($d in @(Get-EntryDirs $it)) { try { if (Test-Path -LiteralPath $d -PathType Container) { $dirs += $d } } catch { } }
+                }
+                $fp.Dirs = @($dirs | Select-Object -Unique)
+            } catch { }
+            return $fp
+        }
+        function Get-InUseDirs {
+            $dirs = @()
+            foreach ($rk in @('HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*', 'HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*', 'HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*')) {
+                foreach ($it in @(Get-ItemProperty -Path $rk -ErrorAction SilentlyContinue)) { $dirs += @(Get-EntryDirs $it) }
+            }
+            return @($dirs | Where-Object { $_ -and $_.Length -gt 3 } | Select-Object -Unique)
+        }
+        function Test-SafeLeftDir([string]$path, $inUse) {
+            try {
+                if ([string]::IsNullOrWhiteSpace($path)) { return $false }
+                $full = ([System.IO.Path]::GetFullPath($path)).TrimEnd('\')
+                if (-not (Test-Path -LiteralPath $full -PathType Container)) { return $false }
+                $segs = @($full.Split('\') | Where-Object { $_ })
+                if ($segs.Count -lt 2) { return $false }                                   # never a drive root
+                $blockLeaf = @('windows','system32','syswow64','users','program files','program files (x86)','programdata','appdata','local','locallow','roaming','documents','desktop','downloads','temp','microsoft','windowsapps','common files','intel','nvidia','nvidia corporation','amd','google','mozilla','adobe','packages','programs')
+                if ($blockLeaf -contains $segs[$segs.Count - 1].ToLowerInvariant()) { return $false }
+                $sysRoot = [string]$env:SystemRoot
+                if ($sysRoot -and $full.StartsWith($sysRoot, [System.StringComparison]::OrdinalIgnoreCase)) { return $false }
+                foreach ($r in @($env:ProgramFiles, ${env:ProgramFiles(x86)}, $env:ProgramData, $env:APPDATA, $env:LOCALAPPDATA, $env:USERPROFILE, ($env:SystemDrive + '\'))) {
+                    if ($r -and ($full -eq $r.TrimEnd('\'))) { return $false }
+                }
+                foreach ($u in @($inUse)) {
+                    if (($full -eq $u) -or $full.StartsWith($u + '\', [System.StringComparison]::OrdinalIgnoreCase) -or $u.StartsWith($full + '\', [System.StringComparison]::OrdinalIgnoreCase)) { return $false }
+                }
+                return $true
+            } catch { return $false }
+        }
+        function Find-Leftovers($app, $fp) {
+            if ($app.Source -eq 'msstore') { return 0 }
+            $keys = @(); $pubKeys = @()
+            $k1 = Get-Norm ([string]$app.Name); if ($k1.Length -ge 4) { $keys += $k1 }
+            $parts = @(([string]$app.Id) -split '\.')
+            if ($parts.Count -gt 1) {
+                $k2 = Get-Norm (($parts[1..($parts.Count - 1)]) -join ''); if ($k2.Length -ge 4) { $keys += $k2 }
+                $p1 = Get-Norm $parts[0]; if ($p1.Length -ge 4) { $pubKeys += $p1 }
+            }
+            foreach ($pn in @($fp.Publishers)) { $p2 = Get-Norm ([string]$pn); if ($p2.Length -ge 4) { $pubKeys += $p2 } }
+            $keys = @($keys | Select-Object -Unique); $pubKeys = @($pubKeys | Select-Object -Unique)
+            if ($keys.Count -eq 0) { return 0 }
+            $inUse = @(Get-InUseDirs)
+            $left = $sync.Left
+            $seen = @{}
+            $addItem = {
+                param($kind, $target, $extra, $personal)
+                $dk = ($kind + '|' + $target + '|' + $extra).ToLowerInvariant()
+                if ($seen.ContainsKey($dk)) { return }
+                $seen[$dk] = $true
+                $o = New-Object MeshalLeft
+                $o.Kind = $kind; $o.Target = $target; $o.Extra = $extra; $o.Personal = [bool]$personal; $o.AppName = [string]$app.Name; $o.Checked = (-not [bool]$personal)
+                [void]$left.Add($o)
+            }
+            $isPub = { param($n) foreach ($pk in $pubKeys) { if ($n -eq $pk -or $n.StartsWith($pk)) { return $true } }; return $false }
+
+            # 1) the folders the program itself registered
+            foreach ($d in @($fp.Dirs)) { if (Test-SafeLeftDir $d $inUse) { & $addItem 'Folder' $d '' $false } }
+
+            # 2) folders named like the program (or Publisher\Program) in the usual places
+            $roots = @($env:APPDATA, $env:LOCALAPPDATA, (Join-Path $env:LOCALAPPDATA 'Programs'), $env:ProgramData, $env:ProgramFiles, ${env:ProgramFiles(x86)},
+                       (Join-Path $env:ProgramData 'Microsoft\Windows\Start Menu\Programs'), (Join-Path $env:APPDATA 'Microsoft\Windows\Start Menu\Programs'))
+            foreach ($root in @($roots | Where-Object { $_ } | Select-Object -Unique)) {
+                if (-not (Test-Path -LiteralPath $root)) { continue }
+                foreach ($c in @(Get-ChildItem -LiteralPath $root -Directory -Force -ErrorAction SilentlyContinue)) {
+                    $n = Get-Norm $c.Name
+                    if ($keys -contains $n) { if (Test-SafeLeftDir $c.FullName $inUse) { & $addItem 'Folder' $c.FullName '' $false } }
+                    elseif (& $isPub $n) {
+                        foreach ($c2 in @(Get-ChildItem -LiteralPath $c.FullName -Directory -Force -ErrorAction SilentlyContinue)) {
+                            if ($keys -contains (Get-Norm $c2.Name)) { if (Test-SafeLeftDir $c2.FullName $inUse) { & $addItem 'Folder' $c2.FullName '' $false } }
+                        }
+                    }
+                }
+            }
+            # personal data (documents, saved games): offered but not ticked
+            $docs = ''; try { $docs = [Environment]::GetFolderPath('MyDocuments') } catch { }
+            foreach ($root in @($docs, (Join-Path $docs 'My Games'), (Join-Path $env:USERPROFILE 'Saved Games'))) {
+                if ((-not $root) -or (-not (Test-Path -LiteralPath $root))) { continue }
+                foreach ($c in @(Get-ChildItem -LiteralPath $root -Directory -Force -ErrorAction SilentlyContinue)) {
+                    if (($keys -contains (Get-Norm $c.Name)) -and (Test-SafeLeftDir $c.FullName $inUse)) { & $addItem 'Folder' $c.FullName '' $true }
+                }
+            }
+
+            # 3) registry keys named like the program
+            $blockKey = @('microsoft','classes','policies','wow6432node','clients','registeredapplications','windows','software','system')
+            foreach ($rp in @('HKCU:\Software', 'HKLM:\SOFTWARE', 'HKLM:\SOFTWARE\WOW6432Node')) {
+                foreach ($k in @(Get-ChildItem -LiteralPath $rp -ErrorAction SilentlyContinue)) {
+                    $n = Get-Norm $k.PSChildName
+                    if ($blockKey -contains $n) { if (& $isPub $n) { } else { continue } }
+                    if ($keys -contains $n) { & $addItem 'Registry' $k.Name '' $false }
+                    elseif (& $isPub $n) {
+                        foreach ($k2 in @(Get-ChildItem -LiteralPath $k.PSPath -ErrorAction SilentlyContinue)) {
+                            if ($keys -contains (Get-Norm $k2.PSChildName)) { & $addItem 'Registry' $k2.Name '' $false }
+                        }
+                    }
+                }
+            }
+            # an uninstall entry that is still registered although its uninstaller is gone
+            foreach ($it in @(Get-ArpEntries $app)) {
+                $us = [string]$it.UninstallString
+                if ($us -match '^"?([^"]+?\.exe)') {
+                    $ue = [Environment]::ExpandEnvironmentVariables($Matches[1])
+                    $locGone = $true; if ($it.InstallLocation) { $locGone = (-not (Test-Path -LiteralPath ([string]$it.InstallLocation).Trim('"'))) }
+                    if ((-not (Test-Path -LiteralPath $ue)) -and $locGone) { & $addItem 'Registry' (([string]$it.PSPath) -replace '^.*Registry::', '') '' $false }
+                }
+            }
+
+            # 4) start-with-Windows entries whose program is gone
+            foreach ($rk in @('HKCU:\Software\Microsoft\Windows\CurrentVersion\Run', 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Run', 'HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Run')) {
+                $props = $null; try { $props = Get-ItemProperty -LiteralPath $rk -ErrorAction SilentlyContinue } catch { }
+                if (-not $props) { continue }
+                foreach ($pr in @($props.PSObject.Properties)) {
+                    if ($pr.Name -like 'PS*') { continue }
+                    $exe = ''; $val = [string]$pr.Value
+                    if ($val -match '^"?([^"]+?\.exe)') { $exe = [Environment]::ExpandEnvironmentVariables($Matches[1]) }
+                    if ((-not $exe) -or (Test-Path -LiteralPath $exe)) { continue }
+                    $inFp = $false
+                    foreach ($d in @($fp.Dirs)) { if ($exe.StartsWith($d + '\', [System.StringComparison]::OrdinalIgnoreCase)) { $inFp = $true } }
+                    if (($keys -contains (Get-Norm $pr.Name)) -or $inFp) { & $addItem 'Startup' (($props.PSPath) -replace '^.*Registry::', '') $pr.Name $false }
+                }
+            }
+
+            # 5) scheduled tasks whose program is gone
+            try {
+                foreach ($tk in @(Get-ScheduledTask -ErrorAction SilentlyContinue)) {
+                    if ([string]$tk.TaskPath -like '\Microsoft*') { continue }
+                    $n = Get-Norm ([string]$tk.TaskName)
+                    $hit = $false
+                    foreach ($k in $keys) { if ($n -eq $k -or ($k.Length -ge 5 -and $n.StartsWith($k))) { $hit = $true; break } }
+                    if (-not $hit) { continue }
+                    $has = $false; $dead = $false
+                    foreach ($ac in @($tk.Actions)) {
+                        $ex = ([Environment]::ExpandEnvironmentVariables([string]$ac.Execute)).Trim('"')
+                        if ($ex) { $has = $true; if (-not (Test-Path -LiteralPath $ex)) { $dead = $true } }
+                    }
+                    if ($has -and $dead) { & $addItem 'Task' ([string]$tk.TaskPath) ([string]$tk.TaskName) $false }
+                }
+            } catch { }
+            return $seen.Count
+        }
+
         function Ensure-DesktopShortcut($app, $before, [string]$exeHint = '') {
             $made = @()
             try {
@@ -3751,6 +3996,8 @@ $worker = {
                     $ucmd = 'winget uninstall --id ' + $app.Id + ' --exact --silent --accept-source-agreements --disable-interactivity'
                     if ($app.Source -eq 'msstore') { $ucmd += ' --source msstore' }
                 }
+                $fp = $null
+                if ($sync.Deep) { try { $fp = Get-AppFootprint $app } catch { } }              # deep clean: note what the program owns before it is gone
                 $wId = ''; if ($app.Lingers) { $wId = $app.Id }
                 $code = Run-Winget $ucmd $app.Id 'install' $false $wId 'absent' ([string]$app.Name)
                 # user-scope package + elevated session -> winget refuses (0x8A15007D-style error); retry without admin rights
@@ -3766,6 +4013,13 @@ $worker = {
                         $gone = @(Remove-DesktopShortcuts $app)
                         if ($gone.Count -gt 0) { $sync.Queue.Enqueue("log|$($app.Id)|Removed the desktop shortcut: $($gone -join ', ')") }
                     } catch { }
+                    if ($sync.Deep -and $fp) {
+                        try {
+                            $sync.Queue.Enqueue("log|$($app.Id)|Deep clean: looking for leftovers...")
+                            $cnt = [int](Find-Leftovers $app $fp)
+                            if ($cnt -gt 0) { $sync.Queue.Enqueue("log|$($app.Id)|Deep clean: $cnt leftover item(s) found.") }
+                        } catch { $sync.Queue.Enqueue("log|$($app.Id)|Deep clean: $($_.Exception.Message)") }
+                    }
                 }
                 $sync.Queue.Enqueue("done|$($app.Id)|$code")
                 continue
@@ -4078,6 +4332,79 @@ function Finish-Install {
         $script:pbar.Value = 100
         $script:ResetTimer.Start()
     }
+    # deep clean: let the user review what the removed programs left behind
+    if (($script:Mode -eq 'uninstall') -and $script:DeepClean -and $script:Sync -and (-not $script:Sync.Cancel)) {
+        try { Show-Leftovers } catch { Write-Log $_.Exception.Message }
+    }
+}
+
+function Remove-Leftovers {
+    param($Items)
+    $t = $script:T
+    $window.Cursor = [System.Windows.Input.Cursors]::Wait
+    $ok = 0; $fail = 0; $regN = 0; $usedBackup = $false
+    $backup = Join-Path ([Environment]::GetFolderPath('Desktop')) 'MeshalBox Backup'
+    $stamp = (Get-Date).ToString('yyyyMMdd-HHmmss')
+    try { Add-Type -AssemblyName Microsoft.VisualBasic -ErrorAction SilentlyContinue } catch { }
+    foreach ($it in @($Items)) {
+        try {
+            $safeApp = ([string]$it.AppName -replace '[^A-Za-z0-9._-]', '_')
+            switch ([string]$it.Kind) {
+                'Folder' {
+                    if (Test-Path -LiteralPath $it.Target) {
+                        try { [Microsoft.VisualBasic.FileIO.FileSystem]::DeleteDirectory([string]$it.Target, 'OnlyErrorDialogs', 'SendToRecycleBin') }
+                        catch { Remove-Item -LiteralPath $it.Target -Recurse -Force -ErrorAction Stop }
+                    }
+                    $ok++
+                }
+                'Registry' {
+                    $regN++; [void](New-Item -ItemType Directory -Path $backup -Force); $usedBackup = $true
+                    $file = Join-Path $backup ('{0}-{1}-{2}.reg' -f $safeApp, $stamp, $regN)
+                    $null = & reg.exe export ([string]$it.Target) $file /y 2>&1
+                    if (-not (Test-Path -LiteralPath $file)) { throw 'the registry backup could not be written, so the key was not deleted' }
+                    Remove-Item -LiteralPath ('Registry::' + [string]$it.Target) -Recurse -Force -ErrorAction Stop
+                    $ok++
+                }
+                'Startup' {
+                    $regN++; [void](New-Item -ItemType Directory -Path $backup -Force); $usedBackup = $true
+                    $file = Join-Path $backup ('{0}-startup-{1}-{2}.reg' -f $safeApp, $stamp, $regN)
+                    $null = & reg.exe export ([string]$it.Target) $file /y 2>&1
+                    if (-not (Test-Path -LiteralPath $file)) { throw 'the registry backup could not be written, so the entry was not deleted' }
+                    Remove-ItemProperty -LiteralPath ('Registry::' + [string]$it.Target) -Name ([string]$it.Extra) -ErrorAction Stop
+                    $ok++
+                }
+                'Task' {
+                    [void](New-Item -ItemType Directory -Path $backup -Force); $usedBackup = $true
+                    $xml = Join-Path $backup ('{0}-task-{1}-{2}.xml' -f $safeApp, $stamp, ([string]$it.Extra -replace '[^A-Za-z0-9._-]', '_'))
+                    try { Export-ScheduledTask -TaskName ([string]$it.Extra) -TaskPath ([string]$it.Target) | Out-File -LiteralPath $xml -Encoding utf8 } catch { }
+                    Unregister-ScheduledTask -TaskName ([string]$it.Extra) -TaskPath ([string]$it.Target) -Confirm:$false -ErrorAction Stop
+                    $ok++
+                }
+            }
+        }
+        catch { $fail++; Write-Log ('{0}: {1}' -f $it.Display, $_.Exception.Message) }
+    }
+    $window.Cursor = $null
+    $msg = ($t.leftDone -f $ok, $fail)
+    Write-Log $msg
+    if ($usedBackup) { Write-Log ($t.leftBackup -f $backup) }
+    if ($fail -gt 0) { Show-Notice -Kind warn -Text $msg } else { Show-Notice -Kind ok -Text $msg }
+}
+
+function Show-Leftovers {
+    $t = $script:T
+    $items = @()
+    try { $items = @($script:Sync.Left) } catch { }
+    if ($items.Count -eq 0) { Write-Log $t.leftNone; return }
+    $msg = ($t.dlgLeftBody -f $items.Count)
+    if (@($items | Where-Object { $_.Personal }).Count -gt 0) { $msg += "`n" + $t.dlgLeftPersonal }
+    $r = Show-Dialog -Title $t.dlgLeftTitle -Message $msg -Checks $items -Wide -Buttons @(
+        @{ Id = 'skip'; Text = $t.btnLeftSkip; Cancel = $true; Focus = $true },
+        @{ Id = 'go'; Text = $t.btnLeftDelete; Kind = 'danger' })
+    if ($r -ne 'go') { Write-Log $t.leftKept; return }
+    $sel = @($items | Where-Object { $_.Checked })
+    if ($sel.Count -eq 0) { Write-Log $t.leftKept; return }
+    Remove-Leftovers $sel
 }
 
 function Clear-Finished {
@@ -4216,6 +4543,8 @@ function Start-Work {
 
     $script:Sync = [hashtable]::Synchronized(@{ Cancel = $false; Proc = $null })
     $script:Sync.Queue = New-Object 'System.Collections.Concurrent.ConcurrentQueue[object]'
+    $script:Sync.Deep = (($Mode -eq 'uninstall') -and [bool]$script:DeepClean)
+    $script:Sync.Left = [System.Collections.ArrayList]::Synchronized((New-Object System.Collections.ArrayList))
 
     $list = @()
     if ($Mode -ne 'upgradeall') { $list = @($Sel | ForEach-Object { [pscustomobject]@{ Id = $_.Id; Name = $_.NameEn; Source = $_.Source; Lingers = $_.Lingers; Url = $_.Url; Dir = $_.Dir; Domain = $_.Domain; Repo = $_.Repo; Asset = $_.Asset; Exe = $_.Exe; Keep = $_.Keep; Extras = $_.Extras; Cli = $_.Cli } }) }
@@ -4254,10 +4583,12 @@ function Start-Uninstall {
     if (-not (Get-Command winget -ErrorAction SilentlyContinue)) { Show-WingetMissing; return }
     $n = Format-Apps $sel.Count
     # dangerous action: the safe button (Cancel) has the initial focus
-    $r = Show-Dialog -Title ($t.dlgUninstTitle -f $n) -Message $t.dlgUninstBody -Items $sel -Buttons @(
+    $r = Show-Dialog -Title ($t.dlgUninstTitle -f $n) -Message $t.dlgUninstBody -Items $sel -Notes $t.dlgUninstNote -Buttons @(
         @{ Id = 'cancel'; Text = $t.btnCancel2; Cancel = $true; Focus = $true },
-        @{ Id = 'go'; Text = ($t.btnUninstN -f $n); Kind = 'danger' })
-    if ($r -ne 'go') { return }
+        @{ Id = 'go'; Text = ($t.btnUninstN -f $n); Kind = 'danger' },
+        @{ Id = 'deep'; Text = $t.btnDeepUninst; Kind = 'danger' })
+    if (($r -ne 'go') -and ($r -ne 'deep')) { return }
+    $script:DeepClean = ($r -eq 'deep')
     Hide-Notice
     Start-Work 'uninstall' $sel
 }
