@@ -4792,15 +4792,6 @@
       "descAr": "تطبيق مرافق لأذرع GameSir المدعومة: تعيين الأزرار والعصي وتحديث البرنامج الثابت."
     },
     {
-      "id": "GameSir.GameSirT4kApp",
-      "en": "GameSir T4k App",
-      "ar": "تطبيق GameSir T4k",
-      "category": "Peripherals",
-      "domain": "gamesir.com",
-      "desc": "Companion app for the GameSir T4k controller.",
-      "descAr": "تطبيق مرافق لذراع GameSir T4k."
-    },
-    {
       "id": "8BitDo.UltimateSoftwareV2",
       "en": "8BitDo Ultimate Software V2",
       "ar": "برنامج 8BitDo Ultimate V2",
@@ -4817,15 +4808,6 @@
       "domain": "flydigi.com",
       "desc": "Companion software for Flydigi Vader 3/4, Apex 3/4 and Direwolf 2 controllers.",
       "descAr": "برنامج مرافق لأذرع Flydigi: Vader 3/4 وApex 3/4 وDirewolf 2."
-    },
-    {
-      "id": "Flydigi.FlydigiPCSpace",
-      "en": "Flydigi PC Space",
-      "ar": "فلايديجي PC Space",
-      "category": "Peripherals",
-      "domain": "flydigi.com",
-      "desc": "Companion software for older Flydigi controllers (Apex 2/3, Vader 2/2 Pro, Direwolf 1).",
-      "descAr": "برنامج مرافق لأذرع Flydigi الأقدم (Apex 2/3 وVader 2/2 Pro وDirewolf 1)."
     },
     {
       "id": "PlayStation.PlayStationAccessories",
@@ -4873,15 +4855,6 @@
       "descAr": "أعد تعيين مفاتيح لوحات مفاتيح وماوسات CHERRY."
     },
     {
-      "id": "CHERRY.UTILITY",
-      "en": "CHERRY UTILITY",
-      "ar": "تشيري يوتيليتي",
-      "category": "Peripherals",
-      "domain": "cherry.de",
-      "desc": "Settings utility for compatible CHERRY input devices.",
-      "descAr": "أداة إعدادات لأجهزة الإدخال المتوافقة من CHERRY."
-    },
-    {
       "id": "MCHOSE.MCHOSEHUB",
       "en": "MCHOSE HUB",
       "ar": "ام تشوز HUB",
@@ -4920,42 +4893,6 @@
       "descAr": "يفتح موقع AJAZZ الرسمي: اختر موديل لوحة المفاتيح أو الماوس أو Stream Dock ونزّل تعريفه."
     },
     {
-      "id": "Logitech.UnifyingSoftware",
-      "en": "Logitech Unifying Software",
-      "ar": "برنامج Logitech Unifying",
-      "category": "Peripherals",
-      "domain": "logitech.com",
-      "desc": "Pair or remove devices that use a Logitech Unifying receiver.",
-      "descAr": "اقرن الأجهزة التي تستخدم مستقبل Logitech Unifying أو أزلها."
-    },
-    {
-      "id": "Logitech.LogiBolt",
-      "en": "Logi Bolt",
-      "ar": "لوجي بولت",
-      "category": "Peripherals",
-      "domain": "logitech.com",
-      "desc": "Pair Logi Bolt devices with the Logi Bolt receiver.",
-      "descAr": "اقرن أجهزة Logi Bolt مع مستقبل Logi Bolt."
-    },
-    {
-      "id": "Logitech.LogiTune",
-      "en": "Logi Tune",
-      "ar": "لوجي تيون",
-      "category": "Peripherals",
-      "domain": "logitech.com",
-      "desc": "Settings and updates for Logitech headsets and webcams.",
-      "descAr": "إعدادات وتحديثات سماعات وكاميرات Logitech."
-    },
-    {
-      "id": "Logitech.CameraSettings",
-      "en": "Logitech Camera Settings",
-      "ar": "إعدادات كاميرا Logitech",
-      "category": "Peripherals",
-      "domain": "logitech.com",
-      "desc": "Easy access to Logitech webcam controls (zoom, focus, brightness).",
-      "descAr": "وصول سهل لإعدادات كاميرا Logitech (التكبير والتركيز والسطوع)."
-    },
-    {
       "id": "Asus.GpuTweak3.Stable",
       "en": "ASUS GPU Tweak III",
       "ar": "ASUS GPU Tweak III",
@@ -4965,15 +4902,6 @@
       "descAr": "اضبط وراقب ورفع تردد كروت الشاشة من ASUS."
     },
     {
-      "id": "Asus.DisplayWidgetCenter",
-      "en": "ASUS DisplayWidget Center",
-      "ar": "ASUS DisplayWidget Center",
-      "category": "Peripherals",
-      "domain": "asus.com",
-      "desc": "Manage and optimize compatible ASUS monitors from Windows.",
-      "descAr": "أدِر شاشات ASUS المتوافقة وحسّن إعداداتها من ويندوز."
-    },
-    {
       "id": "GIGABYTE.RGBFusion",
       "en": "GIGABYTE RGB Fusion",
       "ar": "جيجابايت RGB Fusion",
@@ -4981,33 +4909,6 @@
       "domain": "gigabyte.com",
       "desc": "Control the RGB lighting of GIGABYTE motherboards, graphics cards and devices.",
       "descAr": "تحكم بإضاءة RGB للوحات الأم وكروت الشاشة والأجهزة من GIGABYTE."
-    },
-    {
-      "id": "DeepCool.DeepCool",
-      "en": "DeepCool",
-      "ar": "ديب كول",
-      "category": "Peripherals",
-      "domain": "deepcool.com",
-      "desc": "Control software for compatible DeepCool coolers and cases.",
-      "descAr": "برنامج تحكم لمبرّدات وصناديق DeepCool المتوافقة."
-    },
-    {
-      "id": "Lenovo.LegionAccessoryCentral",
-      "en": "Legion Accessory Central",
-      "ar": "Legion Accessory Central",
-      "category": "Peripherals",
-      "domain": "lenovo.com",
-      "desc": "Configure Lenovo Legion accessories (mice, keyboards, headsets).",
-      "descAr": "اضبط ملحقات Lenovo Legion (ماوسات ولوحات مفاتيح وسماعات)."
-    },
-    {
-      "id": "Dell.DisplayAndPeripheralManager",
-      "en": "Dell Display and Peripheral Manager",
-      "ar": "مدير شاشات وملحقات Dell",
-      "category": "Peripherals",
-      "domain": "dell.com",
-      "desc": "Set up Dell monitors and peripherals: keyboards, mice, webcams, audio devices and active pens.",
-      "descAr": "اضبط شاشات وملحقات Dell: لوحات المفاتيح والماوس والكاميرات وأجهزة الصوت والأقلام."
     },
     {
       "id": "EPOS.EPOSConnect",
@@ -5055,24 +4956,6 @@
       "descAr": "تحكم بكاميرات Insta360 Link: ضبط الصورة والتتبع ووضع السبورة."
     },
     {
-      "id": "Samsung.GalaxyBudsManager",
-      "en": "Galaxy Buds Manager",
-      "ar": "مدير Galaxy Buds",
-      "category": "Peripherals",
-      "domain": "samsung.com",
-      "desc": "Manage and update Samsung Galaxy Buds from your PC.",
-      "descAr": "أدِر سماعات Samsung Galaxy Buds وحدّثها من الكمبيوتر."
-    },
-    {
-      "id": "Philips.HueSync",
-      "en": "Philips Hue Sync",
-      "ar": "Philips Hue Sync",
-      "category": "Peripherals",
-      "domain": "philips-hue.com",
-      "desc": "Sync Philips Hue lights with what is on your PC screen.",
-      "descAr": "زامن إضاءة Philips Hue مع ما يظهر على شاشة الكمبيوتر."
-    },
-    {
       "id": "Meta.Oculus",
       "en": "Meta Quest Link (Oculus)",
       "ar": "Meta Quest Link (Oculus)",
@@ -5080,15 +4963,7 @@
       "domain": "meta.com",
       "desc": "Install the Meta Quest PC software to use your headset for PC VR with a cable or Air Link.",
       "descAr": "ثبّت برنامج Meta Quest للكمبيوتر لتستخدم النظارة مع ألعاب الواقع الافتراضي عبر كابل أو Air Link."
-    },
-    {
-      "id": "SanDisk.Dashboard",
-      "en": "SanDisk Dashboard",
-      "ar": "SanDisk Dashboard",
-      "category": "Peripherals",
-      "domain": "sandisk.com",
-      "desc": "Check the health of SanDisk and Western Digital drives on Windows.",
-      "descAr": "افحص حالة أقراص SanDisk وWestern Digital على ويندوز."
     }
+
   ]
 }
