@@ -1005,7 +1005,7 @@ foreach ($e in $catalog.apps) {
     # Safety: ids are placed into a cmd.exe command line, so only allow winget-style ids (or https links for 'web' entries)
     if ([string]$e.source -eq 'web') { if ([string]$e.id -notmatch '^https://[^\s"&|<>^]+$') { $script:CatalogSkipped++; continue } }
     elseif ([string]$e.id -notmatch '^[A-Za-z0-9][A-Za-z0-9.\-_+]*$') { $script:CatalogSkipped++; continue }
-    if ([string]$e.source -eq 'direct') { if ([string]$e.url -notmatch '^https://[^\s"&|<>^]+\.exe$') { $script:CatalogSkipped++; continue } }
+    if ([string]$e.source -eq 'direct') { if ([string]$e.url -notmatch '^https://[^\s"&|<>^]+\.(exe|zip)$') { $script:CatalogSkipped++; continue } }
     if ([string]$e.source -eq 'portable') {
         # GitHub release archive that is unpacked into %LocalAppData%\<dir> (values end up in paths and a regex, so keep them strict)
         if (([string]$e.repo -notmatch '^[A-Za-z0-9._-]+/[A-Za-z0-9._-]+$') -or ([string]$e.asset -notmatch '^[A-Za-z0-9_.\-\\*+?|()\[\]^$]+$') -or ([string]$e.dir -notmatch '^[A-Za-z0-9._-]+$') -or ([string]$e.exe -notmatch '^[A-Za-z0-9._-]+\.exe$')) { $script:CatalogSkipped++; continue }
@@ -3616,9 +3616,10 @@ $worker = {
             $name = [string]$app.Name
             $ua   = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36'
             try { [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 } catch { }
+            $nn = Get-Norm $name
             $testArp = {
                 foreach ($rk in @('HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*', 'HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*', 'HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*')) {
-                    try { if (Get-ItemProperty -Path $rk -ErrorAction SilentlyContinue | Where-Object { $_.DisplayName -like ($name + '*') }) { return $true } } catch { }
+                    try { if (Get-ItemProperty -Path $rk -ErrorAction SilentlyContinue | Where-Object { $_.DisplayName -and ((Get-Norm ([string]$_.DisplayName)).StartsWith($nn)) }) { return $true } } catch { }
                 }
                 return $false
             }
@@ -3629,6 +3630,14 @@ $worker = {
             $dir  = Join-Path $env:LOCALAPPDATA $dirName
             $file = [System.IO.Path]::GetFileName(([uri]$app.Url).AbsolutePath)
             $exe  = Join-Path $dir $file
+            $isZip = ($file -match '\.zip$')
+            $work = $null
+            if ($isZip) {
+                # a ZIP holds the real installer: it is unpacked in a temp folder, not in %LocalAppData%
+                $work = Join-Path $env:TEMP ('meshalbox_' + [guid]::NewGuid().ToString('N'))
+                $dir  = $work
+                $exe  = Join-Path $work $file
+            }
             $part = $exe + '.part'
             try { [void](New-Item -ItemType Directory -Path $dir -Force) } catch { $q.Enqueue("log|$id|$($_.Exception.Message)"); return $null }
 
@@ -3661,7 +3670,10 @@ $worker = {
             try {
                 if ((Get-Item -LiteralPath $part).Length -gt 200KB) {
                     $fs = [System.IO.File]::OpenRead($part)
-                    try { $valid = (($fs.ReadByte() -eq 0x4D) -and ($fs.ReadByte() -eq 0x5A)) } finally { $fs.Close() }
+                    try {
+                        $b0 = $fs.ReadByte(); $b1 = $fs.ReadByte()
+                        if ($isZip) { $valid = (($b0 -eq 0x50) -and ($b1 -eq 0x4B)) } else { $valid = (($b0 -eq 0x4D) -and ($b1 -eq 0x5A)) }
+                    } finally { $fs.Close() }
                 }
             } catch { }
             if (-not $valid) {
@@ -3670,6 +3682,19 @@ $worker = {
                 return $null
             }
             try { Move-Item -LiteralPath $part -Destination $exe -Force } catch { $q.Enqueue("log|$id|$($_.Exception.Message)"); return $null }
+            if ($isZip) {
+                try {
+                    $q.Enqueue("log|$id|Unpacking the download...")
+                    $unz = Join-Path $work 'unpacked'
+                    Expand-Archive -LiteralPath $exe -DestinationPath $unz -Force
+                    $cands = @(Get-ChildItem -LiteralPath $unz -Recurse -File -ErrorAction SilentlyContinue | Where-Object { $_.Extension -in @('.exe', '.msi') })
+                    $pick = $cands | Where-Object { $_.Name -match '(?i)setup|install' } | Select-Object -First 1
+                    if (-not $pick) { $pick = $cands | Sort-Object Length -Descending | Select-Object -First 1 }
+                    if (-not $pick) { $q.Enqueue("log|$id|No installer was found inside the downloaded ZIP."); return $null }
+                    $exe = $pick.FullName; $file = $pick.Name
+                }
+                catch { $q.Enqueue("log|$id|Could not unpack the download: $($_.Exception.Message)"); return $null }
+            }
 
             # explorer.exe starts the installer WITHOUT administrator rights (these launchers expect a normal user session)
             $q.Enqueue("log|$id|Starting the official installer ($file). It installs for your user - keep its window open until it finishes.")
@@ -3679,7 +3704,10 @@ $worker = {
                 if ($sync.Cancel) { return -1 }
                 Start-Sleep -Milliseconds 1500
                 if (& $testArp) { $hits++ } else { $hits = 0 }
-                if ($hits -ge 2) { return 0 }
+                if ($hits -ge 2) {
+                    if ($work) { try { Remove-Item -LiteralPath $work -Recurse -Force -ErrorAction SilentlyContinue } catch { } }
+                    return 0
+                }
             }
             $q.Enqueue("log|$id|The installer did not finish within 10 minutes.")
             return $null
