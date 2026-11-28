@@ -613,6 +613,8 @@ $Strings = @{
         installNone   = 'Install apps'
         allInstalled  = 'all already installed'
         selectedNone  = 'No apps selected. Click a card to select it.'
+        mixedShort    = 'Install is off: your selection includes installed apps'
+        mixedSel      = 'Install is off because your selection mixes apps that are already installed with new ones. Select only new apps to install them, or only installed apps to uninstall them.'
         cancel        = 'Stop'
         selected      = 'Selected: {0}'
         ready         = 'Ready'
@@ -786,6 +788,8 @@ $Strings = @{
         installNone   = 'تثبيت البرامج'
         allInstalled  = 'كلها مثبّتة بالفعل'
         selectedNone  = 'لم تحدد أي برنامج. اضغط على بطاقة لتحديدها.'
+        mixedShort    = 'التثبيت متوقف: تحديدك يضم برامج مثبّتة'
+        mixedSel      = 'التثبيت متوقف لأن تحديدك يجمع برامج مثبّتة بالفعل مع برامج جديدة. حدّد برامج جديدة فقط لتثبيتها، أو برامج مثبّتة فقط لإزالتها.'
         cancel        = 'إيقاف'
         selected      = 'المحدد: {0}'
         ready         = 'جاهز'
@@ -2408,19 +2412,25 @@ function Update-Selection {
     if ($ni -gt 0) { $script:btnUninstall.Content = ($t.uninstallBtn + ' ' + (Format-Apps $ni)) } else { $script:btnUninstall.Content = $t.uninstallBtn }
     # the reason a button is off is written on screen (not only in a tooltip)
     $nNew = $n - $ni          # selected apps that are not on this PC yet (the only ones Install can add)
+    $mixed = ($nNew -gt 0) -and ($ni -gt 0)      # new apps AND installed apps selected together: Install is switched off
     if ($n -gt 0) {
         $script:txtSelected.Text = ($t.selected -f $n)
         if ($nNew -eq 0) { $script:txtSelected.Text += ' - ' + $t.allInstalled }
+        elseif ($mixed) { $script:txtSelected.Text += ' - ' + $t.mixedShort }
     } else { $script:txtSelected.Text = $t.selectedNone }
     $script:SelItems.Clear(); $shown = 0
     foreach ($sa in $script:Apps) { if ($sa.IsSelected) { if ($shown -lt 8) { $script:SelItems.Add($sa) }; $shown++ } }
     if ($n -gt 8) { $script:txtSelMore.Text = ('+{0}' -f ($n - 8)) } else { $script:txtSelMore.Text = '' }
     $script:CatMap['Selected'].Count = $n
-    $script:btnInstall.IsEnabled = ($nNew -gt 0) -and (-not $script:Busy)
+    $script:btnInstall.IsEnabled = ($nNew -gt 0) -and (-not $mixed) -and (-not $script:Busy)
     if ($nNew -gt 0) { $script:btnInstall.Content = ($t.install + ' ' + (Format-Apps $nNew)) } else { $script:btnInstall.Content = $t.installNone }
     $script:btnClear.IsEnabled = ($n -gt 0) -and (-not $script:Busy)
     $script:btnInstall.ToolTip = $null
     $script:btnUninstall.ToolTip = $null
+    if ($mixed) { $script:btnInstall.ToolTip = $t.mixedSel }
+    # tell the user once when the selection becomes mixed, and clear the message when it stops being mixed
+    if ($mixed -and (-not $script:MixedShown)) { $script:MixedShown = $true; Show-Notice -Kind warn -Text $t.mixedSel }
+    elseif ((-not $mixed) -and $script:MixedShown) { $script:MixedShown = $false; Hide-Notice }
 }
 
 function Initialize-Categories {
@@ -4566,6 +4576,7 @@ function Start-Install {
     $sel = @($script:Apps | Where-Object { $_.IsSelected -and (-not $script:InstalledIds.ContainsKey($_.Id)) })
     $t = $script:T
     if ($sel.Count -eq 0) { Show-Notice -Kind warn -Text $t.selectedNone; return }
+    if (@($script:Apps | Where-Object { $_.IsSelected -and $script:InstalledIds.ContainsKey($_.Id) }).Count -gt 0) { Show-Notice -Kind warn -Text $t.mixedSel; return }
     if (-not (Get-Command winget -ErrorAction SilentlyContinue)) { Show-WingetMissing; return }
     $n = Format-Apps $sel.Count
     $r = Show-Dialog -Title ($t.dlgInstallTitle -f $n) -Message $t.dlgInstallBody -Items $sel -Buttons @(
